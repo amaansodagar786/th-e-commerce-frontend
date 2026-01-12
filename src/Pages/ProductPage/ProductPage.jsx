@@ -273,39 +273,58 @@ function ProductPage() {
     }
   };
 
+  // UPDATED: SIMPLE fetchInventoryStatus - JUST CHECK TOTAL STOCK
   const fetchInventoryStatus = async () => {
     if (!product) return;
 
     try {
       setInventoryStatus(prev => ({ ...prev, status: 'checking' }));
 
-      const params = new URLSearchParams();
-
-      const currentColor = product.type === "simple" ? selectedColor : selectedModelColor;
-      if (currentColor?.colorId) {
-        params.append('colorId', currentColor.colorId);
-      }
-
-      if (product.type === "variable" && selectedModel?._id) {
-        params.append('modelId', selectedModel._id);
-      }
-
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/inventory/product/${product.productId}/status?${params.toString()}`
+      // SIMPLE: Just get ALL inventory for this product
+      const inventoryResponse = await axios.get(
+        `${import.meta.env.VITE_API_URL}/inventory/all`
       );
 
-      // Set ALL data from backend including actual threshold
+      // Find ALL inventory items for this product (could be multiple for different colors/models)
+      const inventoryItems = inventoryResponse.data.filter(item =>
+        item.productId === product.productId
+      );
+
+      if (inventoryItems.length === 0) {
+        // No inventory found
+        setInventoryStatus({
+          stock: 0,
+          threshold: 10,
+          status: 'out-of-stock'
+        });
+        return;
+      }
+
+      // ✅ JUST CHECK TOTAL STOCK FROM ALL INVENTORY ITEMS
+      const totalStock = inventoryItems.reduce((sum, item) => sum + item.stock, 0);
+
+      // Get average threshold or use default
+      const averageThreshold = inventoryItems.reduce((sum, item) => sum + (item.threshold || 10), 0) / inventoryItems.length;
+
+      // Determine status
+      let status = 'in-stock';
+      if (totalStock === 0) {
+        status = 'out-of-stock';
+      } else if (totalStock <= averageThreshold) {
+        status = 'low-stock';
+      }
+
       setInventoryStatus({
-        stock: response.data.stock,
-        threshold: response.data.threshold, // From DB
-        status: response.data.status // From DB logic
+        stock: totalStock,
+        threshold: Math.round(averageThreshold),
+        status: status
       });
 
     } catch (error) {
       console.error('Error fetching inventory:', error);
       setInventoryStatus({
         stock: 0,
-        threshold: 10, // Fallback
+        threshold: 10,
         status: 'error'
       });
     }
@@ -787,7 +806,6 @@ function ProductPage() {
     }
   };
 
-  // NEW: Updated handle add to cart WITH STOCK VALIDATION
   const handleAddToCart = async () => {
     // Check stock before proceeding
     if (!canPurchaseProduct()) {
@@ -813,7 +831,10 @@ function ProductPage() {
     const offerPrice = getOfferPrice();
     const hasOffer = currentOffer && currentOffer.offerPercentage > 0;
 
-    // Prepare cart data
+    // ✅ GET TAX SLAB FROM PRODUCT
+    const taxSlab = product.taxSlab || 18; // Default to 18% if not specified
+
+    // Prepare cart data with tax slab
     const cartData = {
       userId,
       productId: product.productId,
@@ -822,6 +843,8 @@ function ProductPage() {
       unitPrice: basePrice,
       finalPrice: offerPrice,
       totalPrice: getTotalPrice(),
+      // ✅ ADD TAX SLAB
+      taxSlab: taxSlab,
       selectedColor: product.type === "simple" ? selectedColor : selectedModelColor,
       selectedSize: product.type === "simple" ? selectedSize : selectedModelSize,
       hasOffer: hasOffer,
@@ -859,9 +882,6 @@ function ProductPage() {
 
       // Dispatch event for navbar and cart update
       window.dispatchEvent(new Event('cartUpdated'));
-
-      // You can open cart sidebar here if you want
-      // setIsCartOpen(true);
 
     } catch (error) {
       console.error("Error adding to cart:", error);
@@ -902,7 +922,10 @@ function ProductPage() {
     const selectedSizeData = product.type === "simple" ? selectedSize : selectedModelSize;
     const thumbnailImage = selectedColorData?.images?.[0] || product.thumbnailImage;
 
-    // Prepare Buy Now data
+    // ✅ GET TAX SLAB FROM PRODUCT
+    const taxSlab = product.taxSlab || 18; // Default to 18% if not specified
+
+    // Prepare Buy Now data WITH TAX SLAB
     const buyNowData = {
       userId,
       productId: product.productId,
@@ -911,6 +934,8 @@ function ProductPage() {
       unitPrice: basePrice,
       finalPrice: offerPrice,
       totalPrice: getTotalPrice(),
+      // ✅ ADD TAX SLAB
+      taxSlab: taxSlab,
       selectedColor: selectedColorData,
       selectedSize: selectedSizeData,
       selectedModel: product.type === "variable" ? {

@@ -34,10 +34,8 @@ const Checkout = () => {
   const token = localStorage.getItem('token');
   const userId = localStorage.getItem('userId');
 
-
   const [checkoutMode, setCheckoutMode] = useState('cart'); // 'cart' or 'buy-now'
   const [buyNowData, setBuyNowData] = useState(null);
-
 
   // Step Names
   const steps = [
@@ -71,6 +69,15 @@ const Checkout = () => {
     try {
       setLoading(true);
 
+      // LOG BUY NOW DATA WITH TAX SLAB
+      console.log('🛒 Buy Now Data Received:', {
+        productName: productData.productName,
+        quantity: productData.quantity,
+        price: productData.finalPrice,
+        taxSlab: productData.taxSlab || 'Not found',
+        total: productData.totalPrice
+      });
+
       // Create checkout session on backend
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/buynow/create-checkout-session`,
@@ -82,6 +89,9 @@ const Checkout = () => {
         // Set cart items and summary from buy now session
         setCartItems(response.data.checkoutSession.cartItems);
         setCartSummary(response.data.summary);
+
+        // LOG BUY NOW CHECKOUT SESSION ITEMS
+        console.log('🛍️ Buy Now Checkout Session Items:', response.data.checkoutSession.cartItems);
       }
 
       // Still fetch addresses (same for both modes)
@@ -96,8 +106,6 @@ const Checkout = () => {
     }
   };
 
-
-
   // Fetch cart data
   const fetchCartData = async () => {
     try {
@@ -110,6 +118,16 @@ const Checkout = () => {
 
       if (response.data.cartItems) {
         setCartItems(response.data.cartItems);
+
+        // LOG CART ITEMS WITH TAX SLAB
+        console.log('🛒 Cart Items with Tax Slab:', response.data.cartItems.map(item => ({
+          name: item.productName,
+          quantity: item.quantity,
+          price: item.finalPrice,
+          taxSlab: item.taxSlab || 'Not found',
+          total: item.totalPrice
+        })));
+
         calculateCartSummary(response.data.cartItems, response.data.summary);
       }
     } catch (error) {
@@ -181,7 +199,6 @@ const Checkout = () => {
         // Refresh addresses
         await fetchAddresses();
 
-        // ✅ Set newly added address as selected automatically
         setSelectedAddress(response.data.address);
 
         // Close form
@@ -270,7 +287,33 @@ const Checkout = () => {
     }
   };
 
-  // ==================== ORDER CREATION ====================
+  // Add this function to Checkout.jsx
+  const calculateItemGST = (item) => {
+    const quantity = item.quantity || 1;
+    const taxRate = item.taxSlab || 18;
+    const finalPrice = item.finalPrice || item.price || 0;
+    const discount = item.discount || 0;
+
+    // Calculate
+    const itemTotal = finalPrice * quantity;
+    const discountAmount = itemTotal * (discount / 100);
+    const totalAfterDiscount = itemTotal - discountAmount;
+    const baseValue = totalAfterDiscount / (1 + taxRate / 100);
+    const taxAmount = totalAfterDiscount - baseValue;
+    const cgstAmount = taxAmount / 2;
+    const sgstAmount = taxAmount / 2;
+
+    return {
+      baseValue: parseFloat(baseValue.toFixed(2)),
+      taxAmount: parseFloat(taxAmount.toFixed(2)),
+      cgstAmount: parseFloat(cgstAmount.toFixed(2)),
+      sgstAmount: parseFloat(sgstAmount.toFixed(2)),
+      discountAmount: parseFloat(discountAmount.toFixed(2)),
+      totalPrice: parseFloat(totalAfterDiscount.toFixed(2))
+    };
+  };
+
+  // Update handlePlaceOrder function in Checkout.jsx
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
       alert('⚠️ Please select a delivery address');
@@ -281,27 +324,74 @@ const Checkout = () => {
     try {
       setSaving(true);
 
-      // Prepare order data based on checkout mode
-      const orderData = {
-        userId,
-        checkoutMode,
-        items: cartItems.map(item => ({
+      // Calculate GST for each item
+      const itemsWithGST = cartItems.map(item => {
+        const gstCalculation = calculateItemGST(item);
+
+        return {
           productId: item.productId,
           productName: item.productName,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           finalPrice: item.finalPrice,
-          totalPrice: item.totalPrice,
+          // Add GST fields
+          taxSlab: item.taxSlab || 18,
+          baseValue: gstCalculation.baseValue,
+          taxAmount: gstCalculation.taxAmount,
+          cgstAmount: gstCalculation.cgstAmount,
+          sgstAmount: gstCalculation.sgstAmount,
+          discountAmount: gstCalculation.discountAmount,
+          totalPrice: gstCalculation.totalPrice,
+          discount: item.discount || 0,
+          // Add other fields
           selectedColor: item.selectedColor,
           selectedSize: item.selectedSize,
           selectedModel: item.selectedModel,
+          thumbnailImage: item.selectedColor?.images?.[0] || item.thumbnailImage,
           hasOffer: item.hasOffer,
-          offerDetails: item.offerDetails,
-          thumbnailImage: item.selectedColor?.images?.[0] || item.thumbnailImage
-        })),
+          offerDetails: item.offerDetails
+        };
+      });
+
+      // Calculate order totals
+      let subtotal = 0, tax = 0, cgst = 0, sgst = 0, totalDiscount = 0, baseValue = 0;
+      const taxPercentages = new Set();
+
+      itemsWithGST.forEach(item => {
+        subtotal += (item.unitPrice * item.quantity);
+        tax += item.taxAmount;
+        cgst += item.cgstAmount;
+        sgst += item.sgstAmount;
+        totalDiscount += item.discountAmount;
+        baseValue += item.baseValue;
+        taxPercentages.add(item.taxSlab);
+      });
+
+      const shipping = subtotal > 1000 ? 0 : 50;
+      const total = subtotal - totalDiscount + shipping;
+      const hasMixedTaxRates = taxPercentages.size > 1;
+
+      // Prepare order data
+      const orderData = {
+        userId,
+        checkoutMode,
+        items: itemsWithGST,
         address: selectedAddress,
-        paymentMethod: 'cod'
+        paymentMethod: 'cod',
+        // Send calculated totals
+        subtotal: parseFloat(subtotal.toFixed(2)),
+        baseValue: parseFloat(baseValue.toFixed(2)),
+        discount: parseFloat(totalDiscount.toFixed(2)),
+        tax: parseFloat(tax.toFixed(2)),
+        cgst: parseFloat(cgst.toFixed(2)),
+        sgst: parseFloat(sgst.toFixed(2)),
+        shipping: parseFloat(shipping.toFixed(2)),
+        total: parseFloat(total.toFixed(2)),
+        hasMixedTaxRates,
+        taxPercentages: Array.from(taxPercentages)
       };
+
+      console.log('📦 Order data being sent:', orderData);
 
       // Call backend to create order
       const response = await axios.post(
@@ -316,17 +406,14 @@ const Checkout = () => {
       );
 
       if (response.data.success) {
-        // Success message with order details
-        alert(`✅ Order placed successfully!\nOrder ID: ${response.data.order.orderId}\nTotal: ₹${response.data.order.pricing.total.toLocaleString()}`);
+        alert(`✅ Order placed successfully!\nOrder ID: ${response.data.order.orderNumber}\nTotal: ₹${response.data.order.pricing.total.toLocaleString()}`);
 
-        // Dispatch event to update cart count in navbar
         window.dispatchEvent(new Event('cartUpdated'));
 
-        // Navigate to orders page with success message
         navigate('/orders', {
           state: {
             orderSuccess: true,
-            orderId: response.data.order.orderId,
+            orderId: response.data.order.orderNumber,
             orderTotal: response.data.order.pricing.total
           }
         });
@@ -336,30 +423,7 @@ const Checkout = () => {
 
     } catch (error) {
       console.error('❌ Error placing order:', error);
-
-      let errorMessage = 'Failed to place order. Please try again.';
-
-      if (error.response) {
-        // Backend returned an error
-        if (error.response.data.message) {
-          errorMessage = error.response.data.message;
-        }
-
-        // Handle specific error cases
-        if (error.response.status === 400) {
-          if (error.response.data.message.includes('Insufficient stock')) {
-            errorMessage = 'Some items in your cart are out of stock. Please update your cart and try again.';
-            // Optionally refresh cart data
-            if (checkoutMode === 'cart') {
-              await fetchCartData();
-            }
-          } else if (error.response.data.message.includes('Product not found')) {
-            errorMessage = 'Some products in your cart are no longer available. Please update your cart.';
-          }
-        }
-      }
-
-      alert(`❌ ${errorMessage}`);
+      alert(error.response?.data?.message || 'Failed to place order. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -374,47 +438,62 @@ const Checkout = () => {
 
       {/* Cart Items */}
       <div className="order-items">
-        {cartItems.map(item => (
-          <div key={item._id} className="order-item">
-            <div className="item-image">
-              <img
-                src={item.selectedColor?.images?.[0] || item.thumbnailImage || "https://via.placeholder.com/80x80"}
-                alt={item.productName}
-                onError={(e) => {
-                  e.target.src = "https://via.placeholder.com/80x80";
-                }}
-              />
-            </div>
+        {cartItems.map(item => {
+          // LOG EACH ITEM WITH TAX SLAB
+          console.log('📦 Checkout Item:', {
+            name: item.productName,
+            quantity: item.quantity,
+            price: item.finalPrice,
+            taxSlab: item.taxSlab || 'Not found',
+            total: item.totalPrice
+          });
 
-            <div className="item-details">
-              <h4 className="item-name">{item.productName}</h4>
-
-              <div className="item-variants">
-                {item.selectedModel && (
-                  <span className="variant-chip">{item.selectedModel.modelName}</span>
-                )}
-                {item.selectedColor && (
-                  <span className="variant-chip">{item.selectedColor.colorName}</span>
-                )}
-                {item.selectedSize && (
-                  <span className="variant-chip">Size: {item.selectedSize}</span>
-                )}
+          return (
+            <div key={item._id} className="order-item">
+              <div className="item-image">
+                <img
+                  src={item.selectedColor?.images?.[0] || item.thumbnailImage || "https://via.placeholder.com/80x80"}
+                  alt={item.productName}
+                  onError={(e) => {
+                    e.target.src = "https://via.placeholder.com/80x80";
+                  }}
+                />
               </div>
 
-              <div className="item-quantity-price">
-                <span className="quantity">Qty: {item.quantity}</span>
-                <span className="price">
-                  ₹{(item.finalPrice * item.quantity).toLocaleString()}
-                  {item.hasOffer && (
-                    <span className="original-price">
-                      ₹{(item.unitPrice * item.quantity).toLocaleString()}
-                    </span>
+              <div className="item-details">
+                <h4 className="item-name">{item.productName}</h4>
+
+                <div className="item-variants">
+                  {item.selectedModel && (
+                    <span className="variant-chip">{item.selectedModel.modelName}</span>
                   )}
-                </span>
+                  {item.selectedColor && (
+                    <span className="variant-chip">{item.selectedColor.colorName}</span>
+                  )}
+                  {item.selectedSize && (
+                    <span className="variant-chip">Size: {item.selectedSize}</span>
+                  )}
+                  {/* ✅ SHOW TAX SLAB IN UI */}
+                  <span className="variant-chip tax-chip">
+                    GST: {item.taxSlab || 18}%
+                  </span>
+                </div>
+
+                <div className="item-quantity-price">
+                  <span className="quantity">Qty: {item.quantity}</span>
+                  <span className="price">
+                    ₹{(item.finalPrice * item.quantity).toLocaleString()}
+                    {item.hasOffer && (
+                      <span className="original-price">
+                        ₹{(item.unitPrice * item.quantity).toLocaleString()}
+                      </span>
+                    )}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Order Summary */}
@@ -761,7 +840,6 @@ const Checkout = () => {
           Step {currentStep} of 3
         </div>
 
-  
         {currentStep < 3 ? (
           <button className="next-btn" onClick={goToNextStep}>
             Continue to {currentStep === 1 ? 'Address' : 'Payment'}

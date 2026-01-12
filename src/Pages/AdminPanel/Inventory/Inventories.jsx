@@ -5,25 +5,32 @@ import "./Inventories.scss";
 const Inventories = () => {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [showAddStock, setShowAddStock] = useState(false);
-  const [showSetStock, setShowSetStock] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const [showAddBatch, setShowAddBatch] = useState(false);
+  const [showBatchDetails, setShowBatchDetails] = useState(false);
+  const [showExpiryAlerts, setShowExpiryAlerts] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // Fixed: Renamed setStockForm to stockAdjustmentForm
-  const [stockForm, setStockForm] = useState({
+  // Batch form state
+  const [batchForm, setBatchForm] = useState({
+    batchNumber: "",
     quantity: "",
-    reason: "Stock added manually",
+    manufactureDate: "",
+    price: "",
+    sellingPrice: "",
+    reason: "New batch received",
     notes: ""
   });
 
-  const [stockAdjustmentForm, setStockAdjustmentForm] = useState({
-    stock: "",
-    reason: "Stock adjusted manually",
-    notes: ""
+  // Batch details state
+  const [batchDetails, setBatchDetails] = useState({
+    batches: [],
+    summary: null,
+    history: []
   });
 
-  const [stockHistory, setStockHistory] = useState([]);
+  // Expiry alerts state
+  const [expiryAlerts, setExpiryAlerts] = useState([]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
 
@@ -35,7 +42,6 @@ const Inventories = () => {
       const res = await axios.get(
         `${import.meta.env.VITE_API_URL}/inventory/all`,
         { headers: { Authorization: `Bearer ${token}` } }
-
       );
       setInventory(res.data);
     } catch (err) {
@@ -48,118 +54,193 @@ const Inventories = () => {
 
   useEffect(() => {
     fetchInventory();
+    fetchExpiryAlerts();
   }, []);
 
-  // Open add stock modal
-  const openAddStock = (item) => {
+  // Fetch expiry alerts
+  const fetchExpiryAlerts = async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/inventory/alerts/expiry`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setExpiryAlerts(res.data.alerts);
+    } catch (err) {
+      console.error("Error fetching expiry alerts:", err);
+    }
+  };
+
+  // Open add batch modal
+  const openAddBatch = (item) => {
     setSelectedItem(item);
-    setStockForm({
+    // Pre-fill selling price with current price
+    setBatchForm({
+      batchNumber: "",
       quantity: "",
-      reason: "Stock added manually",
+      manufactureDate: new Date().toISOString().split('T')[0].substring(0, 7), // YYYY-MM
+      price: item.sellingPrice || "",
+      sellingPrice: item.sellingPrice || "",
+      reason: "New batch received",
       notes: ""
     });
-    setShowAddStock(true);
+    setShowAddBatch(true);
   };
 
-  // Open set stock modal
-  const openSetStock = (item) => {
-    setSelectedItem(item);
-    setStockAdjustmentForm({
-      stock: item.stock.toString(),
-      reason: "Stock adjusted manually",
-      notes: ""
-    });
-    setShowSetStock(true);
-  };
-
-  // Open stock history modal
-  const openStockHistory = async (item) => {
+  // Open batch details modal
+  const openBatchDetails = async (item) => {
     try {
       setSelectedItem(item);
       const token = localStorage.getItem("adminToken");
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/inventory/stock-history/${item._id}`,
+
+      // Fetch batch summary
+      const summaryRes = await axios.get(
+        `${import.meta.env.VITE_API_URL}/inventory/batch/summary/${item.inventoryId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setStockHistory(res.data.history);
-      setShowHistory(true);
+
+      // Fetch stock history
+      const historyRes = await axios.get(
+        `${import.meta.env.VITE_API_URL}/inventory/stock-history/${item.inventoryId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setBatchDetails({
+        batches: item.batches || [],
+        summary: summaryRes.data,
+        history: historyRes.data.history || []
+      });
+
+      setShowBatchDetails(true);
     } catch (err) {
-      console.error("Error fetching stock history:", err);
-      alert("Failed to load stock history");
+      console.error("Error fetching batch details:", err);
+      alert("Failed to load batch details");
     }
   };
 
-  // Handle add stock form changes
-  const handleStockFormChange = (e) => {
+  // Handle batch form changes
+  const handleBatchFormChange = (e) => {
     const { name, value } = e.target;
-    setStockForm(prev => ({
+    setBatchForm(prev => ({
       ...prev,
       [name]: value
     }));
   };
 
-  // Handle set stock form changes - UPDATED
-  const handleSetStockFormChange = (e) => {
-    const { name, value } = e.target;
-    setStockAdjustmentForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // Add stock to item
-  const handleAddStock = async () => {
+  // Add batch to inventory
+  const handleAddBatch = async () => {
     try {
       if (!selectedItem) return;
 
-      const quantity = parseFloat(stockForm.quantity);
+      // Validation
+      if (!batchForm.batchNumber.trim()) {
+        alert("Batch number is required");
+        return;
+      }
+
+      const quantity = parseFloat(batchForm.quantity);
       if (isNaN(quantity) || quantity <= 0) {
-        alert("Please enter a valid positive quantity");
+        alert("Please enter a valid quantity");
+        return;
+      }
+
+      const price = parseFloat(batchForm.price);
+      if (isNaN(price) || price <= 0) {
+        alert("Please enter a valid price");
+        return;
+      }
+
+      const sellingPrice = parseFloat(batchForm.sellingPrice) || price;
+      if (isNaN(sellingPrice) || sellingPrice <= 0) {
+        alert("Please enter a valid selling price");
+        return;
+      }
+
+      if (!batchForm.manufactureDate) {
+        alert("Manufacture date is required");
         return;
       }
 
       const token = localStorage.getItem("adminToken");
-      await axios.put(
-        `${import.meta.env.VITE_API_URL}/inventory/add-stock/${selectedItem._id}`,
-        stockForm,
+
+      // Create batch data object
+      const batchData = {
+        batch: {
+          batchNumber: batchForm.batchNumber.trim().toUpperCase(),
+          quantity: quantity,
+          manufactureDate: batchForm.manufactureDate,
+          price: price,
+          sellingPrice: sellingPrice
+        },
+        reason: batchForm.reason,
+        notes: batchForm.notes
+      };
+
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/inventory/batch/add-batch/${selectedItem.inventoryId}`,  // ← Change to _id
+        batchData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert(`Successfully added ${quantity} stock to ${selectedItem.colorName}`);
-      setShowAddStock(false);
+      alert(`Batch ${batchForm.batchNumber} added successfully!`);
+      setShowAddBatch(false);
       setSelectedItem(null);
       fetchInventory(); // Refresh list
     } catch (err) {
-      console.error("Error adding stock:", err);
-      alert(err.response?.data?.error || "Failed to add stock");
+      console.error("Error adding batch:", err);
+      alert(err.response?.data?.error || "Failed to add batch");
     }
   };
 
-  // Set stock to specific value - UPDATED
-  const handleSetStock = async () => {
+  // Deduct stock from batch inventory
+  const handleDeductStock = async (item, quantity) => {
     try {
-      if (!selectedItem) return;
-
-      const stock = parseFloat(stockAdjustmentForm.stock); // Updated
-      if (isNaN(stock) || stock < 0) {
-        alert("Please enter a valid stock value (0 or positive)");
+      if (!quantity || isNaN(quantity) || quantity <= 0) {
+        alert("Please enter a valid quantity");
         return;
       }
 
       const token = localStorage.getItem("adminToken");
       await axios.put(
-        `${import.meta.env.VITE_API_URL}/inventory/set-stock/${selectedItem._id}`,
-        stockAdjustmentForm, // Updated
+        `${import.meta.env.VITE_API_URL}/inventory/batch/deduct-stock/${item.inventoryId}`,
+        {
+          quantity: parseFloat(quantity),
+          reason: "Stock sold",
+          notes: "Deducted from inventory"
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert(`Stock set to ${stock} for ${selectedItem.colorName}`);
-      setShowSetStock(false);
-      setSelectedItem(null);
+      alert(`Successfully deducted ${quantity} stock from ${item.productName}`);
       fetchInventory(); // Refresh list
     } catch (err) {
-      console.error("Error setting stock:", err);
-      alert(err.response?.data?.error || "Failed to set stock");
+      console.error("Error deducting stock:", err);
+      alert(err.response?.data?.error || "Failed to deduct stock");
+    }
+  };
+
+  // Mark batch as expired
+  const handleMarkExpired = async (batchNumbers, reason = "Batch expired") => {
+    try {
+      if (!selectedItem) return;
+
+      const token = localStorage.getItem("adminToken");
+      await axios.put(
+        `${import.meta.env.VITE_API_URL}/inventory/batch/mark-expired/${selectedItem.inventoryId}`,
+        {
+          batchNumbers: batchNumbers,
+          reason: reason,
+          notes: "Marked as expired"
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert(`${batchNumbers.length} batch(es) marked as expired`);
+      fetchInventory(); // Refresh list
+      setShowBatchDetails(false); // Close details modal
+    } catch (err) {
+      console.error("Error marking batch as expired:", err);
+      alert(err.response?.data?.error || "Failed to mark batch as expired");
     }
   };
 
@@ -174,14 +255,14 @@ const Inventories = () => {
 
       const token = localStorage.getItem("adminToken");
       await axios.put(
-        `${import.meta.env.VITE_API_URL}/inventory/update-threshold/${item._id}`,
+        `${import.meta.env.VITE_API_URL}/inventory/update-threshold/${item.inventoryId}`,
         { threshold },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       // Update local state
       setInventory(prev => prev.map(i =>
-        i._id === item._id ? { ...i, threshold } : i
+        i.inventoryId === item.inventoryId ? { ...i, threshold } : i
       ));
 
       alert("Threshold updated successfully!");
@@ -195,19 +276,23 @@ const Inventories = () => {
   const filteredInventory = inventory.filter(item => {
     const matchesSearch = searchTerm === "" ||
       item.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.colorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.modelName && item.modelName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (item.variableModelName && item.variableModelName.toLowerCase().includes(searchTerm.toLowerCase()));
-
-    const productType = item.productDetails?.type;
-    const matchesType = filterType === "all" ||
-      (filterType === "simple" && productType === "simple") ||
-      (filterType === "variable" && productType === "variable");
+      item.productId.toLowerCase().includes(searchTerm.toLowerCase());
 
     const isLowStock = item.stock < (item.threshold || 10);
     const matchesLowStock = filterType !== "low" || isLowStock;
 
-    return matchesSearch && matchesType && matchesLowStock;
+    // Check for expiring batches
+    const hasExpiringBatches = item.batches && item.batches.some(batch => {
+      if (batch.status !== "active") return false;
+      const expiryDate = new Date(batch.expiryDate);
+      const today = new Date();
+      const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+      return daysUntilExpiry <= 30 && daysUntilExpiry >= 0;
+    });
+
+    const matchesExpiring = filterType !== "expiring" || hasExpiringBatches;
+
+    return matchesSearch && matchesLowStock && matchesExpiring;
   });
 
   // Get stock status
@@ -217,8 +302,18 @@ const Inventories = () => {
     return { class: "in-stock", text: "In Stock", icon: "✅" };
   };
 
-  // Format date for history
+  // Format date
   const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  // Format date with time for history
+  const formatDateTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -229,17 +324,30 @@ const Inventories = () => {
     });
   };
 
-  // Get type badge for history
-  const getTypeBadge = (type) => {
-    const types = {
-      "added": { label: "Added", class: "added" },
-      "deducted": { label: "Deducted", class: "deducted" },
-      "adjusted": { label: "Adjusted", class: "adjusted" },
-      "initial": { label: "Initial", class: "initial" },
-      "sold": { label: "Sold", class: "sold" },
-      "returned": { label: "Returned", class: "returned" }
-    };
-    return types[type] || { label: type, class: "default" };
+  // Get batch status
+  const getBatchStatus = (batch) => {
+    const today = new Date();
+    const expiryDate = new Date(batch.expiryDate);
+
+    if (batch.status === "expired") {
+      return { class: "expired", text: "Expired", icon: "⏰" };
+    }
+
+    if (batch.status === "sold-out") {
+      return { class: "sold-out", text: "Sold Out", icon: "✅" };
+    }
+
+    if (expiryDate < today) {
+      return { class: "expired", text: "Expired", icon: "⏰" };
+    }
+
+    const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+
+    if (daysUntilExpiry <= 30) {
+      return { class: "expiring", text: `Expiring in ${daysUntilExpiry} days`, icon: "⚠️" };
+    }
+
+    return { class: "active", text: "Active", icon: "✓" };
   };
 
   // Get stock statistics
@@ -248,35 +356,97 @@ const Inventories = () => {
     let outOfStock = 0;
     let lowStock = 0;
     let inStock = 0;
+    let totalValue = 0;
+    let expiringBatches = 0;
 
     filteredInventory.forEach(item => {
       totalStock += item.stock;
+      totalValue += item.totalValue || 0;
+
       const status = getStockStatus(item.stock, item.threshold || 10);
       if (status.class === "out-of-stock") outOfStock++;
       else if (status.class === "low-stock") lowStock++;
       else inStock++;
+
+      // Count expiring batches
+      if (item.batches) {
+        item.batches.forEach(batch => {
+          if (batch.status === "active") {
+            const expiryDate = new Date(batch.expiryDate);
+            const today = new Date();
+            const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+            if (daysUntilExpiry <= 30 && daysUntilExpiry >= 0) {
+              expiringBatches++;
+            }
+          }
+        });
+      }
     });
 
-    return { totalStock, outOfStock, lowStock, inStock };
+    return { totalStock, outOfStock, lowStock, inStock, totalValue, expiringBatches };
   };
 
   const stats = getStats();
+
+  // Quick deduct stock
+  const QuickDeductStock = ({ item }) => {
+    const [quantity, setQuantity] = useState("");
+
+    const handleDeduct = () => {
+      if (quantity && parseFloat(quantity) > 0) {
+        handleDeductStock(item, parseFloat(quantity));
+        setQuantity("");
+      }
+    };
+
+    return (
+      <div className="quick-deduct">
+        <input
+          type="number"
+          min="1"
+          max={item.stock}
+          value={quantity}
+          onChange={(e) => setQuantity(e.target.value)}
+          placeholder="Qty"
+          className="deduct-input"
+        />
+        <button
+          onClick={handleDeduct}
+          disabled={!quantity || parseFloat(quantity) <= 0 || parseFloat(quantity) > item.stock}
+          className="deduct-btn"
+          title="Deduct stock"
+        >
+          Sell
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="inventories">
       {/* HEADER */}
       <div className="header">
         <div className="title-section">
-          <h2>Inventory Management</h2>
-          <span className="count">({filteredInventory.length} items)</span>
+          <h2>Batch Inventory Management</h2>
+          <span className="count">({filteredInventory.length} batch products)</span>
         </div>
         <div className="actions">
           <button
             className="refresh-btn"
-            onClick={fetchInventory}
+            onClick={() => {
+              fetchInventory();
+              fetchExpiryAlerts();
+            }}
             disabled={loading}
           >
             ⟳ Refresh
+          </button>
+          <button
+            className="alerts-btn"
+            onClick={() => setShowExpiryAlerts(true)}
+            disabled={expiryAlerts.length === 0}
+          >
+            ⚠️ Expiry Alerts ({expiryAlerts.length})
           </button>
         </div>
       </div>
@@ -285,7 +455,7 @@ const Inventories = () => {
       <div className="stats">
         <div className="stat-card">
           <div className="stat-value">{filteredInventory.length}</div>
-          <div className="stat-label">Total Items</div>
+          <div className="stat-label">Batch Products</div>
         </div>
         <div className="stat-card">
           <div className="stat-value">{stats.outOfStock}</div>
@@ -296,8 +466,12 @@ const Inventories = () => {
           <div className="stat-label">Low Stock</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value">{stats.totalStock}</div>
-          <div className="stat-label">Total Stock</div>
+          <div className="stat-value">{stats.expiringBatches}</div>
+          <div className="stat-label">Expiring Soon</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">₹{stats.totalValue.toLocaleString()}</div>
+          <div className="stat-label">Total Value</div>
         </div>
       </div>
 
@@ -306,7 +480,7 @@ const Inventories = () => {
         <div className="search-box">
           <input
             type="text"
-            placeholder="Search by product, color, or model..."
+            placeholder="Search by product name or ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -322,19 +496,7 @@ const Inventories = () => {
             className={filterType === "all" ? "active" : ""}
             onClick={() => setFilterType("all")}
           >
-            All Items
-          </button>
-          <button
-            className={filterType === "simple" ? "active" : ""}
-            onClick={() => setFilterType("simple")}
-          >
-            Simple Products
-          </button>
-          <button
-            className={filterType === "variable" ? "active" : ""}
-            onClick={() => setFilterType("variable")}
-          >
-            Variable Products
+            All Products
           </button>
           <button
             className={filterType === "low" ? "active low" : ""}
@@ -342,25 +504,31 @@ const Inventories = () => {
           >
             ⚠️ Low Stock
           </button>
+          <button
+            className={filterType === "expiring" ? "active expiring" : ""}
+            onClick={() => setFilterType("expiring")}
+          >
+            ⏰ Expiring Soon
+          </button>
         </div>
       </div>
 
       {/* INVENTORY TABLE */}
       {loading ? (
-        <div className="loading">Loading inventory...</div>
+        <div className="loading">Loading batch inventory...</div>
       ) : filteredInventory.length === 0 ? (
         <div className="no-items">
-          <p>No inventory items found</p>
+          <p>No batch inventory items found</p>
         </div>
       ) : (
         <div className="inventory-table-container">
           <table className="inventory-table">
             <thead>
               <tr>
-                <th>Image</th>
                 <th>Product Details</th>
-                <th>Color</th>
-                <th>Stock</th>
+                <th>Batch Summary</th>
+                <th>Current Stock</th>
+                <th>Price & Value</th>
                 <th>Threshold</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -369,66 +537,74 @@ const Inventories = () => {
             <tbody>
               {filteredInventory.map((item) => {
                 const stockStatus = getStockStatus(item.stock, item.threshold || 10);
+                const batchSummary = item.batches ? {
+                  totalBatches: item.batches.length,
+                  activeBatches: item.batches.filter(b => b.status === "active").length,
+                  expiredBatches: item.batches.filter(b => b.status === "expired").length,
+                  soldOutBatches: item.batches.filter(b => b.status === "sold-out").length,
+                  nextExpiry: item.batches
+                    .filter(b => b.status === "active")
+                    .sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate))[0]?.expiryDate
+                } : null;
 
                 return (
-                  <tr key={item._id} className={stockStatus.class}>
-                    <td className="image-cell">
-                      {item.productImage ? (
-                        <img
-                          src={item.productImage}
-                          alt={`${item.productName} - ${item.colorName}`}
-                          className="product-image"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "https://via.placeholder.com/60x60?text=No+Image";
-                          }}
-                        />
-                      ) : (
-                        <div className="no-image">No Image</div>
-                      )}
-                    </td>
-
+                  <tr key={item.inventoryId} className={stockStatus.class}>
                     <td className="product-details">
                       <div className="product-name">{item.productName}</div>
-                      <div className="model-info">
-                        {item.variableModelName ? (
-                          <>
-                            <span className="model-type">Variable:</span>
-                            <span className="model-name">{item.variableModelName}</span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="model-type">Simple:</span>
-                            <span className="model-name">{item.modelName || "Default"}</span>
-                          </>
-                        )}
-                      </div>
                       <div className="product-id">ID: {item.productId}</div>
+                      <div className="product-category">{item.category} • {item.hsnCode}</div>
+                      <div className="inventory-id">Inventory: {item.inventoryId}</div>
                     </td>
 
-                    <td className="color-cell">
-                      <div className="color-name">{item.colorName}</div>
-                      <div className="color-id">Color ID: {item.colorId}</div>
+                    <td className="batch-summary">
+                      {batchSummary ? (
+                        <div className="batch-stats">
+                          <div className="batch-stat">
+                            <span className="stat-label">Batches:</span>
+                            <span className="stat-value">{batchSummary.totalBatches}</span>
+                          </div>
+                          <div className="batch-stat">
+                            <span className="stat-label">Active:</span>
+                            <span className="stat-value active">{batchSummary.activeBatches}</span>
+                          </div>
+                          <div className="batch-stat">
+                            <span className="stat-label">Expired:</span>
+                            <span className="stat-value expired">{batchSummary.expiredBatches}</span>
+                          </div>
+                          <div className="batch-stat">
+                            <span className="stat-label">Sold Out:</span>
+                            <span className="stat-value sold-out">{batchSummary.soldOutBatches}</span>
+                          </div>
+                          {batchSummary.nextExpiry && (
+                            <div className="batch-stat">
+                              <span className="stat-label">Next Expiry:</span>
+                              <span className="stat-value expiring">
+                                {formatDate(batchSummary.nextExpiry)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="no-batches">No batches added</div>
+                      )}
                     </td>
 
                     <td className="stock-cell">
                       <div className="stock-display">
-                        <span className="stock-value">{item.stock}</span>
-                        <div className="stock-buttons">
-                          <button
-                            className="add-stock-btn"
-                            onClick={() => openAddStock(item)}
-                            title="Add Stock"
-                          >
-                            + Add
-                          </button>
-                          <button
-                            className="set-stock-btn"
-                            onClick={() => openSetStock(item)}
-                            title="Set Stock"
-                          >
-                            📝 Set
-                          </button>
+                        <span className="stock-value">{item.stock} units</span>
+                        <QuickDeductStock item={item} />
+                      </div>
+                    </td>
+
+                    <td className="price-cell">
+                      <div className="price-info">
+                        <div className="selling-price">
+                          ₹{item.sellingPrice?.toFixed(2) || "0.00"}
+                          <span className="price-label">Selling Price</span>
+                        </div>
+                        <div className="total-value">
+                          ₹{(item.sellingPrice * item.stock).toLocaleString()}
+                          <span className="value-label">Total Value</span>
                         </div>
                       </div>
                     </td>
@@ -455,11 +631,18 @@ const Inventories = () => {
                     <td className="actions-cell">
                       <div className="action-buttons">
                         <button
-                          className="history-btn"
-                          onClick={() => openStockHistory(item)}
-                          title="View Stock History"
+                          className="add-batch-btn"
+                          onClick={() => openAddBatch(item)}
+                          title="Add New Batch"
                         >
-                          📊 History
+                          + Add Batch
+                        </button>
+                        <button
+                          className="details-btn"
+                          onClick={() => openBatchDetails(item)}
+                          title="View Batch Details"
+                        >
+                          📋 Details
                         </button>
                       </div>
                     </td>
@@ -471,257 +654,417 @@ const Inventories = () => {
         </div>
       )}
 
-      {/* ADD STOCK MODAL */}
-      {showAddStock && selectedItem && (
+      {/* ADD BATCH MODAL */}
+      {showAddBatch && selectedItem && (
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h3>Add Stock - {selectedItem.colorName}</h3>
+              <h3>Add New Batch - {selectedItem.productName}</h3>
               <p className="modal-subtitle">
-                {selectedItem.productName} • Current Stock: {selectedItem.stock}
+                Inventory: {selectedItem.inventoryId} • Current Stock: {selectedItem.stock}
               </p>
-              <button className="close-btn" onClick={() => setShowAddStock(false)}>
+              <button className="close-btn" onClick={() => setShowAddBatch(false)}>
                 ×
               </button>
             </div>
 
             <div className="modal-body">
-              <div className="form-group">
-                <label>Quantity to Add *</label>
-                <input
-                  type="number"
-                  name="quantity"
-                  min="1"
-                  step="1"
-                  value={stockForm.quantity}
-                  onChange={handleStockFormChange}
-                  placeholder="Enter quantity"
-                  autoFocus
-                />
-                <small>Enter the quantity you want to add to current stock</small>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Batch Number *</label>
+                  <input
+                    type="text"
+                    name="batchNumber"
+                    value={batchForm.batchNumber}
+                    onChange={handleBatchFormChange}
+                    placeholder="e.g., BATCH-2024-001"
+                    autoFocus
+                  />
+                  <small>Unique identifier for this batch</small>
+                </div>
+
+                <div className="form-group">
+                  <label>Quantity *</label>
+                  <input
+                    type="number"
+                    name="quantity"
+                    min="1"
+                    step="1"
+                    value={batchForm.quantity}
+                    onChange={handleBatchFormChange}
+                    placeholder="Number of units"
+                  />
+                </div>
               </div>
 
-              <div className="form-group">
-                <label>Reason</label>
-                <select
-                  name="reason"
-                  value={stockForm.reason}
-                  onChange={handleStockFormChange}
-                >
-                  <option value="Stock added manually">Stock added manually</option>
-                  <option value="New shipment received">New shipment received</option>
-                  <option value="Stock adjustment">Stock adjustment</option>
-                  <option value="Return from customer">Return from customer</option>
-                  <option value="Other">Other</option>
-                </select>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Manufacture Date *</label>
+                  <input
+                    type="month"
+                    name="manufactureDate"
+                    value={batchForm.manufactureDate}
+                    onChange={handleBatchFormChange}
+                  />
+                  <small>Format: YYYY-MM (Expiry will be 12 months later)</small>
+                </div>
+
+                <div className="form-group">
+                  <label>Purchase Price *</label>
+                  <input
+                    type="number"
+                    name="price"
+                    min="0.01"
+                    step="0.01"
+                    value={batchForm.price}
+                    onChange={handleBatchFormChange}
+                    placeholder="Cost per unit"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Selling Price *</label>
+                  <input
+                    type="number"
+                    name="sellingPrice"
+                    min="0.01"
+                    step="0.01"
+                    value={batchForm.sellingPrice}
+                    onChange={handleBatchFormChange}
+                    placeholder="Selling price per unit"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Reason</label>
+                  <select
+                    name="reason"
+                    value={batchForm.reason}
+                    onChange={handleBatchFormChange}
+                  >
+                    <option value="New batch received">New batch received</option>
+                    <option value="Stock replenishment">Stock replenishment</option>
+                    <option value="Manufacturer shipment">Manufacturer shipment</option>
+                    <option value="Return from customer">Return from customer</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
               </div>
 
               <div className="form-group">
                 <label>Notes (Optional)</label>
                 <textarea
                   name="notes"
-                  value={stockForm.notes}
-                  onChange={handleStockFormChange}
+                  value={batchForm.notes}
+                  onChange={handleBatchFormChange}
                   placeholder="Add any additional notes..."
                   rows={3}
                 />
               </div>
 
-              <div className="stock-preview">
-                <div className="preview-row">
-                  <span>Current Stock:</span>
-                  <strong>{selectedItem.stock}</strong>
+              <div className="batch-preview">
+                <h4>Batch Preview</h4>
+                <div className="preview-grid">
+                  <div className="preview-item">
+                    <span>Batch Number:</span>
+                    <strong>{batchForm.batchNumber || "Not specified"}</strong>
+                  </div>
+                  <div className="preview-item">
+                    <span>Quantity:</span>
+                    <strong>{batchForm.quantity || 0} units</strong>
+                  </div>
+                  <div className="preview-item">
+                    <span>Manufacture:</span>
+                    <strong>{batchForm.manufactureDate || "Not specified"}</strong>
+                  </div>
+                  <div className="preview-item">
+                    <span>Expiry:</span>
+                    <strong>
+                      {batchForm.manufactureDate ?
+                        new Date(new Date(batchForm.manufactureDate + '-01').setMonth(
+                          new Date(batchForm.manufactureDate + '-01').getMonth() + 12
+                        )).toISOString().substring(0, 7) :
+                        "Not specified"}
+                    </strong>
+                  </div>
+                  <div className="preview-item">
+                    <span>Purchase Price:</span>
+                    <strong>₹{batchForm.price || "0.00"}</strong>
+                  </div>
+                  <div className="preview-item">
+                    <span>Selling Price:</span>
+                    <strong>₹{batchForm.sellingPrice || batchForm.price || "0.00"}</strong>
+                  </div>
                 </div>
-                <div className="preview-row">
-                  <span>Adding:</span>
-                  <strong>+{stockForm.quantity || 0}</strong>
-                </div>
-                <div className="preview-row total">
-                  <span>New Stock:</span>
-                  <strong>{selectedItem.stock + (parseFloat(stockForm.quantity) || 0)}</strong>
+                <div className="stock-change">
+                  <div className="change-item">
+                    <span>Current Stock:</span>
+                    <strong>{selectedItem.stock}</strong>
+                  </div>
+                  <div className="change-item">
+                    <span>Adding:</span>
+                    <strong className="positive">+{batchForm.quantity || 0}</strong>
+                  </div>
+                  <div className="change-item total">
+                    <span>New Stock:</span>
+                    <strong>{selectedItem.stock + (parseFloat(batchForm.quantity) || 0)}</strong>
+                  </div>
                 </div>
               </div>
             </div>
 
             <div className="modal-footer">
-              <button className="cancel-btn" onClick={() => setShowAddStock(false)}>
+              <button className="cancel-btn" onClick={() => setShowAddBatch(false)}>
                 Cancel
               </button>
-              <button className="save-btn" onClick={handleAddStock}>
-                Add Stock
+              <button className="save-btn" onClick={handleAddBatch}>
+                Add Batch
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* SET STOCK MODAL - UPDATED */}
-      {showSetStock && selectedItem && (
+      {/* BATCH DETAILS MODAL */}
+      {showBatchDetails && selectedItem && batchDetails.summary && (
         <div className="modal-overlay">
-          <div className="modal">
+          <div className="modal xlarge">
             <div className="modal-header">
-              <h3>Set Stock - {selectedItem.colorName}</h3>
+              <h3>Batch Details - {selectedItem.productName}</h3>
               <p className="modal-subtitle">
-                {selectedItem.productName} • Current Stock: {selectedItem.stock}
+                Total Stock: {batchDetails.summary.totalStock} •
+                Total Value: ₹{batchDetails.summary.totalValue?.toLocaleString()}
               </p>
-              <button className="close-btn" onClick={() => setShowSetStock(false)}>
+              <button className="close-btn" onClick={() => setShowBatchDetails(false)}>
                 ×
               </button>
             </div>
 
             <div className="modal-body">
-              <div className="form-group">
-                <label>Set Stock To *</label>
-                <input
-                  type="number"
-                  name="stock"
-                  min="0"
-                  step="1"
-                  value={stockAdjustmentForm.stock}
-                  onChange={handleSetStockFormChange}
-                  placeholder="Enter stock value"
-                  autoFocus
-                />
-                <small>Set the exact stock quantity (for corrections)</small>
-              </div>
-
-              <div className="form-group">
-                <label>Reason</label>
-                <select
-                  name="reason"
-                  value={stockAdjustmentForm.reason}
-                  onChange={handleSetStockFormChange}
-                >
-                  <option value="Stock adjusted manually">Stock adjusted manually</option>
-                  <option value="Physical count correction">Physical count correction</option>
-                  <option value="Damage/loss adjustment">Damage/loss adjustment</option>
-                  <option value="System correction">System correction</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Notes (Optional)</label>
-                <textarea
-                  name="notes"
-                  value={stockAdjustmentForm.notes}
-                  onChange={handleSetStockFormChange}
-                  placeholder="Add any additional notes..."
-                  rows={3}
-                />
-              </div>
-
-              <div className="stock-preview">
-                <div className="preview-row">
-                  <span>Current Stock:</span>
-                  <strong>{selectedItem.stock}</strong>
-                </div>
-                <div className="preview-row">
-                  <span>Setting to:</span>
-                  <strong>{stockAdjustmentForm.stock || 0}</strong> {/* Updated */}
-                </div>
-                <div className="preview-row total">
-                  <span>Difference:</span>
-                  <strong className={parseFloat(stockAdjustmentForm.stock || 0) >= selectedItem.stock ? "positive" : "negative"}>
-                    {parseFloat(stockAdjustmentForm.stock || 0) >= selectedItem.stock ? "+" : ""}
-                    {(parseFloat(stockAdjustmentForm.stock || 0) - selectedItem.stock)}
-                  </strong>
+              {/* Batch Summary */}
+              <div className="summary-section">
+                <h4>Batch Summary</h4>
+                <div className="summary-grid">
+                  <div className="summary-item">
+                    <span>Total Batches:</span>
+                    <strong>{batchDetails.summary.batchSummary?.totalBatches || 0}</strong>
+                  </div>
+                  <div className="summary-item">
+                    <span>Active Batches:</span>
+                    <strong className="active">{batchDetails.summary.batchSummary?.activeBatches || 0}</strong>
+                  </div>
+                  <div className="summary-item">
+                    <span>Expired Batches:</span>
+                    <strong className="expired">{batchDetails.summary.batchSummary?.expiredBatches || 0}</strong>
+                  </div>
+                  <div className="summary-item">
+                    <span>Sold Out Batches:</span>
+                    <strong className="sold-out">{batchDetails.summary.batchSummary?.soldOutBatches || 0}</strong>
+                  </div>
+                  <div className="summary-item">
+                    <span>Current Stock:</span>
+                    <strong>{batchDetails.summary.totalStock}</strong>
+                  </div>
+                  <div className="summary-item">
+                    <span>Total Value:</span>
+                    <strong>₹{batchDetails.summary.totalValue?.toLocaleString()}</strong>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="modal-footer">
-              <button className="cancel-btn" onClick={() => setShowSetStock(false)}>
-                Cancel
-              </button>
-              <button className="save-btn" onClick={handleSetStock}>
-                Set Stock
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* STOCK HISTORY MODAL */}
-      {showHistory && selectedItem && (
-        <div className="modal-overlay">
-          <div className="modal large">
-            <div className="modal-header">
-              <h3>Stock History - {selectedItem.colorName}</h3>
-              <p className="modal-subtitle">
-                {selectedItem.productName} • Current Stock: {selectedItem.stock}
-              </p>
-              <button className="close-btn" onClick={() => setShowHistory(false)}>
-                ×
-              </button>
-            </div>
-
-            <div className="modal-body">
-              {stockHistory.length === 0 ? (
-                <div className="no-history">
-                  <p>No stock history available</p>
+              {/* Active Batches Table */}
+              <div className="batches-section">
+                <div className="section-header">
+                  <h4>Active Batches ({batchDetails.batches.filter(b => b.status === "active").length})</h4>
+                  {batchDetails.batches.filter(b => b.status === "active").length > 0 && (
+                    <button
+                      className="mark-expired-btn"
+                      onClick={() => {
+                        const expiringBatches = batchDetails.batches
+                          .filter(b => b.status === "active" && new Date(b.expiryDate) < new Date())
+                          .map(b => b.batchNumber);
+                        if (expiringBatches.length > 0) {
+                          if (window.confirm(`Mark ${expiringBatches.length} expired batch(es) as expired?`)) {
+                            handleMarkExpired(expiringBatches, "Batch expired");
+                          }
+                        }
+                      }}
+                    >
+                      ⏰ Mark Expired Batches
+                    </button>
+                  )}
                 </div>
-              ) : (
-                <div className="history-table-container">
-                  <table className="history-table">
-                    <thead>
-                      <tr>
-                        <th>Date & Time</th>
-                        <th>Type</th>
-                        <th>Quantity</th>
-                        <th>Previous</th>
-                        <th>New</th>
-                        <th>Difference</th>
-                        <th>Reason</th>
-                        <th>Added By</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {stockHistory.map((history, index) => {
-                        const typeBadge = getTypeBadge(history.type);
-                        const difference = history.newStock - history.previousStock;
 
-                        return (
-                          <tr key={history.historyId || index}>
-                            <td className="date-cell">
-                              {formatDate(history.date)}
-                            </td>
-                            <td className="type-cell">
-                              <span className={`type-badge ${typeBadge.class}`}>
-                                {typeBadge.label}
-                              </span>
-                            </td>
-                            <td className="quantity-cell">
-                              {history.quantity}
-                            </td>
-                            <td className="previous-cell">
-                              {history.previousStock}
-                            </td>
-                            <td className="new-cell">
-                              <strong>{history.newStock}</strong>
-                            </td>
-                            <td className="difference-cell">
-                              <span className={difference >= 0 ? "positive" : "negative"}>
-                                {difference >= 0 ? "+" : ""}{difference}
-                              </span>
-                            </td>
-                            <td className="reason-cell">
-                              {history.reason}
-                            </td>
-                            <td className="addedby-cell">
-                              {history.addedBy}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                {batchDetails.batches.filter(b => b.status === "active").length > 0 ? (
+                  <div className="batches-table-container">
+                    <table className="batches-table">
+                      <thead>
+                        <tr>
+                          <th>Batch Number</th>
+                          <th>Manufacture Date</th>
+                          <th>Expiry Date</th>
+                          <th>Quantity</th>
+                          <th>Current Qty</th>
+                          <th>Purchase Price</th>
+                          <th>Selling Price</th>
+                          <th>Status</th>
+                          <th>Added On</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {batchDetails.batches
+                          .filter(batch => batch.status === "active")
+                          .sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate)) // Sort by expiry
+                          .map((batch, index) => {
+                            const batchStatus = getBatchStatus(batch);
+                            return (
+                              <tr key={batch.batchId || index} className={batchStatus.class}>
+                                <td className="batch-number">{batch.batchNumber}</td>
+                                <td>{formatDate(batch.manufactureDate)}</td>
+                                <td>{formatDate(batch.expiryDate)}</td>
+                                <td>{batch.quantity}</td>
+                                <td><strong>{batch.currentQuantity}</strong></td>
+                                <td>₹{batch.price?.toFixed(2)}</td>
+                                <td>₹{batch.sellingPrice?.toFixed(2)}</td>
+                                <td>
+                                  <span className={`batch-status ${batchStatus.class}`}>
+                                    {batchStatus.icon} {batchStatus.text}
+                                  </span>
+                                </td>
+                                <td>{formatDate(batch.addedAt)}</td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="no-active-batches">No active batches</div>
+                )}
+              </div>
+
+              {/* Stock History */}
+              {batchDetails.history.length > 0 && (
+                <div className="history-section">
+                  <h4>Stock History (Last 10 Transactions)</h4>
+                  <div className="history-table-container">
+                    <table className="history-table">
+                      <thead>
+                        <tr>
+                          <th>Date & Time</th>
+                          <th>Type</th>
+                          <th>Quantity</th>
+                          <th>Batch Number</th>
+                          <th>Previous</th>
+                          <th>New</th>
+                          <th>Reason</th>
+                          <th>Added By</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {batchDetails.history.slice(0, 10).map((history, index) => {
+                          const typeClass = history.type === "added" ? "added" :
+                            history.type === "deducted" ? "deducted" :
+                              history.type === "initial" ? "initial" : "default";
+                          return (
+                            <tr key={history.historyId || index}>
+                              <td>{formatDateTime(history.date)}</td>
+                              <td>
+                                <span className={`type-badge ${typeClass}`}>
+                                  {history.type}
+                                </span>
+                              </td>
+                              <td>{history.quantity}</td>
+                              <td>{history.batchNumber || "-"}</td>
+                              <td>{history.previousStock}</td>
+                              <td><strong>{history.newStock}</strong></td>
+                              <td className="reason">{history.reason}</td>
+                              <td>{history.addedBy}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>
 
             <div className="modal-footer">
-              <button className="close-btn" onClick={() => setShowHistory(false)}>
+              <button className="close-btn" onClick={() => setShowBatchDetails(false)}>
+                Close
+              </button>
+              <button className="add-batch-btn" onClick={() => {
+                setShowBatchDetails(false);
+                openAddBatch(selectedItem);
+              }}>
+                + Add New Batch
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EXPIRY ALERTS MODAL */}
+      {showExpiryAlerts && (
+        <div className="modal-overlay">
+          <div className="modal large">
+            <div className="modal-header">
+              <h3>⚠️ Expiry Alerts (Next 30 Days)</h3>
+              <p className="modal-subtitle">
+                {expiryAlerts.length} product(s) have batches expiring soon
+              </p>
+              <button className="close-btn" onClick={() => setShowExpiryAlerts(false)}>
+                ×
+              </button>
+            </div>
+
+            <div className="modal-body">
+              {expiryAlerts.length === 0 ? (
+                <div className="no-alerts">
+                  <p>No expiry alerts at the moment</p>
+                </div>
+              ) : (
+                <div className="alerts-list">
+                  {expiryAlerts.map((alert, index) => (
+                    <div key={index} className="alert-item">
+                      <div className="alert-header">
+                        <h4>{alert.productName}</h4>
+                        <span className="product-id">{alert.productId}</span>
+                      </div>
+                      <div className="alert-batches">
+                        {alert.expiringBatches.map((batch, bIndex) => (
+                          <div key={bIndex} className="batch-alert">
+                            <span className="batch-number">Batch: {batch.batchNumber}</span>
+                            <span className="batch-quantity">Qty: {batch.currentQuantity}</span>
+                            <span className="batch-expiry">
+                              Expires: {formatDate(batch.expiryDate)}
+                              ({batch.daysUntilExpiry} days)
+                            </span>
+                            <button
+                              className="mark-expired-btn small"
+                              onClick={() => {
+                                if (window.confirm(`Mark batch ${batch.batchNumber} as expired?`)) {
+                                  handleMarkExpired([batch.batchNumber], "Marked as expired from alerts");
+                                  setShowExpiryAlerts(false);
+                                }
+                              }}
+                            >
+                              Mark Expired
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button className="close-btn" onClick={() => setShowExpiryAlerts(false)}>
                 Close
               </button>
             </div>

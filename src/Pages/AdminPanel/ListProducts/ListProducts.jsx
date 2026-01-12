@@ -17,19 +17,26 @@ const ListProducts = () => {
     categoryId: "",
     categoryName: "",
     hsnCode: "",
-    type: "simple",
+    taxSlab: 18, // Default tax slab
+    type: "simple", // Always simple
     // Simple product fields
-    modelName: "",
+    modelName: "", // Will auto-fill with product name
     SKU: "",
     specifications: [],
-    colors: [],
-    // Variable product fields
-    models: []
+    colors: [] // Will auto-create with White color
   });
 
   // File states
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [existingThumbnail, setExistingThumbnail] = useState("");
+  const [colorImages, setColorImages] = useState([]); // For the default White color
+
+  // Tax slab options
+  const taxSlabOptions = [
+    { value: 5, label: "5%" },
+    { value: 18, label: "18%" },
+    { value: 24, label: "24%" }
+  ];
 
   // Fetch products and categories
   const fetchProducts = async () => {
@@ -69,54 +76,25 @@ const ListProducts = () => {
       setFormData({
         ...formData,
         categoryId: value,
-        categoryName: selectedCat ? selectedCat.name : ""
+        categoryName: selectedCat ? selectedCat.name : "",
+        modelName: formData.productName // Auto-update model name if product name is being changed
       });
-    } else if (name === "type") {
-      if (value === "simple") {
-        setFormData({
-          ...formData,
-          type: value,
-          models: [],
-          colors: formData.colors.length > 0 ? formData.colors : [{
-            colorId: `temp_${Date.now()}_1`,
-            colorName: "",
-            sizes: [],
-            images: [],
-            originalPrice: "",
-            currentPrice: "",
-            colorSpecifications: []
-          }]
-        });
-      } else {
-        setFormData({
-          ...formData,
-          type: value,
-          SKU: "",
-          specifications: [],
-          colors: [],
-          models: formData.models.length > 0 ? formData.models : [{
-            modelName: "",
-            description: "",
-            SKU: "",
-            modelSpecifications: [],
-            colors: [{
-              colorId: `temp_${Date.now()}_1`,
-              colorName: "",
-              sizes: [],
-              images: [],
-              originalPrice: "",
-              currentPrice: "",
-              colorSpecifications: []
-            }]
-          }]
-        });
-      }
+    } else if (name === "productName") {
+      // Auto-update model name when product name changes
+      setFormData({
+        ...formData,
+        productName: value,
+        modelName: value // Model name always same as product name
+      });
+    } else if (name === "taxSlab") {
+      setFormData({ 
+        ...formData, 
+        [name]: parseInt(value) // Convert to number
+      });
     } else {
       setFormData({ ...formData, [name]: value });
     }
   };
-
-  // ========== SIMPLE PRODUCT HANDLERS ==========
 
   // GLOBAL SPECIFICATIONS
   const handleSpecChange = (index, field, value) => {
@@ -137,276 +115,49 @@ const ListProducts = () => {
     setFormData({ ...formData, specifications: updatedSpecs });
   };
 
-  // COLORS for simple products
-  const addColor = () => {
-    setFormData({
-      ...formData,
-      colors: [
-        ...formData.colors,
-        {
-          colorId: `temp_${Date.now()}_${formData.colors.length + 1}`,
-          colorName: "",
-          sizes: [],
-          images: [],
-          originalPrice: "",
-          currentPrice: "",
-          colorSpecifications: []
-        }
-      ]
-    });
-  };
-
-  const removeColor = (colorIndex) => {
-    const updatedColors = formData.colors.filter((_, i) => i !== colorIndex);
-    setFormData({ ...formData, colors: updatedColors });
-  };
-
-  const handleColorChange = (colorIndex, field, value) => {
-    const updatedColors = [...formData.colors];
-    updatedColors[colorIndex][field] = value;
-    setFormData({ ...formData, colors: updatedColors });
-  };
-
-  // SIZES for colors
-  const addSizeToColor = (colorIndex) => {
-    const updatedColors = [...formData.colors];
-    const currentSizes = updatedColors[colorIndex].sizes || [];
-    updatedColors[colorIndex].sizes = [...currentSizes, ""];
-    setFormData({ ...formData, colors: updatedColors });
-  };
-
-  const removeSizeFromColor = (colorIndex, sizeIndex) => {
-    const updatedColors = [...formData.colors];
-    updatedColors[colorIndex].sizes = updatedColors[colorIndex].sizes.filter((_, i) => i !== sizeIndex);
-    setFormData({ ...formData, colors: updatedColors });
-  };
-
-  const handleSizeChange = (colorIndex, sizeIndex, value) => {
-    const updatedColors = [...formData.colors];
-    updatedColors[colorIndex].sizes[sizeIndex] = value;
-    setFormData({ ...formData, colors: updatedColors });
-  };
-
-  // COLOR SPECIFICATIONS
-  const addColorSpecField = (colorIndex) => {
-    const updatedColors = [...formData.colors];
-    updatedColors[colorIndex].colorSpecifications = [
-      ...(updatedColors[colorIndex].colorSpecifications || []),
-      { key: "", value: "" }
-    ];
-    setFormData({ ...formData, colors: updatedColors });
-  };
-
-  const removeColorSpecField = (colorIndex, specIndex) => {
-    const updatedColors = [...formData.colors];
-    updatedColors[colorIndex].colorSpecifications =
-      updatedColors[colorIndex].colorSpecifications.filter((_, i) => i !== specIndex);
-    setFormData({ ...formData, colors: updatedColors });
-  };
-
-  const handleColorSpecChange = (colorIndex, specIndex, field, value) => {
-    const updatedColors = [...formData.colors];
-    updatedColors[colorIndex].colorSpecifications[specIndex][field] = value;
-    setFormData({ ...formData, colors: updatedColors });
-  };
-
-  // COLOR IMAGES
-  const handleColorImagesChange = (colorIndex, e) => {
+  // COLOR IMAGES for the default White color
+  const handleColorImagesChange = (e) => {
     if (e.target.files.length > 0) {
-      const updatedColors = [...formData.colors];
       const newFiles = Array.from(e.target.files);
-
-      // Store file objects with color reference
-      const newImages = newFiles.map(file => file);
-
-      updatedColors[colorIndex].images = [...(updatedColors[colorIndex].images || []), ...newImages];
-      setFormData({ ...formData, colors: updatedColors });
+      setColorImages([...colorImages, ...newFiles]);
     }
   };
 
-  const removeColorImage = (colorIndex, imageIndex) => {
-    const updatedColors = [...formData.colors];
-    updatedColors[colorIndex].images =
-      updatedColors[colorIndex].images.filter((_, i) => i !== imageIndex);
-    setFormData({ ...formData, colors: updatedColors });
+  const removeColorImage = (imageIndex) => {
+    setColorImages(colorImages.filter((_, i) => i !== imageIndex));
   };
 
-  // ========== VARIABLE PRODUCT HANDLERS ==========
-
-  // MODELS for variable products
-  const addModel = () => {
-    setFormData({
-      ...formData,
-      models: [
-        ...formData.models,
-        {
-          modelName: "",
-          description: "",
-          SKU: "",
-          modelSpecifications: [],
-          colors: [{
-            colorId: `temp_${Date.now()}_${formData.models.length + 1}_1`,
-            colorName: "",
-            sizes: [],
-            images: [],
-            originalPrice: "",
-            currentPrice: "",
-            colorSpecifications: []
-          }]
-        }
-      ]
-    });
-  };
-
-  const removeModel = (modelIndex) => {
-    const updatedModels = formData.models.filter((_, i) => i !== modelIndex);
-    setFormData({ ...formData, models: updatedModels });
-  };
-
-  const handleModelChange = (modelIndex, field, value) => {
-    const updatedModels = [...formData.models];
-    updatedModels[modelIndex][field] = value;
-    setFormData({ ...formData, models: updatedModels });
-  };
-
-  // MODEL SPECIFICATIONS
-  const handleModelSpecChange = (modelIndex, specIndex, field, value) => {
-    const updatedModels = [...formData.models];
-    if (!updatedModels[modelIndex].modelSpecifications) {
-      updatedModels[modelIndex].modelSpecifications = [];
-    }
-    updatedModels[modelIndex].modelSpecifications[specIndex][field] = value;
-    setFormData({ ...formData, models: updatedModels });
-  };
-
-  const addModelSpecField = (modelIndex) => {
-    const updatedModels = [...formData.models];
-    if (!updatedModels[modelIndex].modelSpecifications) {
-      updatedModels[modelIndex].modelSpecifications = [];
-    }
-    updatedModels[modelIndex].modelSpecifications = [
-      ...updatedModels[modelIndex].modelSpecifications,
-      { key: "", value: "" }
-    ];
-    setFormData({ ...formData, models: updatedModels });
-  };
-
-  const removeModelSpecField = (modelIndex, specIndex) => {
-    const updatedModels = [...formData.models];
-    updatedModels[modelIndex].modelSpecifications =
-      updatedModels[modelIndex].modelSpecifications.filter((_, i) => i !== specIndex);
-    setFormData({ ...formData, models: updatedModels });
-  };
-
-  // COLORS for models
-  const addColorToModel = (modelIndex) => {
-    const updatedModels = [...formData.models];
-    updatedModels[modelIndex].colors = [
-      ...(updatedModels[modelIndex].colors || []),
-      {
-        colorId: `temp_${Date.now()}_${modelIndex}_${updatedModels[modelIndex].colors.length + 1}`,
-        colorName: "",
-        sizes: [],
-        images: [],
-        originalPrice: "",
-        currentPrice: "",
-        colorSpecifications: []
-      }
-    ];
-    setFormData({ ...formData, models: updatedModels });
-  };
-
-  const removeColorFromModel = (modelIndex, colorIndex) => {
-    const updatedModels = [...formData.models];
-    updatedModels[modelIndex].colors = updatedModels[modelIndex].colors.filter((_, i) => i !== colorIndex);
-    setFormData({ ...formData, models: updatedModels });
-  };
-
-  const handleModelColorChange = (modelIndex, colorIndex, field, value) => {
-    const updatedModels = [...formData.models];
-    updatedModels[modelIndex].colors[colorIndex][field] = value;
-    setFormData({ ...formData, models: updatedModels });
-  };
-
-  // SIZES for colors in models
-  const addSizeToModelColor = (modelIndex, colorIndex) => {
-    const updatedModels = [...formData.models];
-    const currentSizes = updatedModels[modelIndex].colors[colorIndex].sizes || [];
-    updatedModels[modelIndex].colors[colorIndex].sizes = [...currentSizes, ""];
-    setFormData({ ...formData, models: updatedModels });
-  };
-
-  const removeSizeFromModelColor = (modelIndex, colorIndex, sizeIndex) => {
-    const updatedModels = [...formData.models];
-    updatedModels[modelIndex].colors[colorIndex].sizes =
-      updatedModels[modelIndex].colors[colorIndex].sizes.filter((_, i) => i !== sizeIndex);
-    setFormData({ ...formData, models: updatedModels });
-  };
-
-  const handleModelSizeChange = (modelIndex, colorIndex, sizeIndex, value) => {
-    const updatedModels = [...formData.models];
-    updatedModels[modelIndex].colors[colorIndex].sizes[sizeIndex] = value;
-    setFormData({ ...formData, models: updatedModels });
-  };
-
-  // COLOR SPECIFICATIONS for colors in models
-  const addModelColorSpecField = (modelIndex, colorIndex) => {
-    const updatedModels = [...formData.models];
-    if (!updatedModels[modelIndex].colors[colorIndex].colorSpecifications) {
-      updatedModels[modelIndex].colors[colorIndex].colorSpecifications = [];
-    }
-    updatedModels[modelIndex].colors[colorIndex].colorSpecifications = [
-      ...updatedModels[modelIndex].colors[colorIndex].colorSpecifications,
-      { key: "", value: "" }
-    ];
-    setFormData({ ...formData, models: updatedModels });
-  };
-
-  const removeModelColorSpecField = (modelIndex, colorIndex, specIndex) => {
-    const updatedModels = [...formData.models];
-    updatedModels[modelIndex].colors[colorIndex].colorSpecifications =
-      updatedModels[modelIndex].colors[colorIndex].colorSpecifications.filter((_, i) => i !== specIndex);
-    setFormData({ ...formData, models: updatedModels });
-  };
-
-  const handleModelColorSpecChange = (modelIndex, colorIndex, specIndex, field, value) => {
-    const updatedModels = [...formData.models];
-    updatedModels[modelIndex].colors[colorIndex].colorSpecifications[specIndex][field] = value;
-    setFormData({ ...formData, models: updatedModels });
-  };
-
-  // COLOR IMAGES for colors in models
-  const handleModelColorImagesChange = (modelIndex, colorIndex, e) => {
-    if (e.target.files.length > 0) {
-      const updatedModels = [...formData.models];
-      const newFiles = Array.from(e.target.files);
-
-      const newImages = newFiles.map(file => file);
-
-      updatedModels[modelIndex].colors[colorIndex].images = [
-        ...(updatedModels[modelIndex].colors[colorIndex].images || []),
-        ...newImages
-      ];
-      setFormData({ ...formData, models: updatedModels });
-    }
-  };
-
-  const removeModelColorImage = (modelIndex, colorIndex, imageIndex) => {
-    const updatedModels = [...formData.models];
-    updatedModels[modelIndex].colors[colorIndex].images =
-      updatedModels[modelIndex].colors[colorIndex].images.filter((_, i) => i !== imageIndex);
-    setFormData({ ...formData, models: updatedModels });
-  };
-
-  // ========== IMAGE HANDLING ==========
-
+  // IMAGE HANDLING
   const handleThumbnailChange = (e) => {
     if (e.target.files[0]) {
       setThumbnailFile(e.target.files[0]);
     }
   };
 
-  // ========== PRODUCT OPERATIONS ==========
+  // Helper to check if image is a URL
+  const isImageUrl = (img) => {
+    return typeof img === 'string' && (img.startsWith('http') || img.startsWith('/'));
+  };
+
+  // Helper to get image source
+  const getImageSrc = (img) => {
+    if (isImageUrl(img)) {
+      return img;
+    } else if (img instanceof File) {
+      return URL.createObjectURL(img);
+    }
+    return "";
+  };
+
+  // Helper to get image name
+  const getImageName = (img) => {
+    if (isImageUrl(img)) {
+      return img.split('/').pop();
+    } else if (img instanceof File) {
+      return img.name;
+    }
+    return "Image";
+  };
 
   // ADD PRODUCT
   const addProduct = async () => {
@@ -420,49 +171,17 @@ const ListProducts = () => {
         alert("Please select a category");
         return;
       }
-
-      // Validation based on product type
-      if (formData.type === "simple") {
-        if (!formData.SKU?.trim()) {
-          alert("SKU is required for simple products");
-          return;
-        }
-        if (!formData.colors || formData.colors.length === 0) {
-          alert("At least one color variant is required for simple products");
-          return;
-        }
-        const invalidColors = formData.colors.filter(
-          color => !color.colorName?.trim() || !color.currentPrice || color.currentPrice <= 0
-        );
-        if (invalidColors.length > 0) {
-          alert("All colors must have a name and valid current price");
-          return;
-        }
-      } else {
-        if (!formData.models || formData.models.length === 0) {
-          alert("At least one model is required for variable products");
-          return;
-        }
-        const invalidModels = formData.models.filter(
-          model => !model.modelName?.trim() || !model.SKU?.trim()
-        );
-        if (invalidModels.length > 0) {
-          alert("All models must have both Model Name and SKU");
-          return;
-        }
-        for (const model of formData.models) {
-          if (!model.colors || model.colors.length === 0) {
-            alert(`Model "${model.modelName}" must have at least one color variant`);
-            return;
-          }
-          const invalidColors = model.colors.filter(
-            color => !color.colorName?.trim() || !color.currentPrice || color.currentPrice <= 0
-          );
-          if (invalidColors.length > 0) {
-            alert(`All colors in model "${model.modelName}" must have a name and valid current price`);
-            return;
-          }
-        }
+      if (!formData.SKU?.trim()) {
+        alert("SKU is required");
+        return;
+      }
+      if (!formData.colors?.[0]?.currentPrice || formData.colors[0].currentPrice <= 0) {
+        alert("Please enter a valid current price");
+        return;
+      }
+      if (!formData.taxSlab) {
+        alert("Please select a tax slab");
+        return;
       }
 
       if (!thumbnailFile && formMode === "add") {
@@ -476,107 +195,51 @@ const ListProducts = () => {
         return;
       }
 
+      // Prepare the default White color
+      const whiteColor = {
+        colorId: `temp_${Date.now()}_1`,
+        colorName: "White",
+        sizes: [],
+        images: [],
+        originalPrice: formData.colors[0]?.originalPrice || 0,
+        currentPrice: formData.colors[0]?.currentPrice || 0,
+        colorSpecifications: []
+      };
+
       const formDataToSend = new FormData();
 
       // Append basic data
-      Object.keys(formData).forEach(key => {
-        if (key === 'specifications' && formData.type === "simple") {
-          const nonEmptySpecs = formData.specifications.filter(
-            spec => spec.key?.trim() !== "" && spec.value?.trim() !== ""
-          );
-          if (nonEmptySpecs.length > 0) {
-            formDataToSend.append(key, JSON.stringify(nonEmptySpecs));
-          }
-        } else if (key === 'colors' && formData.type === "simple") {
-          // Process colors WITHOUT images (images will be sent as files)
-          const colorsWithoutImages = formData.colors
-            .filter(color => color.colorName?.trim() !== "")
-            .map(color => ({
-              colorId: color.colorId,
-              colorName: color.colorName,
-              sizes: color.sizes || [],
-              images: [], // Empty array - images will be added by backend
-              originalPrice: color.originalPrice || 0,
-              currentPrice: color.currentPrice || 0,
-              colorSpecifications: color.colorSpecifications?.filter(
-                spec => spec.key?.trim() !== "" && spec.value?.trim() !== ""
-              ) || []
-            }));
+      formDataToSend.append("productName", formData.productName);
+      formDataToSend.append("description", formData.description || "");
+      formDataToSend.append("categoryId", formData.categoryId);
+      formDataToSend.append("categoryName", formData.categoryName || "");
+      formDataToSend.append("hsnCode", formData.hsnCode || "");
+      formDataToSend.append("taxSlab", formData.taxSlab);
+      formDataToSend.append("type", "simple"); // Always simple
+      formDataToSend.append("modelName", formData.modelName || formData.productName); // Auto-fill
+      formDataToSend.append("SKU", formData.SKU);
 
-          if (colorsWithoutImages.length > 0) {
-            formDataToSend.append(key, JSON.stringify(colorsWithoutImages));
-          }
-        } else if (key === 'models' && formData.type === "variable") {
-          // Process models WITHOUT images
-          const modelsWithoutImages = formData.models
-            .filter(model => model.modelName?.trim() !== "" && model.SKU?.trim() !== "")
-            .map(model => ({
-              modelName: model.modelName,
-              description: model.description || "",
-              SKU: model.SKU,
-              modelSpecifications: model.modelSpecifications?.filter(
-                spec => spec.key?.trim() !== "" && spec.value?.trim() !== ""
-              ) || [],
-              colors: (model.colors || [])
-                .filter(color => color.colorName?.trim() !== "")
-                .map(color => ({
-                  colorId: color.colorId,
-                  colorName: color.colorName,
-                  sizes: color.sizes || [],
-                  images: [], // Empty array
-                  originalPrice: color.originalPrice || 0,
-                  currentPrice: color.currentPrice || 0,
-                  colorSpecifications: color.colorSpecifications?.filter(
-                    spec => spec.key?.trim() !== "" && spec.value?.trim() !== ""
-                  ) || []
-                }))
-                .filter(color => color.colorName?.trim() !== "")
-            }))
-            .filter(model => model.colors.length > 0);
+      // Append specifications if any
+      const nonEmptySpecs = formData.specifications.filter(
+        spec => spec.key?.trim() !== "" && spec.value?.trim() !== ""
+      );
+      if (nonEmptySpecs.length > 0) {
+        formDataToSend.append("specifications", JSON.stringify(nonEmptySpecs));
+      }
 
-          if (modelsWithoutImages.length > 0) {
-            formDataToSend.append(key, JSON.stringify(modelsWithoutImages));
-          }
-        } else if (formData[key] !== null && formData[key] !== '' && formData[key] !== undefined) {
-          formDataToSend.append(key, formData[key]);
-        }
-      });
+      // Append the default White color
+      formDataToSend.append("colors", JSON.stringify([whiteColor]));
 
       // Append thumbnail file
       if (thumbnailFile) {
         formDataToSend.append("thumbnail", thumbnailFile);
       }
 
-      // Append color images for simple products WITH COLOR INDEX
-      if (formData.type === "simple" && formData.colors && formData.colors.length > 0) {
-        formData.colors.forEach((color, colorIndex) => {
-          if (color.images && color.images.length > 0) {
-            color.images.forEach((imgFile, imgIndex) => {
-              if (imgFile instanceof File) {
-                // Send color index and colorId with each image
-                formDataToSend.append(`colorImages[${colorIndex}]`, imgFile);
-                formDataToSend.append(`colorIds[${colorIndex}]`, color.colorId);
-              }
-            });
-          }
-        });
-      }
-
-      // Append color images for variable products WITH INDEXES
-      if (formData.type === "variable" && formData.models) {
-        formData.models.forEach((model, modelIndex) => {
-          if (model.colors) {
-            model.colors.forEach((color, colorIndex) => {
-              if (color.images && color.images.length > 0) {
-                color.images.forEach((imgFile, imgIndex) => {
-                  if (imgFile instanceof File) {
-                    // Send model index, color index, and colorId
-                    formDataToSend.append(`modelImages[${modelIndex}][${colorIndex}]`, imgFile);
-                    formDataToSend.append(`modelColorIds[${modelIndex}][${colorIndex}]`, color.colorId);
-                  }
-                });
-              }
-            });
+      // Append color images for the default White color
+      if (colorImages.length > 0) {
+        colorImages.forEach((imgFile, index) => {
+          if (imgFile instanceof File) {
+            formDataToSend.append(`colorImages[0]`, imgFile);
           }
         });
       }
@@ -618,108 +281,50 @@ const ListProducts = () => {
         return;
       }
 
+      // Prepare updated colors (preserve existing colorId if updating)
+      const existingColors = formData.colors || [];
+      const updatedColor = {
+        colorId: existingColors[0]?.colorId || `temp_${Date.now()}_1`,
+        colorName: "White",
+        sizes: [],
+        images: existingColors[0]?.images?.filter(img => typeof img === 'string') || [],
+        originalPrice: formData.colors[0]?.originalPrice || 0,
+        currentPrice: formData.colors[0]?.currentPrice || 0,
+        colorSpecifications: []
+      };
+
       const formDataToSend = new FormData();
 
       // Append basic data
-      Object.keys(formData).forEach(key => {
-        if (key === 'specifications') {
-          if (formData.type === "simple") {
-            const nonEmptySpecs = formData.specifications.filter(
-              spec => spec.key?.trim() !== "" && spec.value?.trim() !== ""
-            );
-            formDataToSend.append(key, JSON.stringify(nonEmptySpecs));
-          } else {
-            formDataToSend.append(key, JSON.stringify([]));
-          }
-        } else if (key === 'colors') {
-          if (formData.type === "simple") {
-            const validColors = formData.colors
-              .filter(color => color.colorName?.trim() !== "")
-              .map(color => ({
-                colorId: color.colorId || "",
-                colorName: color.colorName,
-                sizes: color.sizes || [],
-                images: color.images ? color.images.filter(img => typeof img === 'string') : [],
-                originalPrice: color.originalPrice || 0,
-                currentPrice: color.currentPrice || 0,
-                colorSpecifications: color.colorSpecifications?.filter(
-                  spec => spec.key?.trim() !== "" && spec.value?.trim() !== ""
-                ) || []
-              }));
+      formDataToSend.append("productName", formData.productName);
+      formDataToSend.append("description", formData.description || "");
+      formDataToSend.append("categoryId", formData.categoryId);
+      formDataToSend.append("categoryName", formData.categoryName || "");
+      formDataToSend.append("hsnCode", formData.hsnCode || "");
+      formDataToSend.append("taxSlab", formData.taxSlab);
+      formDataToSend.append("type", "simple");
+      formDataToSend.append("modelName", formData.modelName || formData.productName);
+      formDataToSend.append("SKU", formData.SKU || "");
 
-            if (validColors.length > 0) {
-              formDataToSend.append(key, JSON.stringify(validColors));
-            }
-          }
-        } else if (key === 'models') {
-          if (formData.type === "variable") {
-            const validModels = formData.models
-              .filter(model => model.modelName?.trim() !== "" && model.SKU?.trim() !== "")
-              .map(model => ({
-                ...model,
-                modelSpecifications: model.modelSpecifications?.filter(
-                  spec => spec.key?.trim() !== "" && spec.value?.trim() !== ""
-                ) || [],
-                colors: (model.colors || [])
-                  .filter(color => color.colorName?.trim() !== "")
-                  .map(color => ({
-                    colorId: color.colorId || "",
-                    colorName: color.colorName,
-                    sizes: color.sizes || [],
-                    images: color.images ? color.images.filter(img => typeof img === 'string') : [],
-                    originalPrice: color.originalPrice || 0,
-                    currentPrice: color.currentPrice || 0,
-                    colorSpecifications: color.colorSpecifications?.filter(
-                      spec => spec.key?.trim() !== "" && spec.value?.trim() !== ""
-                    ) || []
-                  }))
-              }))
-              .filter(model => model.colors.length > 0);
+      // Append specifications
+      const nonEmptySpecs = formData.specifications.filter(
+        spec => spec.key?.trim() !== "" && spec.value?.trim() !== ""
+      );
+      formDataToSend.append("specifications", JSON.stringify(nonEmptySpecs));
 
-            if (validModels.length > 0) {
-              formDataToSend.append(key, JSON.stringify(validModels));
-            }
-          } else {
-            formDataToSend.append(key, JSON.stringify([]));
-          }
-        } else if (key !== 'productId' && formData[key] !== null && formData[key] !== undefined) {
-          formDataToSend.append(key, formData[key]);
-        }
-      });
+      // Append colors
+      formDataToSend.append("colors", JSON.stringify([updatedColor]));
 
       // Append thumbnail file
       if (thumbnailFile) {
         formDataToSend.append("thumbnail", thumbnailFile);
       }
 
-      // Append new images for simple products
-      if (formData.type === "simple" && formData.colors) {
-        formData.colors.forEach((color, colorIndex) => {
-          if (color.images && color.images.length > 0) {
-            color.images.forEach((img, imgIndex) => {
-              if (img instanceof File) {
-                formDataToSend.append(`colorImages[${colorIndex}]`, img);
-                formDataToSend.append(`colorIds[${colorIndex}]`, color.colorId || "");
-              }
-            });
-          }
-        });
-      }
-
-      // Append new images for variable products
-      if (formData.type === "variable" && formData.models) {
-        formData.models.forEach((model, modelIndex) => {
-          if (model.colors) {
-            model.colors.forEach((color, colorIndex) => {
-              if (color.images && color.images.length > 0) {
-                color.images.forEach((img, imgIndex) => {
-                  if (img instanceof File) {
-                    formDataToSend.append(`modelImages[${modelIndex}][${colorIndex}]`, img);
-                    formDataToSend.append(`modelColorIds[${modelIndex}][${colorIndex}]`, color.colorId || "");
-                  }
-                });
-              }
-            });
+      // Append new color images
+      if (colorImages.length > 0) {
+        colorImages.forEach((imgFile, index) => {
+          if (imgFile instanceof File) {
+            formDataToSend.append(`colorImages[0]`, imgFile);
           }
         });
       }
@@ -763,7 +368,7 @@ const ListProducts = () => {
         `${import.meta.env.VITE_API_URL}/products/delete/${deleteId}`,
         {
           headers: {
-            Authorization: `Bearer ${token}`  // ✅ FIXED: Added "Bearer " prefix
+            Authorization: `Bearer ${token}`
           }
         }
       );
@@ -785,19 +390,32 @@ const ListProducts = () => {
 
     const preparedData = {
       ...product,
+      modelName: product.modelName || product.productName, // Auto-fill model name
       specifications: product.specifications || [],
-      colors: product.type === "simple" ? (product.colors || []) : [],
-      models: product.type === "variable" ? (product.models || []).map(model => ({
-        ...model,
-        modelSpecifications: model.modelSpecifications || [],
-        colors: model.colors || []
-      })) : [],
-      hsnCode: product.hsnCode || ""
+      colors: product.colors || [{
+        colorId: `temp_${Date.now()}_1`,
+        colorName: "White",
+        sizes: [],
+        images: [],
+        originalPrice: "",
+        currentPrice: "",
+        colorSpecifications: []
+      }],
+      hsnCode: product.hsnCode || "",
+      taxSlab: product.taxSlab || 18
     };
 
     setFormData(preparedData);
     setExistingThumbnail(product.thumbnailImage || "");
     setThumbnailFile(null);
+    
+    // Set existing color images if any
+    if (preparedData.colors[0]?.images) {
+      setColorImages([]); // We'll only show existing URLs, not file objects
+    } else {
+      setColorImages([]);
+    }
+    
     setShowForm(true);
   };
 
@@ -809,23 +427,24 @@ const ListProducts = () => {
       categoryId: "",
       categoryName: "",
       hsnCode: "",
+      taxSlab: 18,
       type: "simple",
       modelName: "",
       SKU: "",
       specifications: [],
       colors: [{
         colorId: `temp_${Date.now()}_1`,
-        colorName: "",
+        colorName: "White",
         sizes: [],
         images: [],
         originalPrice: "",
         currentPrice: "",
         colorSpecifications: []
-      }],
-      models: []
+      }]
     });
     setThumbnailFile(null);
     setExistingThumbnail("");
+    setColorImages([]);
     setShowForm(false);
   };
 
@@ -868,420 +487,6 @@ const ListProducts = () => {
     }
   };
 
-  // Helper to check if image is a URL
-  const isImageUrl = (img) => {
-    return typeof img === 'string' && (img.startsWith('http') || img.startsWith('/'));
-  };
-
-  // Helper to get image source
-  const getImageSrc = (img) => {
-    if (isImageUrl(img)) {
-      return img;
-    } else if (img instanceof File) {
-      return URL.createObjectURL(img);
-    }
-    return "";
-  };
-
-  // Helper to get image name
-  const getImageName = (img) => {
-    if (isImageUrl(img)) {
-      return img.split('/').pop();
-    } else if (img instanceof File) {
-      return img.name;
-    }
-    return "Image";
-  };
-
-  // RENDER SIMPLE PRODUCT FORM
-  const renderSimpleProductForm = () => (
-    <>
-      <div className="form-section">
-        <h4>Product Details</h4>
-        <div className="row">
-          <div className="form-group">
-            <label>SKU *</label>
-            <input
-              name="SKU"
-              placeholder="Enter SKU"
-              value={formData.SKU}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Model Name (Optional)</label>
-            <input
-              name="modelName"
-              placeholder="Enter model name"
-              value={formData.modelName}
-              onChange={handleChange}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="form-section">
-        <div className="section-header">
-          <h4>Product Specifications</h4>
-          <button type="button" onClick={addSpecField} className="add-btn small">
-            + Add
-          </button>
-        </div>
-
-        {formData.specifications.length === 0 ? (
-          <p className="no-items">No specifications added yet.</p>
-        ) : (
-          formData.specifications.map((spec, index) => (
-            <div key={index} className="spec-row">
-              <input
-                placeholder="Key"
-                value={spec.key}
-                onChange={(e) => handleSpecChange(index, 'key', e.target.value)}
-                className="spec-input"
-              />
-              <input
-                placeholder="Value"
-                value={spec.value}
-                onChange={(e) => handleSpecChange(index, 'value', e.target.value)}
-                className="spec-input"
-              />
-              <button
-                type="button"
-                className="remove-btn small"
-                onClick={() => removeSpecField(index)}
-              >
-                ×
-              </button>
-            </div>
-          ))
-        )}
-      </div>
-
-      <div className="form-section">
-        <div className="section-header">
-          <h4>Color Variants</h4>
-          <button type="button" onClick={addColor} className="add-btn small">
-            + Add Color
-          </button>
-        </div>
-
-        {formData.colors.length === 0 ? (
-          <p className="no-items">No color variants added yet.</p>
-        ) : (
-          formData.colors.map((color, colorIndex) => (
-            <div key={color.colorId || colorIndex} className="color-section">
-              <div className="color-header">
-                <h5>Color Variant {colorIndex + 1}</h5>
-                <button
-                  type="button"
-                  className="remove-btn small"
-                  onClick={() => removeColor(colorIndex)}
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className="row">
-                <div className="form-group">
-                  <label>Color Name *</label>
-                  <input
-                    placeholder="Enter color name"
-                    value={color.colorName}
-                    onChange={(e) => handleColorChange(colorIndex, 'colorName', e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Original Price</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={color.originalPrice}
-                    onChange={(e) => handleColorChange(colorIndex, 'originalPrice', e.target.value)}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Current Price *</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={color.currentPrice}
-                    onChange={(e) => handleColorChange(colorIndex, 'currentPrice', e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Color Images</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => handleColorImagesChange(colorIndex, e)}
-                />
-                {color.images && color.images.length > 0 && (
-                  <div className="color-images">
-                    <p>Selected images: {color.images.length}</p>
-                    <div className="color-thumbs">
-                      {color.images.map((img, imgIndex) => (
-                        <div key={imgIndex} className="image-item">
-                          {isImageUrl(img) ? (
-                            <img
-                              src={img}
-                              alt={`Color ${colorIndex + 1}`}
-                              className="gallery-thumb"
-                            />
-                          ) : (
-                            <div className="file-info">
-                              <span className="image-name">{getImageName(img)}</span>
-                            </div>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => removeColorImage(colorIndex, imgIndex)}
-                            className="remove-image-btn"
-                            title="Remove this image"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </>
-  );
-
-  // RENDER VARIABLE PRODUCT FORM
-  const renderVariableProductForm = () => (
-    <div className="form-section">
-      <div className="section-header">
-        <h4>Variable Options</h4>
-        <button type="button" onClick={addModel} className="add-btn small">
-          + Add Model
-        </button>
-      </div>
-
-      {formData.models.length === 0 ? (
-        <p className="no-items">No models added yet.</p>
-      ) : (
-        formData.models.map((model, modelIndex) => (
-          <div key={modelIndex} className="model-section">
-            <div className="model-header">
-              <h5>Model {modelIndex + 1}</h5>
-              <button
-                type="button"
-                className="remove-btn small"
-                onClick={() => removeModel(modelIndex)}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="row">
-              <div className="form-group">
-                <label>Model Name *</label>
-                <input
-                  placeholder="Enter model name"
-                  value={model.modelName}
-                  onChange={(e) => handleModelChange(modelIndex, 'modelName', e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Model SKU *</label>
-                <input
-                  placeholder="Enter SKU for this model"
-                  value={model.SKU}
-                  onChange={(e) => handleModelChange(modelIndex, 'SKU', e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            {/* ===== HIDDEN: MODEL DESCRIPTION - COMMENTED OUT AS REQUESTED ===== */}
-            
-          <div className="form-group">
-            <label>Model Description</label>
-            <textarea
-              placeholder="Enter description for this model"
-              value={model.description || ''}
-              onChange={(e) => handleModelChange(modelIndex, 'description', e.target.value)}
-              rows={2}
-            />
-          </div>
-         
-
-            <div className="form-group">
-              <div className="section-header">
-                <label>Model Specifications</label>
-                <button
-                  type="button"
-                  onClick={() => addModelSpecField(modelIndex)}
-                  className="add-btn xsmall"
-                >
-                  + Add
-                </button>
-              </div>
-              {model.modelSpecifications && model.modelSpecifications.length > 0 ? (
-                <div className="specs-list">
-                  {model.modelSpecifications.map((spec, specIndex) => (
-                    <div key={specIndex} className="spec-row">
-                      <input
-                        placeholder="Key"
-                        value={spec.key}
-                        onChange={(e) => handleModelSpecChange(modelIndex, specIndex, 'key', e.target.value)}
-                        className="spec-input"
-                      />
-                      <input
-                        placeholder="Value"
-                        value={spec.value}
-                        onChange={(e) => handleModelSpecChange(modelIndex, specIndex, 'value', e.target.value)}
-                        className="spec-input"
-                      />
-                      <button
-                        type="button"
-                        className="remove-btn xsmall"
-                        onClick={() => removeModelSpecField(modelIndex, specIndex)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="no-items">No model specifications added yet.</p>
-              )}
-            </div>
-
-            <div className="colors-section">
-              <div className="section-header">
-                <h6>Color Variants</h6>
-                <button
-                  type="button"
-                  onClick={() => addColorToModel(modelIndex)}
-                  className="add-btn small"
-                >
-                  + Add Color
-                </button>
-              </div>
-
-              {model.colors && model.colors.length > 0 ? (
-                model.colors.map((color, colorIndex) => (
-                  <div key={color.colorId || colorIndex} className="color-section">
-                    <div className="color-header">
-                      <h6>Color {colorIndex + 1}</h6>
-                      <button
-                        type="button"
-                        className="remove-btn small"
-                        onClick={() => removeColorFromModel(modelIndex, colorIndex)}
-                      >
-                        ×
-                      </button>
-                    </div>
-
-                    <div className="row">
-                      <div className="form-group">
-                        <label>Color Name *</label>
-                        <input
-                          placeholder="Enter color name"
-                          value={color.colorName}
-                          onChange={(e) => handleModelColorChange(modelIndex, colorIndex, 'colorName', e.target.value)}
-                          required
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label>Original Price</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          placeholder="0.00"
-                          value={color.originalPrice}
-                          onChange={(e) => handleModelColorChange(modelIndex, colorIndex, 'originalPrice', e.target.value)}
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label>Current Price *</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          placeholder="0.00"
-                          value={color.currentPrice}
-                          onChange={(e) => handleModelColorChange(modelIndex, colorIndex, 'currentPrice', e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Color Images</label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={(e) => handleModelColorImagesChange(modelIndex, colorIndex, e)}
-                      />
-                      {color.images && color.images.length > 0 && (
-                        <div className="color-images">
-                          <p>Selected images: {color.images.length}</p>
-                          <div className="color-thumbs">
-                            {color.images.map((img, imgIndex) => (
-                              <div key={imgIndex} className="image-item">
-                                {isImageUrl(img) ? (
-                                  <img
-                                    src={img}
-                                    alt={`Color ${colorIndex + 1}`}
-                                    className="gallery-thumb"
-                                  />
-                                ) : (
-                                  <div className="file-info">
-                                    <span className="image-name">{getImageName(img)}</span>
-                                  </div>
-                                )}
-                                <button
-                                  type="button"
-                                  onClick={() => removeModelColorImage(modelIndex, colorIndex, imgIndex)}
-                                  className="remove-image-btn"
-                                  title="Remove this image"
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="no-items">No color variants added yet.</p>
-              )}
-            </div>
-          </div>
-        ))
-      )}
-    </div>
-  );
-
   return (
     <div className="list-products">
       <div className="header">
@@ -1315,6 +520,7 @@ const ListProducts = () => {
               <th>SKU</th>
               <th>Variants</th>
               <th>HSN</th>
+              <th>Tax Slab</th>
               <th>Price</th>
               <th>Status</th>
               <th>Actions</th>
@@ -1343,21 +549,14 @@ const ListProducts = () => {
                     {p.type}
                   </span>
                 </td>
-                <td>
-                  {p.type === "simple" ? (
-                    p.SKU || "-"
-                  ) : (
-                    <span className="variable-sku">
-                      {p.models?.length || 0} model(s)
-                    </span>
-                  )}
-                </td>
+                <td>{p.SKU || "-"}</td>
                 <td>
                   <span className="variant-count">
                     {getColorCount(p)} color(s)
                   </span>
                 </td>
                 <td>{p.hsnCode || "-"}</td>
+                <td>{p.taxSlab || 18}%</td>
                 <td>
                   {getDisplayPrice(p)}
                 </td>
@@ -1390,7 +589,7 @@ const ListProducts = () => {
 
       {showForm && (
         <div className="popup">
-          <div className="popup-box xlarge">
+          <div className="popup-box large">
             <div className="popup-header">
               <h3>{formMode === "add" ? "Add Product" : "Update Product"}</h3>
               <button className="close-btn" onClick={resetForm}>×</button>
@@ -1409,6 +608,7 @@ const ListProducts = () => {
                       onChange={handleChange}
                       required
                     />
+                    <small className="note">(Model name will be auto-filled same as product name)</small>
                   </div>
 
                   <div className="form-group">
@@ -1441,30 +641,45 @@ const ListProducts = () => {
                   </div>
 
                   <div className="form-group">
-                    <label>Product Type</label>
+                    <label>Tax Slab *</label>
                     <select
-                      name="type"
-                      value={formData.type}
+                      name="taxSlab"
+                      value={formData.taxSlab}
                       onChange={handleChange}
+                      required
                     >
-                      <option value="simple">Simple Product</option>
-                      <option value="variable">Variable Product</option>
+                      {taxSlabOptions.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
 
-                {formData.type === "simple" && (
+                <div className="row">
                   <div className="form-group">
-                    <label>Product Description</label>
-                    <textarea
-                      name="description"
-                      placeholder="Enter product description"
-                      value={formData.description}
+                    <label>SKU *</label>
+                    <input
+                      name="SKU"
+                      placeholder="Enter SKU"
+                      value={formData.SKU}
                       onChange={handleChange}
-                      rows={3}
+                      required
                     />
                   </div>
-                )}
+                </div>
+
+                <div className="form-group">
+                  <label>Product Description</label>
+                  <textarea
+                    name="description"
+                    placeholder="Enter product description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    rows={3}
+                  />
+                </div>
               </div>
 
               <div className="form-section">
@@ -1493,7 +708,144 @@ const ListProducts = () => {
                 </div>
               </div>
 
-              {formData.type === "simple" ? renderSimpleProductForm() : renderVariableProductForm()}
+              <div className="form-section">
+                <h4>Product Specifications</h4>
+                <div className="section-header">
+                  <button type="button" onClick={addSpecField} className="add-btn small">
+                    + Add Specification
+                  </button>
+                </div>
+
+                {formData.specifications.length === 0 ? (
+                  <p className="no-items">No specifications added yet.</p>
+                ) : (
+                  formData.specifications.map((spec, index) => (
+                    <div key={index} className="spec-row">
+                      <input
+                        placeholder="Key"
+                        value={spec.key}
+                        onChange={(e) => handleSpecChange(index, 'key', e.target.value)}
+                        className="spec-input"
+                      />
+                      <input
+                        placeholder="Value"
+                        value={spec.value}
+                        onChange={(e) => handleSpecChange(index, 'value', e.target.value)}
+                        className="spec-input"
+                      />
+                      <button
+                        type="button"
+                        className="remove-btn small"
+                        onClick={() => removeSpecField(index)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="form-section">
+                <h4>Product Details</h4>
+                <div className="row">
+                  <div className="form-group">
+                    <label>Original Price</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={formData.colors[0]?.originalPrice || ""}
+                      onChange={(e) => {
+                        const updatedColors = [...formData.colors];
+                        if (updatedColors[0]) {
+                          updatedColors[0].originalPrice = e.target.value;
+                        }
+                        setFormData({ ...formData, colors: updatedColors });
+                      }}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Current Price *</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={formData.colors[0]?.currentPrice || ""}
+                      onChange={(e) => {
+                        const updatedColors = [...formData.colors];
+                        if (updatedColors[0]) {
+                          updatedColors[0].currentPrice = e.target.value;
+                        }
+                        setFormData({ ...formData, colors: updatedColors });
+                      }}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Product Images</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleColorImagesChange}
+                  />
+                  {(colorImages.length > 0 || (formData.colors[0]?.images?.length > 0)) && (
+                    <div className="color-images">
+                      <p>Selected images: {colorImages.length + (formData.colors[0]?.images?.filter(img => typeof img === 'string').length || 0)}</p>
+                      <div className="color-thumbs">
+                        {/* Existing images from database */}
+                        {formData.colors[0]?.images?.map((img, imgIndex) => {
+                          if (typeof img === 'string') {
+                            return (
+                              <div key={`existing-${imgIndex}`} className="image-item">
+                                <img
+                                  src={img}
+                                  alt={`Product ${imgIndex + 1}`}
+                                  className="gallery-thumb"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    // Note: We can't remove existing images from frontend in update mode
+                                    // Backend will handle this
+                                  }}
+                                  className="remove-image-btn"
+                                  title="Cannot remove from frontend"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })}
+                        
+                        {/* Newly uploaded images */}
+                        {colorImages.map((img, imgIndex) => (
+                          <div key={`new-${imgIndex}`} className="image-item">
+                            <div className="file-info">
+                              <span className="image-name">{getImageName(img)}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeColorImage(imgIndex)}
+                              className="remove-image-btn"
+                              title="Remove this image"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="btns">

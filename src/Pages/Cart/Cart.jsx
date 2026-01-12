@@ -16,7 +16,7 @@ const Cart = ({ isOpen, onClose }) => {
   });
   const [loading, setLoading] = useState(false);
   const [updatingItem, setUpdatingItem] = useState(null);
-  
+
   const token = localStorage.getItem('token');
   const userId = localStorage.getItem('userId');
   const navigate = useNavigate();
@@ -41,24 +41,105 @@ const Cart = ({ isOpen, onClose }) => {
     return () => window.removeEventListener('cartUpdated', handleCartUpdate);
   }, [isOpen, token, userId]);
 
+  // UPDATED fetchCart with stock verification
   const fetchCart = async () => {
     try {
       setLoading(true);
       console.log('🛒 Fetching cart for user:', userId);
-      
+
       const response = await axios.get(
         `${import.meta.env.VITE_API_URL}/cart/${userId}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
-      
-      console.log('📦 Cart API Response:', response.data);
-      console.log('🛍️ Cart Items:', response.data.cartItems);
-      console.log('💰 Cart Summary:', response.data.summary);
-      
-      setCartItems(response.data.cartItems || []);
-      calculateSummary(response.data.cartItems || [], response.data.summary);
+
+      let cartItems = response.data.cartItems || [];
+
+      // ✅ VERIFY STOCK FOR EACH ITEM (same logic as product page)
+      const verifiedItems = [];
+
+      // Get all inventory data once
+      let inventoryData = [];
+      try {
+        const inventoryResponse = await axios.get(
+          `${import.meta.env.VITE_API_URL}/inventory/all`
+        );
+        inventoryData = inventoryResponse.data;
+        console.log('📦 Loaded inventory data:', inventoryData.length, 'items');
+      } catch (invError) {
+        console.error('❌ Could not load inventory, skipping stock checks:', invError);
+      }
+
+      for (const item of cartItems) {
+        try {
+          // Find inventory for this product
+          const inventoryItems = inventoryData.filter(inv =>
+            inv.productId === item.productId && inv.isActive === true
+          );
+
+          if (inventoryItems.length === 0) {
+            console.log(`⚠️ ${item.productName} - No inventory found, marking as out of stock`);
+            // Don't add to cart if out of stock
+            continue;
+          }
+
+          // Calculate total stock (same as product page)
+          const totalStock = inventoryItems.reduce((sum, inv) => sum + inv.stock, 0);
+
+          // If quantity exceeds stock, adjust it
+          if (item.quantity > totalStock) {
+            if (totalStock > 0) {
+              console.log(`⚠️ Adjusting ${item.productName}: ${item.quantity} → ${totalStock}`);
+
+              // Update quantity in backend
+              await axios.put(
+                `${import.meta.env.VITE_API_URL}/cart/update/${item._id}`,
+                { quantity: totalStock, userId: userId },
+                {
+                  headers: { Authorization: `Bearer ${token}` }
+                }
+              );
+
+              // Update item locally
+              item.quantity = totalStock;
+              item.totalPrice = item.finalPrice * totalStock;
+
+              if (item.hasOffer && item.offerDetails) {
+                item.offerDetails.savedAmount =
+                  (item.unitPrice - item.finalPrice) * totalStock;
+              }
+            } else {
+              // Remove item if out of stock
+              console.log(`🗑️ Removing ${item.productName} (out of stock)`);
+              await axios.delete(
+                `${import.meta.env.VITE_API_URL}/cart/remove/${item._id}`,
+                {
+                  headers: { Authorization: `Bearer ${token}` }
+                }
+              );
+              continue; // Skip adding to cart
+            }
+          }
+
+          verifiedItems.push(item);
+
+        } catch (stockError) {
+          console.error(`❌ Error checking stock for ${item.productName}:`, stockError);
+          verifiedItems.push(item); // Keep item if stock check fails
+        }
+      }
+
+      console.log('🛍️ Verified Cart Items:', verifiedItems.length, 'items');
+      setCartItems(verifiedItems);
+      calculateSummary(verifiedItems, response.data.summary);
+
+      // Show message if items were adjusted
+      if (verifiedItems.length !== cartItems.length) {
+        const removedCount = cartItems.length - verifiedItems.length;
+        console.log(`📝 Cart updated: ${removedCount} item(s) removed due to stock issues`);
+      }
+
     } catch (error) {
       console.error('❌ Error fetching cart:', error);
       if (error.response) {
@@ -72,7 +153,7 @@ const Cart = ({ isOpen, onClose }) => {
 
   const calculateSummary = (items, apiSummary) => {
     console.log('📊 Calculating summary for items:', items.length);
-    
+
     const subtotal = apiSummary?.subtotal || items.reduce((sum, item) => sum + item.totalPrice, 0);
     const totalSavings = apiSummary?.totalSavings || items.reduce((sum, item) => {
       if (item.hasOffer && item.offerDetails) {
@@ -80,7 +161,7 @@ const Cart = ({ isOpen, onClose }) => {
       }
       return sum;
     }, 0);
-    
+
     const shipping = subtotal > 1000 ? 0 : 50; // Free shipping above ₹1000
     const tax = subtotal * 0.18; // 18% GST
     const total = subtotal + shipping + tax;
@@ -93,59 +174,127 @@ const Cart = ({ isOpen, onClose }) => {
       tax,
       total
     };
-    
+
     console.log('📊 Final Summary:', summary);
     setCartSummary(summary);
   };
 
-  const updateQuantity = async (itemId, newQuantity) => {
+
+  // UPDATED: Use same inventory/all route as product page
+  const checkStockBeforeUpdate = async (productId, requestedQuantity) => {
+    try {
+      console.log(`📦 Checking stock for product: ${productId}`);
+
+      // SAME AS PRODUCT PAGE: Use inventory/all route
+      const inventoryResponse = await axios.get(
+        `${import.meta.env.VITE_API_URL}/inventory/all`
+      );
+
+      // Filter items for this product (same logic as product page)
+      const inventoryItems = inventoryResponse.data.filter(item =>
+        item.productId === productId && item.isActive === true
+      );
+
+      if (inventoryItems.length === 0) {
+        return {
+          allowed: false,
+          stock: 0,
+          message: "Product is out of stock"
+        };
+      }
+
+      // Calculate total stock (same logic as product page)
+      const totalStock = inventoryItems.reduce((sum, item) => sum + item.stock, 0);
+
+      console.log('📦 Stock check result:', {
+        productId,
+        requestedQuantity,
+        totalStock,
+        inventoryItemsCount: inventoryItems.length
+      });
+
+      // Check if requested quantity exceeds stock
+      if (requestedQuantity > totalStock) {
+        return {
+          allowed: false,
+          stock: totalStock,
+          message: `Only ${totalStock} items available in stock`
+        };
+      }
+
+      return {
+        allowed: true,
+        stock: totalStock
+      };
+
+    } catch (error) {
+      console.error('❌ Error checking stock:', error);
+      return {
+        allowed: true, // Allow if check fails (for now)
+        stock: 0,
+        message: 'Unable to verify stock, please try again'
+      };
+    }
+  };
+
+  // UPDATED updateQuantity function
+  const updateQuantity = async (itemId, newQuantity, productId, itemName) => {
     if (!token || newQuantity < 1 || newQuantity > 99) {
       console.log('❌ Invalid quantity or no token');
       return;
     }
-    
+
     try {
-      console.log(`🔄 Updating item ${itemId} to quantity ${newQuantity}`);
+      console.log(`🔄 Updating ${itemName} to quantity ${newQuantity}`);
+
+      // ✅ CHECK STOCK FIRST (same as product page)
+      const stockCheck = await checkStockBeforeUpdate(productId, newQuantity);
+
+      if (!stockCheck.allowed) {
+        alert(`❌ ${stockCheck.message}`);
+        return;
+      }
+
       setUpdatingItem(itemId);
-      
+
+      // Proceed with quantity update
       const response = await axios.put(
         `${import.meta.env.VITE_API_URL}/cart/update/${itemId}`,
-        { quantity: newQuantity , userId: userId },
-        
+        { quantity: newQuantity, userId: userId },
         {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
-      
+
       console.log('✅ Update response:', response.data);
-      
+
       // Update local state
       const updatedItems = cartItems.map(item => {
         if (item._id === itemId) {
-          const updatedItem = { 
-            ...item, 
+          const updatedItem = {
+            ...item,
             quantity: newQuantity,
             totalPrice: item.finalPrice * newQuantity
           };
-          
+
           if (updatedItem.hasOffer && updatedItem.offerDetails) {
-            updatedItem.offerDetails.savedAmount = 
+            updatedItem.offerDetails.savedAmount =
               (updatedItem.unitPrice - updatedItem.finalPrice) * newQuantity;
           }
-          
+
           console.log('🔄 Updated item:', updatedItem);
           return updatedItem;
         }
         return item;
       });
-      
+
       setCartItems(updatedItems);
       calculateSummary(updatedItems);
-      
+
       // Dispatch event for navbar update
       console.log('📢 Dispatching cartUpdated event');
       window.dispatchEvent(new Event('cartUpdated'));
-      
+
     } catch (error) {
       console.error('❌ Error updating quantity:', error);
       if (error.response) {
@@ -163,34 +312,34 @@ const Cart = ({ isOpen, onClose }) => {
       alert('Please login to manage cart');
       return;
     }
-    
+
     if (!window.confirm('Are you sure you want to remove this item from cart?')) {
       return;
     }
-    
+
     try {
       console.log(`🗑️ Removing item ${itemId}`);
-      
+
       const response = await axios.delete(
         `${import.meta.env.VITE_API_URL}/cart/remove/${itemId}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
-      
+
       console.log('✅ Remove response:', response.data);
-      
+
       // Update local state
       const updatedItems = cartItems.filter(item => item._id !== itemId);
       setCartItems(updatedItems);
       calculateSummary(updatedItems);
-      
+
       // Dispatch event for navbar update
       console.log('📢 Dispatching cartUpdated event');
       window.dispatchEvent(new Event('cartUpdated'));
-      
+
       alert('Item removed from cart successfully!');
-      
+
     } catch (error) {
       console.error('❌ Error removing item:', error);
       if (error.response) {
@@ -230,7 +379,7 @@ const Cart = ({ isOpen, onClose }) => {
     <>
       {/* Overlay */}
       <div className="cart-overlay" onClick={onClose}></div>
-      
+
       {/* Cart Sidebar */}
       <div className="cart-sidebar">
         {/* Header */}
@@ -280,7 +429,7 @@ const Cart = ({ isOpen, onClose }) => {
                     {/* Item Details */}
                     <div className="item-details">
                       <div className="item-header">
-                        <h4 
+                        <h4
                           className="item-name"
                           onClick={() => {
                             onClose();
@@ -289,7 +438,7 @@ const Cart = ({ isOpen, onClose }) => {
                         >
                           {item.productName}
                         </h4>
-                        <button 
+                        <button
                           className="remove-item"
                           onClick={() => removeItem(item._id)}
                           title="Remove"
@@ -339,7 +488,7 @@ const Cart = ({ isOpen, onClose }) => {
                             </span>
                           )}
                         </div>
-                        
+
                         {/* Offer Label */}
                         {item.hasOffer && item.offerDetails && (
                           <div className="offer-label">
@@ -348,11 +497,10 @@ const Cart = ({ isOpen, onClose }) => {
                         )}
                       </div>
 
-                      {/* Quantity Selector */}
                       <div className="item-quantity">
                         <button
                           className="qty-btn minus"
-                          onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item._id, item.quantity - 1, item.productId, item.productName)}
                           disabled={item.quantity <= 1 || updatingItem === item._id}
                         >
                           −
@@ -362,7 +510,7 @@ const Cart = ({ isOpen, onClose }) => {
                         </span>
                         <button
                           className="qty-btn plus"
-                          onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item._id, item.quantity + 1, item.productId, item.productName)}
                           disabled={item.quantity >= 99 || updatingItem === item._id}
                         >
                           +
@@ -379,29 +527,29 @@ const Cart = ({ isOpen, onClose }) => {
                   <span>Subtotal ({cartSummary.totalItems} items)</span>
                   <span>₹{cartSummary.subtotal.toLocaleString()}</span>
                 </div>
-                
+
                 {cartSummary.totalSavings > 0 && (
                   <div className="summary-row discount">
                     <span>Total Savings</span>
                     <span className="savings">-₹{cartSummary.totalSavings.toLocaleString()}</span>
                   </div>
                 )}
-                
+
                 <div className="summary-row">
                   <span>Shipping</span>
                   <span>{cartSummary.shipping === 0 ? 'FREE' : `₹${cartSummary.shipping}`}</span>
                 </div>
-                
+
                 <div className="summary-row">
                   <span>Tax (GST 18%)</span>
                   <span>₹{cartSummary.tax.toLocaleString()}</span>
                 </div>
-                
+
                 <div className="summary-row total">
                   <span>Total Amount</span>
                   <span className="total-amount">₹{cartSummary.total.toLocaleString()}</span>
                 </div>
-                
+
                 {cartSummary.subtotal < 1000 && (
                   <div className="free-shipping-note">
                     🚚 Add ₹{(1000 - cartSummary.subtotal).toLocaleString()} more for FREE shipping!

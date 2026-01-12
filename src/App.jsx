@@ -37,7 +37,7 @@ function App() {
         <Route path="/adminregister" element={<AdminRegister />} />
         <Route path="/adminlogin" element={<AdminLogin />} />
         <Route path="/product/:productId" element={<ProductPage />} />
-        <Route path="*" element={<NotFound />} /> {/* Optional: 404 page */}
+        <Route path="*" element={<NotFound />} /> {/* */}
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/checkout" element={<Checkout />} />
