@@ -391,7 +391,7 @@ function Home() {
       {/* HERO SECTION */}
       <div className="hero-section">
         <h1>Welcome to Our E-Commerce Store</h1>
-        <p>Discover amazing products at unbeatable prices. Shop with confidence and</p>
+        <p>Discover amazing products at unbeatable prices. Shop with confidence</p>
         <button className="shop-btn" onClick={() => navigate('/products')}>
           Shop All Products
         </button>
