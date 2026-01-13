@@ -62,7 +62,7 @@ const ImagesSection = () => {
       {/* 🔥 IMAGES */}
       <div
         className="imageRow"
-        style={{ padding: "40px 20px", marginBottom: "90px" }}
+        style={{ padding: "40px 20px", marginBottom: "20px" }}
       >
         <div
           className="imageTrack"
@@ -94,13 +94,13 @@ const ImagesSection = () => {
 
       {/* 🔥 TEXT + LOGOS */}
       <div style={{ textAlign: "center", padding: "0 20px 80px" }}>
-        <h2 style={{ fontSize: "clamp(28px,4vw,44px)", marginBottom: 14 }}>
+        <h2 style={{ fontSize: "clamp(32px,4.5vw,52px)", marginBottom: 14 }}>
           We are also available here
         </h2>
 
         <p
           style={{
-            fontSize: "clamp(14px,2vw,18px)",
+            fontSize: "clamp(16px,2.4vw,22px)",
             color: "#555",
             marginBottom: 40,
           }}
