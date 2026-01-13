@@ -100,9 +100,10 @@ function App() {
             </AdminLayout>
           }
         />
-        <Footer/>
+        
 
       </Routes>
+      <Footer/>
     </Router>
   );
 }
