@@ -24,6 +24,7 @@ import AdminOrders from "./Pages/AdminPanel/AdminOrders/AdminOrders";
 import UserReviews from "./Pages/Profile/UserReviews/UserReviews";
 import AllProducts from "./Pages/AllProducts/AllProducts";
 import CategoryProducts from "./Pages/CategoryProducts/CategoryProducts";
+import Footer from "./Components/Footer/Footer";
 
 function App() {
 
@@ -99,6 +100,7 @@ function App() {
             </AdminLayout>
           }
         />
+        <Footer/>
 
       </Routes>
     </Router>
