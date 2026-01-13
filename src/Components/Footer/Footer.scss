@@ -1,0 +1,141 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&display=swap");
+
+/* 🔥 GLOBAL SCROLL FIX */
+body {
+  overflow-x: hidden;
+}
+
+.footer {
+  background: #000;
+  color: #fff;
+  font-family: "Playfair Display", serif;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* 🔽 TOP SECTION */
+.footer__top {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1.4fr;
+  padding: 40px 80px 26px;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+/* LOGO */
+.footer__logo img {
+  width: 220px;
+  margin-bottom: 16px;
+}
+
+/* ICONS */
+.footer__icons {
+  display: flex;
+  gap: 22px;
+  margin-left: 38px;
+}
+
+.footer__icons svg {
+  font-size: 28px;
+  cursor: pointer;
+}
+
+/* ✅ HEADINGS — 20px */
+.footer__col h4 {
+  font-size: 20px;
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+
+/* LIST */
+.footer__col ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* ✅ TEXT — 18px */
+.footer__col li {
+  font-size: 18px;
+  margin-bottom: 7px;
+}
+
+/* ✅ CONTACT TEXT — 18px */
+.footer__col p {
+  font-size: 18px;
+  line-height: 1.55;
+  margin-bottom: 7px;
+}
+
+/* COPYRIGHT */
+.footer__bottom {
+  grid-column: 2 / -1;
+  margin-top: 28px;
+  padding-top: 14px;
+  font-size: 18px;   /* ✅ same text size */
+  color: #ddd;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  line-height: 1.7;
+}
+
+.footer__bottom span {
+  margin-left: 6px;
+  font-size: 18px;
+}
+
+/* ================= RESPONSIVE ================= */
+
+/* TABLET */
+@media (max-width: 1024px) {
+  .footer__top {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 36px 50px 24px;
+    gap: 28px;
+  }
+
+  .footer__icons {
+    margin-left: 0;
+    justify-content: center;
+  }
+
+  .footer__bottom {
+    grid-column: 1 / -1;
+    text-align: center;
+  }
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+  .footer__top {
+    grid-template-columns: 1fr;
+    padding: 34px 20px 22px;
+    text-align: center;
+  }
+
+  .footer__logo img {
+    width: 170px;
+    margin: 0 auto 14px;
+  }
+
+  .footer__icons {
+    justify-content: center;
+    margin-left: 0;
+  }
+
+  /* SERIES HIDE */
+  .footer__col:nth-of-type(3) {
+    display: none;
+  }
+
+  /* ✅ MOBILE ME BHI SAME SIZES */
+  .footer__col h4 {
+    font-size: 20px;
+  }
+
+  .footer__col li,
+  .footer__col p,
+  .footer__bottom,
+  .footer__bottom span {
+    font-size: 18px;
+  }
+}

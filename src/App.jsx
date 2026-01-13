@@ -30,7 +30,7 @@ function App() {
 
   return (
     <Router>
-      <Navbar />
+      <Navbar /> 
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -100,9 +100,10 @@ function App() {
             </AdminLayout>
           }
         />
-        <Footer/>
+        
 
       </Routes>
+      <Footer />
     </Router>
   );
 }
