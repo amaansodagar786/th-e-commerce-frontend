@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 
 const ImagesSection = () => {
   /* 🔥 CANDLE IMAGES FROM PUBLIC FOLDER */
@@ -94,11 +95,24 @@ const ImagesSection = () => {
 
       {/* 🔥 TEXT + LOGOS */}
       <div style={{ textAlign: "center", padding: "0 20px 80px" }}>
-        <h2 style={{ fontSize: "clamp(32px,4.5vw,52px)", marginBottom: 14 }}>
+        
+        {/* 🔥 ANIMATED HEADING */}
+        <motion.h2
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          viewport={{ once: true }}
+          style={{ fontSize: "clamp(32px,4.5vw,52px)", marginBottom: 14 }}
+        >
           We are also available here
-        </h2>
+        </motion.h2>
 
-        <p
+        {/* 🔥 ANIMATED TEXT */}
+        <motion.p
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, delay: 0.2, ease: "easeOut" }}
+          viewport={{ once: true }}
           style={{
             fontSize: "clamp(16px,2.4vw,22px)",
             color: "#555",
@@ -106,7 +120,7 @@ const ImagesSection = () => {
           }}
         >
           Order your favorite candles effortlessly from apps you already trust.
-        </p>
+        </motion.p>
 
         <div className="logoOuter">
           <div className="logoInner">
