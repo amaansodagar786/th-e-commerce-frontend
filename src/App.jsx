@@ -25,6 +25,7 @@ import UserReviews from "./Pages/Profile/UserReviews/UserReviews";
 import AllProducts from "./Pages/AllProducts/AllProducts";
 import CategoryProducts from "./Pages/CategoryProducts/CategoryProducts";
 import Footer from "./Components/Footer/Footer";
+import NewWishlist from "./Pages/Wishlist/NewWishlist";
 
 function App() {
 
@@ -39,7 +40,7 @@ function App() {
         <Route path="/adminlogin" element={<AdminLogin />} />
         <Route path="/product/:productId" element={<ProductPage />} />
         <Route path="*" element={<NotFound />} /> {/* */}
-        <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/wishlist" element={<NewWishlist />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/orders" element={<UserOrders />} />
