@@ -1,0 +1,355 @@
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Inter:wght@400;500;600&display=swap');
+
+.products-section {
+  padding: 20px 0px 20px;
+  position: relative;
+  background: transparent;
+
+  &__container {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+  }
+
+  // Desktop View
+  &__desktop {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    position: relative;
+    z-index: 1;
+    max-width: 1000px; // 👈 Container width kam kiya
+    margin: 0 auto; // 👈 Center kiya
+
+    @media (max-width: 1024px) {
+      max-width: 900px;
+      gap: 25px;
+    }
+
+    @media (max-width: 992px) {
+      max-width: 800px;
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      display: none;
+    }
+  }
+
+  // Mobile View
+  &__mobile {
+    display: none;
+    position: relative;
+    z-index: 1;
+
+    @media (max-width: 768px) {
+      display: block;
+    }
+  }
+
+  &__slider {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+
+  &__slider-container {
+    flex: 1;
+    overflow: hidden;
+    border-radius: 16px;
+  }
+
+  &__slider-track {
+    display: flex;
+    transition: transform 0.3s ease;
+  }
+
+  &__slider-item {
+    flex: 0 0 100%;
+    padding: 0 3px;
+  }
+
+  &__slider-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #6b2c1f;
+    flex-shrink: 0;
+
+    &:hover {
+      background: #6b2c1f;
+      color: white;
+      border-color: #6b2c1f;
+    }
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  &__dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 15px;
+  }
+
+  &__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ccc;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &.active {
+      background: #6b2c1f;
+      width: 20px;
+      border-radius: 3px;
+    }
+  }
+}
+
+// Product Card - Width kam
+.product-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  max-width: 300px; // 👈 Card ki width kam kiya
+  margin: 0 auto; // 👈 Center kiya
+
+  @media (max-width: 1024px) {
+    max-width: 280px;
+  }
+
+  @media (max-width: 992px) {
+    max-width: 260px;
+  }
+
+  &:hover {
+    transform: translateY(-3px);
+  }
+
+  // PRODUCT IMAGE WITH HALF LIGHT YELLOW BACKGROUND - ROUNDED BORDER
+  &__image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    position: relative;
+    margin: 0;
+    padding: 20px;
+    overflow: hidden;
+    border-radius: 16px 16px 0 0;
+    
+    // Half light yellow background - bottom se half with rounded border
+    &::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 60%;
+      background: #fff5e9;
+      z-index: 1;
+      border-radius: 30px 30px 30px 30px;
+      // margin-left: 10px;
+      // margin-right: -20px;
+    }
+
+    img {
+      max-width: 85%;
+      height: auto;
+      object-fit: contain;
+      transition: transform 0.3s ease;
+      position: relative;
+      z-index: 2;
+    }
+
+    &:hover img {
+      transform: scale(1.03);
+    }
+  }
+
+  &__badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #ff4444;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    z-index: 3;
+  }
+
+  &__content {
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    background: white;
+    box-shadow: none !important;
+  }
+
+  &__title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-align: start;
+    color: #1a1a1a;
+    min-height: 58px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 8px;
+
+    @media (max-width: 768px) {
+      font-size: 13px;
+      min-height: auto;
+    }
+  }
+
+  &__price {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: -10px;
+
+    @media (max-width: 768px) {
+      margin-bottom: 8px;
+    }
+  }
+
+  &__current-price {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #6b2c1f;
+  }
+
+  &__old-price {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: #999;
+    text-decoration: line-through;
+  }
+
+  &__view-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6b2c1f;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: start;
+
+    &:hover {
+      text-decoration: underline;
+      transform: translateY(-1px);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+  }
+
+  &__btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 0;
+    border: none;
+    border-radius: 40px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    &--cart {
+      background: #6b2c1f;
+      color: white;
+
+      &:hover {
+        background: #6b2c1f;
+        transform: translateY(-2px);
+      }
+    }
+
+    &--buy {
+      background: #6b2c1f;
+      color: white;
+
+      &:hover {
+        background: #8b3e2e;
+        transform: translateY(-2px);
+      }
+    }
+
+    @media (max-width: 768px) {
+      padding: 8px 0;
+      font-size: 12px;
+      
+      svg {
+        width: 12px;
+        height: 12px;
+      }
+    }
+  }
+}
+
+// Mobile Slider Items - Width adjust
+@media (max-width: 768px) {
+  .products-section {
+    &__slider-item {
+      .product-card {
+        max-width: 280px;
+        margin: 0 auto;
+      }
+    }
+  }
+}
+
+// Small Mobile
+@media (max-width: 480px) {
+  .products-section {
+    &__slider-item {
+      .product-card {
+        max-width: 260px;
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
+import axios from "axios";
 import "./Navbar.scss";
 import logoImage from "../../assets/images/logo/logo.png";
 
@@ -7,16 +8,20 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [userName, setUserName] = useState("");
   const { pathname } = useLocation();
   const profileRef = useRef(null);
   let hoverTimeout = useRef(null);
 
   const isActive = (path) => pathname === path;
 
+  const token = localStorage.getItem("token");
+  const userId = localStorage.getItem("userId");
+
   const navLinks = [
     { to: "/", label: "HOME" },
     { to: "/contact", label: "CONTACT" },
-    { to: "/distributorship", label: "DISTRIBUTORSHIP" }
+    { to: "/products", label: "DISTRIBUTORSHIP" }
   ];
 
   const profileLinks = [
@@ -26,53 +31,50 @@ const Navbar = () => {
     { to: "/logout", label: "Logout", icon: "log-out" }
   ];
 
-  // Get cart count from localStorage
-  const getCartCount = () => {
-    try {
-      const cartItem = JSON.parse(localStorage.getItem("cartItem"));
-      if (cartItem && cartItem.qty) {
-        return cartItem.qty;
-      }
-      return 0;
-    } catch (error) {
-      return 0;
+  // ✅ Fetch cart count from API
+  const fetchCartCount = useCallback(async () => {
+    if (!token || !userId) {
+      setCartCount(0);
+      return;
     }
-  };
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/cart/count/${userId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setCartCount(res.data.count || 0);
+    } catch (err) {
+      console.error("Failed to fetch cart count:", err);
+    }
+  }, [token, userId]);
 
-  // Update cart count function
-  const updateCartCount = () => {
-    const newCount = getCartCount();
-    setCartCount(newCount);
-  };
+  // ✅ Fetch user name from API
+  const fetchUserName = useCallback(async () => {
+    if (!token || !userId) return;
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/cart/profile/${userId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setUserName(res.data.name || "");
+    } catch (err) {
+      console.error("Failed to fetch user name:", err);
+    }
+  }, [token, userId]);
 
-  // Update cart count when component mounts and when storage changes
   useEffect(() => {
-    updateCartCount();
+    fetchCartCount();
+    fetchUserName();
 
-    const handleStorageChange = (e) => {
-      if (e.key === "cartItem") {
-        updateCartCount();
-      }
-    };
-    window.addEventListener("storage", handleStorageChange);
-
-    const handleCartUpdated = () => {
-      updateCartCount();
-    };
+    const handleCartUpdated = () => fetchCartCount();
     window.addEventListener("cartUpdated", handleCartUpdated);
 
-    const interval = setInterval(() => {
-      updateCartCount();
-    }, 500);
-
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("cartUpdated", handleCartUpdated);
-      clearInterval(interval);
     };
-  }, []);
+  }, [fetchCartCount, fetchUserName]);
 
-  // Close profile dropdown when clicking outside (for desktop)
+  // Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
@@ -83,33 +85,26 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Handle mouse enter for desktop hover
   const handleMouseEnter = () => {
-    if (hoverTimeout.current) {
-      clearTimeout(hoverTimeout.current);
-    }
+    if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
     setIsProfileOpen(true);
   };
 
-  // Handle mouse leave for desktop hover
   const handleMouseLeave = () => {
     hoverTimeout.current = setTimeout(() => {
       setIsProfileOpen(false);
     }, 200);
   };
 
-  // Handle profile click to toggle dropdown
-  const handleProfileClick = () => {
-    setIsProfileOpen(!isProfileOpen);
-  };
+  const handleProfileClick = () => setIsProfileOpen(!isProfileOpen);
 
-  // Close everything when hamburger closes
   const handleHamburgerChange = (e) => {
     setIsOpen(e.target.checked);
-    if (!e.target.checked) {
-      setIsProfileOpen(false);
-    }
+    if (!e.target.checked) setIsProfileOpen(false);
   };
+
+  // ✅ Show first name only, fallback to "User" if not logged in
+  const displayName = userName ? userName.split(" ")[0] : "User";
 
   // Icon components
   const ProfileIcon = () => (
@@ -184,11 +179,7 @@ const Navbar = () => {
 
           <div className="nav-links">
             {navLinks.map(({ to, label }) => (
-              <Link
-                key={to}
-                to={to}
-                className={isActive(to) ? 'active' : ''}
-              >
+              <Link key={to} to={to} className={isActive(to) ? 'active' : ''}>
                 {label}
               </Link>
             ))}
@@ -217,7 +208,8 @@ const Navbar = () => {
 
               <div className={`profile-dropdown ${isProfileOpen ? 'open' : ''}`}>
                 <div className="dropdown-header">
-                  <span className="user-greeting">Hi, User</span>
+                  {/* ✅ Real first name here */}
+                  <span className="user-greeting">Hi, {displayName}</span>
                 </div>
                 <div className="dropdown-links">
                   {profileLinks.map(({ to, label, icon }) => (
@@ -262,7 +254,6 @@ const Navbar = () => {
         </div>
 
         <div className={`mobile-menu-links ${isOpen ? 'open' : ''}`}>
-          {/* Navigation Links */}
           {navLinks.map(({ to, label }) => (
             <Link
               key={to}
@@ -274,7 +265,6 @@ const Navbar = () => {
             </Link>
           ))}
 
-          {/* Cart right above profile section */}
           <Link to="/cart" className="mobile-cart-link" onClick={() => setIsOpen(false)}>
             <div className="mobile-cart-icon-container">
               <CartIcon />
@@ -283,14 +273,11 @@ const Navbar = () => {
             <span>Cart</span>
           </Link>
 
-          {/* Profile section - with cart exactly above it */}
           <div className="mobile-profile-section">
-            <div
-              className="mobile-profile-header"
-              onClick={handleProfileClick}
-            >
+            <div className="mobile-profile-header" onClick={handleProfileClick}>
               <ProfileIcon />
-              <span>Hi, User</span>
+              {/* ✅ Real first name on mobile too */}
+              <span>Hi, {displayName}</span>
               <ArrowIcon isOpen={isProfileOpen} />
             </div>
             <div className={`mobile-profile-dropdown ${isProfileOpen ? 'open' : ''}`}>

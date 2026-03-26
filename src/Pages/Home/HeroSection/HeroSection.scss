@@ -1,54 +1,237 @@
-@font-face {
-  font-family: "Heading";
-  src: url("../../../assets/fonts/TT\ Ramillas\ Trial\ Medium.ttf") format("truetype");
-  font-style: normal;
-}
-@font-face {
-  font-family: "LightHeading";
-  src: url("../../../assets/fonts/TT\ Ramillas\ Trial\ Light.ttf") format("truetype");
-  font-style: normal;
-}
-@font-face {
-  font-family: "Content";
-  src: url("../../../assets/fonts/TT\ Interphases\ Pro\ Trial\ Regular.ttf") format("truetype");
-  font-style: normal;
-}
-// @font-face {
-//   font-family: "DarkContent";
-//   src: url("../../../assets/fonts/TT\ Interphases\ Pro\ Trial\ Medium.ttf") format("truetype");
-//   font-style: normal;
-// }
 
 
-.hero-section {
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+}
+
+.hero {
+  min-height: 100vh;
   width: 100%;
-  height: 87vh;   /* 🔥 pehle 100vh tha */
-  overflow: hidden;
-}
-
-.hero-swiper {
-  width: 100%;
-  height: 100%;
-}
-
-.hero-slide {
-  width: 100%;
-  height: 100%;
+  position: relative;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-}
+  display: flex;
+  align-items: center;
+  padding: 40px;
 
-/* Tablet */
-@media (max-width: 1024px) {
-  .hero-section {
-    height: 60vh;
+  @media (max-width: 1024px) {
+    padding: 40px 20px;
+    min-height: auto;
+    align-items: center;
+  }
+
+  @media (max-width: 768px) {
+    padding: 20px;
+    min-height: auto;
+    align-items: center;
+  }
+
+  &__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+  }
+
+  &__container {
+    margin: 0 auto;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+    position: relative;
+    margin-top: 15px;
+    z-index: 2;
+
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr;
+      gap: 40px;
+      margin-top: 60px;
+    }
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      gap: 30px;
+      margin-top: 60px;
+    }
+  }
+
+  &__left {
+    max-width: 600px;
+
+    @media (max-width: 1024px) {
+      max-width: 100%;
+      text-align: center;
+      order: 1;
+    }
+
+    @media (max-width: 768px) {
+      max-width: 100%;
+      text-align: center;
+      order: 1;
+    }
+  }
+
+  &__main-text {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 64px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: #ffffff;
+    margin-top: 70px;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    text-align: left;
+    margin-left: 90px;
+    
+    // Initial state - hidden
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(20px);
+    
+    // Show state - medium speed
+    &.show {
+      animation: mediumReveal 1s ease-out forwards;
+    }
+
+    @media (max-width: 1024px) {
+      font-size: 35px;
+      text-align: center;
+      margin-left: 0;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 768px) {
+      font-size: 35px;
+      text-align: center;
+      margin-left: 0;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 480px) {
+      font-size: 28px;
+      margin-top: 10px;
+    }
+  }
+
+  &__right {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    @media (max-width: 1024px) {
+      margin-bottom: 20px;
+      order: 2;
+    }
+
+    @media (max-width: 768px) {
+      margin-bottom: 20px;
+      order: 2;
+    }
+  }
+
+  &__oil-image {
+    width: 300px;
+    height: auto;
+    max-width: 100%;
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
+    
+    // Initial state - hidden
+    opacity: 0;
+    transform: scale(0.92);
+    
+    // Show state - desktop only animation
+    &.show {
+      animation: imageMediumReveal 0.9s ease-out forwards;
+    }
+
+    @media (max-width: 1024px) {
+      width: 220px;
+      // No animation on tablet
+      opacity: 1;
+      transform: scale(1);
+      
+      &.show {
+        animation: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      width: 220px;
+      // No animation on mobile
+      opacity: 1;
+      transform: scale(1);
+      
+      &.show {
+        animation: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      width: 200px;
+    }
+
+    @media (max-width: 360px) {
+      width: 180px;
+    }
   }
 }
 
-/* Mobile */
-@media (max-width: 768px) {
-  .hero-section {
-    height: 50vh;
+// Medium Speed Reveal Animation - Na tez na slow
+@keyframes mediumReveal {
+  0% {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(20px);
+  }
+  25% {
+    opacity: 0.3;
+    filter: blur(5px);
+    transform: translateY(12px);
+  }
+  50% {
+    opacity: 0.6;
+    filter: blur(2px);
+    transform: translateY(6px);
+  }
+  75% {
+    opacity: 0.85;
+    filter: blur(1px);
+    transform: translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+// Image Medium Reveal (Desktop only)
+@keyframes imageMediumReveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
   }
 }

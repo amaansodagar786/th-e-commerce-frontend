@@ -30,16 +30,15 @@ import AdminAuth from "./Pages/AdminAuth/AdminAuth";
 import UserAuth from "./Components/Userauth/Userauth";
 import NotFound from "./Pages/404/NotFound";
 import Contact from "./Pages/Contact/Contact";
+import ScrollToTop from "./Components/GoToTop/ScrollToTop";
+import Cart from "./Pages/Cart/Cart";
 
-// Create a wrapper component to conditionally show Navbar and Footer
 function LayoutWrapper({ children }) {
   const location = useLocation();
 
-  // Define routes where Navbar and Footer should be hidden
-  const hideNavAndFooterRoutes = ['/login', '/admin/login'];
-
-  // Check if current path matches any hide routes
-  const shouldHideNavAndFooter = hideNavAndFooterRoutes.includes(location.pathname);
+  // Hide Navbar & Footer for ALL admin routes + login
+  const shouldHideNavAndFooter =
+    location.pathname.startsWith('/admin') || location.pathname === '/login';
 
   return (
     <>
@@ -53,6 +52,7 @@ function LayoutWrapper({ children }) {
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={
           <LayoutWrapper>
@@ -89,6 +89,11 @@ function App() {
             <Profile />
           </LayoutWrapper>
         } />
+        <Route path="/cart" element={
+          <LayoutWrapper>
+            <Cart />
+          </LayoutWrapper>
+        } />
         <Route path="/checkout" element={
           <LayoutWrapper>
             <Checkout />
@@ -99,7 +104,7 @@ function App() {
             <UserOrders />
           </LayoutWrapper>
         } />
-        <Route path="/my-reviews" element={
+        <Route path="/reviews" element={
           <LayoutWrapper>
             <UserReviews />
           </LayoutWrapper>

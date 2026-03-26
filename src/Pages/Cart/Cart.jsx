@@ -1,10 +1,13 @@
-// components/CartSidebar.jsx
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import './Cart.scss';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { FaShoppingBag, FaTruck, FaLock, FaBoxOpen, FaUndo } from "react-icons/fa";
+import { MdClose } from "react-icons/md";
+import { toast } from "react-toastify";
+import "./Cart.scss";
 
-const Cart = ({ isOpen, onClose }) => {
+const Cart = () => {
+  const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
   const [cartSummary, setCartSummary] = useState({
     totalItems: 0,
@@ -14,566 +17,539 @@ const Cart = ({ isOpen, onClose }) => {
     tax: 0,
     total: 0
   });
-  const [loading, setLoading] = useState(false);
-  const [updatingItem, setUpdatingItem] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [updatingItemId, setUpdatingItemId] = useState(null);
+  const [productsData, setProductsData] = useState({});
+  const [offersData, setOffersData] = useState({});
 
-  const token = localStorage.getItem('token');
-  const userId = localStorage.getItem('userId');
-  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+  const userId = localStorage.getItem("userId");
 
-  // Fetch cart data
   useEffect(() => {
-    if (isOpen && token && userId) {
-      fetchCart();
+    if (token && userId) {
+      fetchCartAndProducts();
+    } else {
+      setLoading(false);
     }
-  }, [isOpen, token, userId]);
+  }, [token, userId]);
 
-  // ADD THIS - Listen for cart updates
   useEffect(() => {
     const handleCartUpdate = () => {
-      console.log('Cart update event received');
-      if (isOpen && token && userId) {
-        fetchCart();
+      if (token && userId) {
+        fetchCartAndProducts();
       }
     };
-
     window.addEventListener('cartUpdated', handleCartUpdate);
     return () => window.removeEventListener('cartUpdated', handleCartUpdate);
-  }, [isOpen, token, userId]);
+  }, [token, userId]);
 
-  // UPDATED fetchCart with stock verification
-  const fetchCart = async () => {
+  const fetchCartAndProducts = async () => {
     try {
       setLoading(true);
-      console.log('🛒 Fetching cart for user:', userId);
 
-      const response = await axios.get(
+      const cartResponse = await axios.get(
         `${import.meta.env.VITE_API_URL}/cart/${userId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      let cartItems = response.data.cartItems || [];
+      const cartItemsData = cartResponse.data.cartItems || [];
 
-      // ✅ VERIFY STOCK FOR EACH ITEM (same logic as product page)
-      const verifiedItems = [];
-
-      // Get all inventory data once
-      let inventoryData = [];
-      try {
-        const inventoryResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL}/inventory/all`
-        );
-        inventoryData = inventoryResponse.data;
-        console.log('📦 Loaded inventory data:', inventoryData.length, 'items');
-      } catch (invError) {
-        console.error('❌ Could not load inventory, skipping stock checks:', invError);
+      if (cartItemsData.length === 0) {
+        setCartItems([]);
+        calculateSummary([]);
+        setLoading(false);
+        return;
       }
 
-      for (const item of cartItems) {
-        try {
-          // Find inventory for this product
-          const inventoryItems = inventoryData.filter(inv =>
-            inv.productId === item.productId && inv.isActive === true
+      const productIds = [...new Set(cartItemsData.map(item => item.productId))];
+
+      const productsPromises = productIds.map(id =>
+        axios.get(`${import.meta.env.VITE_API_URL}/products/${id}`)
+          .catch(err => ({ data: null, error: true, productId: id }))
+      );
+
+      const productsResponses = await Promise.all(productsPromises);
+
+      const offersPromises = productIds.map(id =>
+        axios.get(`${import.meta.env.VITE_API_URL}/productoffers/product-color-offers/${id}`)
+          .catch(err => ({ data: [], error: true }))
+      );
+
+      const offersResponses = await Promise.all(offersPromises);
+
+      const productsMap = {};
+      const offersMap = {};
+
+      productsResponses.forEach((res, index) => {
+        if (res.data && !res.error) {
+          productsMap[productIds[index]] = res.data;
+        }
+      });
+
+      offersResponses.forEach((res, index) => {
+        if (res.data && !res.error) {
+          offersMap[productIds[index]] = res.data;
+        }
+      });
+
+      setProductsData(productsMap);
+      setOffersData(offersMap);
+
+      // Get inventory once for all products
+      let inventoryMap = {};
+      try {
+        const inventoryResponse = await axios.get(`${import.meta.env.VITE_API_URL}/inventory/all`);
+        inventoryResponse.data.forEach(inv => {
+          if (!inventoryMap[inv.productId]) {
+            inventoryMap[inv.productId] = 0;
+          }
+          if (inv.isActive) {
+            inventoryMap[inv.productId] += inv.stock;
+          }
+        });
+      } catch (err) {
+        console.error("Error fetching inventory:", err);
+      }
+
+      const enrichedItems = [];
+
+      for (const cartItem of cartItemsData) {
+        const liveProduct = productsMap[cartItem.productId];
+        const productOffers = offersMap[cartItem.productId] || [];
+
+        if (!liveProduct) continue;
+
+        const selectedColorId = cartItem.selectedColor?.colorId;
+
+        let selectedColor = null;
+        let colorData = null;
+
+        if (liveProduct.colors && liveProduct.colors.length > 0) {
+          if (selectedColorId) {
+            selectedColor = liveProduct.colors.find(c => c.colorId === selectedColorId);
+          }
+          if (!selectedColor && liveProduct.colors.length > 0) {
+            selectedColor = liveProduct.colors[0];
+          }
+        }
+
+        if (selectedColor) {
+          colorData = {
+            colorId: selectedColor.colorId,
+            colorName: selectedColor.colorName,
+            currentPrice: selectedColor.currentPrice,
+            originalPrice: selectedColor.originalPrice,
+            images: selectedColor.images || []
+          };
+        }
+
+        const basePrice = colorData?.currentPrice || liveProduct.currentPrice || 0;
+        const originalPrice = colorData?.originalPrice || liveProduct.originalPrice || 0;
+
+        const regularDiscountPercent = originalPrice > basePrice
+          ? Math.round(((originalPrice - basePrice) / originalPrice) * 100)
+          : 0;
+
+        let currentOffer = null;
+        if (selectedColor && productOffers.length > 0) {
+          currentOffer = productOffers.find(offer =>
+            offer.productId === liveProduct.productId &&
+            offer.colorId === selectedColor.colorId &&
+            offer.isCurrentlyValid === true
           );
 
-          if (inventoryItems.length === 0) {
-            console.log(`⚠️ ${item.productName} - No inventory found, marking as out of stock`);
-            // Don't add to cart if out of stock
-            continue;
+          if (!currentOffer) {
+            currentOffer = productOffers.find(offer =>
+              offer.productId === liveProduct.productId &&
+              !offer.colorId &&
+              offer.isCurrentlyValid === true
+            );
           }
-
-          // Calculate total stock (same as product page)
-          const totalStock = inventoryItems.reduce((sum, inv) => sum + inv.stock, 0);
-
-          // If quantity exceeds stock, adjust it
-          if (item.quantity > totalStock) {
-            if (totalStock > 0) {
-              console.log(`⚠️ Adjusting ${item.productName}: ${item.quantity} → ${totalStock}`);
-
-              // Update quantity in backend
-              await axios.put(
-                `${import.meta.env.VITE_API_URL}/cart/update/${item._id}`,
-                { quantity: totalStock, userId: userId },
-                {
-                  headers: { Authorization: `Bearer ${token}` }
-                }
-              );
-
-              // Update item locally
-              item.quantity = totalStock;
-              item.totalPrice = item.finalPrice * totalStock;
-
-              if (item.hasOffer && item.offerDetails) {
-                item.offerDetails.savedAmount =
-                  (item.unitPrice - item.finalPrice) * totalStock;
-              }
-            } else {
-              // Remove item if out of stock
-              console.log(`🗑️ Removing ${item.productName} (out of stock)`);
-              await axios.delete(
-                `${import.meta.env.VITE_API_URL}/cart/remove/${item._id}`,
-                {
-                  headers: { Authorization: `Bearer ${token}` }
-                }
-              );
-              continue; // Skip adding to cart
-            }
-          }
-
-          verifiedItems.push(item);
-
-        } catch (stockError) {
-          console.error(`❌ Error checking stock for ${item.productName}:`, stockError);
-          verifiedItems.push(item); // Keep item if stock check fails
         }
+
+        let finalPrice = basePrice;
+        let offerDetails = null;
+        let hasOffer = false;
+        let offerDiscountPercent = 0;
+
+        if (currentOffer && currentOffer.offerPercentage > 0) {
+          const discountAmount = (basePrice * currentOffer.offerPercentage) / 100;
+          finalPrice = Math.max(0, basePrice - discountAmount);
+          hasOffer = true;
+          offerDiscountPercent = currentOffer.offerPercentage;
+          offerDetails = {
+            offerId: currentOffer._id,
+            offerPercentage: currentOffer.offerPercentage,
+            offerLabel: currentOffer.offerLabel || `${currentOffer.offerPercentage}% OFF`,
+            originalPrice: basePrice,
+            offerPrice: finalPrice,
+            savedAmount: (basePrice - finalPrice) * cartItem.quantity
+          };
+        }
+
+        let totalDiscountPercent = 0;
+        let displayOriginalPrice = originalPrice;
+        let displayCurrentPrice = finalPrice;
+
+        if (hasOffer) {
+          totalDiscountPercent = offerDiscountPercent;
+          displayOriginalPrice = basePrice;
+          displayCurrentPrice = finalPrice;
+        } else if (regularDiscountPercent > 0) {
+          totalDiscountPercent = regularDiscountPercent;
+          displayOriginalPrice = originalPrice;
+          displayCurrentPrice = basePrice;
+        }
+
+        const stock = inventoryMap[liveProduct.productId] || 0;
+
+        let finalQuantity = cartItem.quantity;
+        if (finalQuantity > stock && stock > 0) {
+          finalQuantity = stock;
+          if (finalQuantity !== cartItem.quantity) {
+            await axios.put(
+              `${import.meta.env.VITE_API_URL}/cart/update/${cartItem._id}`,
+              { quantity: finalQuantity, userId: userId },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+          }
+        }
+
+        enrichedItems.push({
+          _id: cartItem._id,
+          productId: liveProduct.productId,
+          productName: liveProduct.productName,
+          quantity: finalQuantity,
+          thumbnailImage: liveProduct.thumbnailImage || colorData?.images?.[0] || null,
+          selectedColor: colorData,
+          selectedModel: cartItem.selectedModel,
+          selectedSize: cartItem.selectedSize,
+          unitPrice: basePrice,
+          originalPrice: originalPrice,
+          finalPrice: finalPrice,
+          totalPrice: finalPrice * finalQuantity,
+          taxSlab: liveProduct.taxSlab || 18,
+          hasOffer: hasOffer,
+          offerDetails: offerDetails,
+          regularDiscountPercent: regularDiscountPercent,
+          offerDiscountPercent: offerDiscountPercent,
+          totalDiscountPercent: totalDiscountPercent,
+          displayOriginalPrice: displayOriginalPrice,
+          displayCurrentPrice: displayCurrentPrice,
+          stock: stock
+        });
       }
 
-      console.log('🛍️ Verified Cart Items:', verifiedItems.length, 'items');
-      setCartItems(verifiedItems);
-      calculateSummary(verifiedItems, response.data.summary);
-
-      // Show message if items were adjusted
-      if (verifiedItems.length !== cartItems.length) {
-        const removedCount = cartItems.length - verifiedItems.length;
-        console.log(`📝 Cart updated: ${removedCount} item(s) removed due to stock issues`);
-      }
+      setCartItems(enrichedItems);
+      calculateSummary(enrichedItems);
 
     } catch (error) {
-      console.error('❌ Error fetching cart:', error);
-      if (error.response) {
-        console.error('📡 Response data:', error.response.data);
-        console.error('📡 Response status:', error.response.status);
-      }
+      console.error('Error fetching cart:', error);
+      toast.error("Failed to load cart");
     } finally {
       setLoading(false);
     }
   };
 
-  const calculateSummary = (items, apiSummary) => {
-    console.log('📊 Calculating summary for items:', items.length);
-
-    const subtotal = apiSummary?.subtotal || items.reduce((sum, item) => sum + item.totalPrice, 0);
-    const totalSavings = apiSummary?.totalSavings || items.reduce((sum, item) => {
-      if (item.hasOffer && item.offerDetails) {
-        return sum + item.offerDetails.savedAmount;
-      }
-      return sum;
+  const calculateSummary = (items) => {
+    const subtotal = items.reduce((sum, item) => sum + (item.displayOriginalPrice * item.quantity), 0);
+    const totalSavings = items.reduce((sum, item) => {
+      const originalTotal = item.displayOriginalPrice * item.quantity;
+      const currentTotal = item.displayCurrentPrice * item.quantity;
+      return sum + (originalTotal - currentTotal);
     }, 0);
+    const shipping = subtotal > 1000 ? 0 : 50;
+    const tax = (subtotal - totalSavings) * 0.18;
+    const total = (subtotal - totalSavings) + shipping + tax;
 
-    const shipping = subtotal > 1000 ? 0 : 50; // Free shipping above ₹1000
-    const tax = subtotal * 0.18; // 18% GST
-    const total = subtotal + shipping + tax;
-
-    const summary = {
+    setCartSummary({
       totalItems: items.reduce((sum, item) => sum + item.quantity, 0),
       subtotal,
       totalSavings,
       shipping,
       tax,
       total
-    };
-
-    console.log('📊 Final Summary:', summary);
-    setCartSummary(summary);
+    });
   };
 
+  const updateQuantity = async (itemId, newQuantity, productId, currentStock) => {
+    if (!token || newQuantity < 1 || newQuantity > 99) return;
 
-  // UPDATED: Use same inventory/all route as product page
-  const checkStockBeforeUpdate = async (productId, requestedQuantity) => {
-    try {
-      console.log(`📦 Checking stock for product: ${productId}`);
-
-      // SAME AS PRODUCT PAGE: Use inventory/all route
-      const inventoryResponse = await axios.get(
-        `${import.meta.env.VITE_API_URL}/inventory/all`
-      );
-
-      // Filter items for this product (same logic as product page)
-      const inventoryItems = inventoryResponse.data.filter(item =>
-        item.productId === productId && item.isActive === true
-      );
-
-      if (inventoryItems.length === 0) {
-        return {
-          allowed: false,
-          stock: 0,
-          message: "Product is out of stock"
-        };
-      }
-
-      // Calculate total stock (same logic as product page)
-      const totalStock = inventoryItems.reduce((sum, item) => sum + item.stock, 0);
-
-      console.log('📦 Stock check result:', {
-        productId,
-        requestedQuantity,
-        totalStock,
-        inventoryItemsCount: inventoryItems.length
-      });
-
-      // Check if requested quantity exceeds stock
-      if (requestedQuantity > totalStock) {
-        return {
-          allowed: false,
-          stock: totalStock,
-          message: `Only ${totalStock} items available in stock`
-        };
-      }
-
-      return {
-        allowed: true,
-        stock: totalStock
-      };
-
-    } catch (error) {
-      console.error('❌ Error checking stock:', error);
-      return {
-        allowed: true, // Allow if check fails (for now)
-        stock: 0,
-        message: 'Unable to verify stock, please try again'
-      };
-    }
-  };
-
-  // UPDATED updateQuantity function
-  const updateQuantity = async (itemId, newQuantity, productId, itemName) => {
-    if (!token || newQuantity < 1 || newQuantity > 99) {
-      console.log('❌ Invalid quantity or no token');
+    if (newQuantity > currentStock) {
+      toast.warning(`Only ${currentStock} item${currentStock > 1 ? 's' : ''} available in stock!`);
       return;
     }
 
     try {
-      console.log(`🔄 Updating ${itemName} to quantity ${newQuantity}`);
+      setUpdatingItemId(itemId);
 
-      // ✅ CHECK STOCK FIRST (same as product page)
-      const stockCheck = await checkStockBeforeUpdate(productId, newQuantity);
-
-      if (!stockCheck.allowed) {
-        alert(`❌ ${stockCheck.message}`);
-        return;
-      }
-
-      setUpdatingItem(itemId);
-
-      // Proceed with quantity update
-      const response = await axios.put(
+      await axios.put(
         `${import.meta.env.VITE_API_URL}/cart/update/${itemId}`,
         { quantity: newQuantity, userId: userId },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log('✅ Update response:', response.data);
-
-      // Update local state
-      const updatedItems = cartItems.map(item => {
-        if (item._id === itemId) {
-          const updatedItem = {
-            ...item,
-            quantity: newQuantity,
-            totalPrice: item.finalPrice * newQuantity
-          };
-
-          if (updatedItem.hasOffer && updatedItem.offerDetails) {
-            updatedItem.offerDetails.savedAmount =
-              (updatedItem.unitPrice - updatedItem.finalPrice) * newQuantity;
-          }
-
-          console.log('🔄 Updated item:', updatedItem);
-          return updatedItem;
-        }
-        return item;
+      // ✅ FIXED: Only update local state, no full reload, no dispatch
+      setCartItems(prev => {
+        const updatedItems = prev.map(item =>
+          item._id === itemId
+            ? { ...item, quantity: newQuantity, totalPrice: item.displayCurrentPrice * newQuantity }
+            : item
+        );
+        calculateSummary(updatedItems);
+        return updatedItems;
       });
 
-      setCartItems(updatedItems);
-      calculateSummary(updatedItems);
-
-      // Dispatch event for navbar update
-      console.log('📢 Dispatching cartUpdated event');
-      window.dispatchEvent(new Event('cartUpdated'));
-
     } catch (error) {
-      console.error('❌ Error updating quantity:', error);
-      if (error.response) {
-        console.error('📡 Error response:', error.response.data);
-        console.error('📡 Error status:', error.response.status);
-      }
-      alert(`Failed to update quantity: ${error.response?.data?.message || error.message}`);
+      console.error('Error updating quantity:', error);
+      toast.error("Failed to update quantity");
     } finally {
-      setUpdatingItem(null);
+      setUpdatingItemId(null);
     }
   };
 
   const removeItem = async (itemId) => {
     if (!token) {
-      alert('Please login to manage cart');
-      return;
-    }
-
-    if (!window.confirm('Are you sure you want to remove this item from cart?')) {
+      toast.info("Please login to manage cart");
       return;
     }
 
     try {
-      console.log(`🗑️ Removing item ${itemId}`);
+      setUpdatingItemId(itemId);
 
-      const response = await axios.delete(
+      await axios.delete(
         `${import.meta.env.VITE_API_URL}/cart/remove/${itemId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log('✅ Remove response:', response.data);
+      setCartItems(prev => {
+        const updatedItems = prev.filter(item => item._id !== itemId);
+        calculateSummary(updatedItems);
+        return updatedItems;
+      });
 
-      // Update local state
-      const updatedItems = cartItems.filter(item => item._id !== itemId);
-      setCartItems(updatedItems);
-      calculateSummary(updatedItems);
-
-      // Dispatch event for navbar update
-      console.log('📢 Dispatching cartUpdated event');
       window.dispatchEvent(new Event('cartUpdated'));
-
-      alert('Item removed from cart successfully!');
+      toast.success("Item removed from cart");
 
     } catch (error) {
-      console.error('❌ Error removing item:', error);
-      if (error.response) {
-        console.error('📡 Error response:', error.response.data);
-        console.error('📡 Error status:', error.response.status);
-      }
-      alert(`Failed to remove item: ${error.response?.data?.message || error.message}`);
+      console.error('Error removing item:', error);
+      toast.error("Failed to remove item");
+    } finally {
+      setUpdatingItemId(null);
     }
   };
 
   const proceedToCheckout = () => {
     if (cartItems.length === 0) {
-      alert('Your cart is empty');
+      toast.error("Your cart is empty");
       return;
     }
-    onClose();
-    navigate('/checkout');
+
+    const checkoutData = {
+      items: cartItems.map(item => ({
+        productId: item.productId,
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.displayCurrentPrice,
+        originalPrice: item.displayOriginalPrice,
+        totalPrice: item.displayCurrentPrice * item.quantity,
+        taxSlab: item.taxSlab,
+        selectedColor: item.selectedColor,
+        selectedSize: item.selectedSize,
+        selectedModel: item.selectedModel,
+        hasOffer: item.hasOffer,
+        offerDetails: item.offerDetails,
+        thumbnailImage: item.thumbnailImage,
+        discountPercent: item.totalDiscountPercent
+      })),
+      summary: cartSummary
+    };
+
+    navigate('/checkout', {
+      state: {
+        cartMode: true,
+        cartData: checkoutData
+      }
+    });
   };
 
   const continueShopping = () => {
-    onClose();
-    navigate('/products');
+    navigate('/all-products');
   };
 
-  // Close on ESC key
-  useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [onClose]);
-
-  if (!isOpen) return null;
+  if (loading) {
+    return (
+      <div className="cartPage">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      {/* Overlay */}
-      <div className="cart-overlay" onClick={onClose}></div>
-
-      {/* Cart Sidebar */}
-      <div className="cart-sidebar">
-        {/* Header */}
-        <div className="cart-header">
-          <h2>
-            <span className="cart-icon">🛒</span>
-            Your Shopping Cart
-            <span className="cart-count">({cartSummary.totalItems})</span>
-          </h2>
-          <button className="close-cart" onClick={onClose}>×</button>
-        </div>
-
-        {/* Cart Content */}
-        <div className="cart-content">
-          {loading ? (
-            <div className="cart-loading">
-              <div className="spinner"></div>
-              <p>Loading cart...</p>
-            </div>
-          ) : cartItems.length === 0 ? (
-            <div className="empty-cart">
-              <div className="empty-cart-icon">🛒</div>
-              <h3>Your cart is empty</h3>
-              <p>Add some amazing products to get started!</p>
-              <button className="continue-shopping-btn" onClick={continueShopping}>
-                Continue Shopping
+    <div className="cartPage">
+      <div className="cartContainer">
+        <div className="left">
+          {cartItems.length === 0 ? (
+            <div className="emptyCart">
+              <FaShoppingBag className="emptyIcon" />
+              <h2>Your cart is empty</h2>
+              <p>Looks like you haven't added anything to your cart yet</p>
+              <button className="shopNowBtn" onClick={continueShopping}>
+                Shop Now
               </button>
             </div>
           ) : (
-            <>
-              {/* Cart Items */}
-              <div className="cart-items">
-                {cartItems.map((item) => (
-                  <div key={item._id} className="cart-item">
-                    {/* Product Image */}
-                    <div className="item-image">
-                      <img
-                        src={item.selectedColor?.images?.[0] || item.thumbnailImage || "https://via.placeholder.com/80x80"}
-                        alt={item.productName}
-                        onClick={() => {
-                          onClose();
-                          navigate(`/product/${item.productId}`);
-                        }}
-                      />
+            cartItems.map((item) => (
+              <div key={item._id} className="cartItem">
+                <img
+                  src={item.thumbnailImage || "https://via.placeholder.com/120x120"}
+                  alt={item.productName}
+                  onClick={() => navigate(`/product/${item.productId}`)}
+                  style={{ cursor: "pointer" }}
+                />
+
+                <div className="info">
+                  <div className="infoHeader">
+                    <h3 onClick={() => navigate(`/product/${item.productId}`)} style={{ cursor: "pointer" }}>
+                      {item.productName}
+                    </h3>
+                    <MdClose
+                      className="closeBtn"
+                      onClick={() => removeItem(item._id)}
+                    />
+                  </div>
+
+                
+
+                  <div className="priceWrapper">
+                    <div className="price">
+                      {item.totalDiscountPercent > 0 && (
+                        <span className="discount">-{item.totalDiscountPercent}%</span>
+                      )}
+                      ₹{item.displayCurrentPrice.toLocaleString()}
                     </div>
+                    {item.displayOriginalPrice > item.displayCurrentPrice && (
+                      <div className="mrp">M.R.P.: ₹{item.displayOriginalPrice.toLocaleString()}</div>
+                    )}
+                  </div>
 
-                    {/* Item Details */}
-                    <div className="item-details">
-                      <div className="item-header">
-                        <h4
-                          className="item-name"
-                          onClick={() => {
-                            onClose();
-                            navigate(`/product/${item.productId}`);
-                          }}
-                        >
-                          {item.productName}
-                        </h4>
-                        <button
-                          className="remove-item"
-                          onClick={() => removeItem(item._id)}
-                          title="Remove"
-                          disabled={updatingItem === item._id}
-                        >
-                          ×
-                        </button>
-                      </div>
-
-                      {/* Variant Info */}
-                      <div className="item-variants">
-                        {item.selectedModel && (
-                          <span className="variant-chip model">
-                            {item.selectedModel.modelName}
-                          </span>
-                        )}
-                        {item.selectedColor && (
-                          <span className="variant-chip color">
-                            {item.selectedColor.colorName}
-                          </span>
-                        )}
-                        {item.selectedSize && (
-                          <span className="variant-chip size">
-                            Size: {item.selectedSize}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Pricing */}
-                      <div className="item-pricing">
-                        <div className="price-display">
-                          {item.hasOffer ? (
-                            <>
-                              <span className="final-price">
-                                ₹{(item.finalPrice * item.quantity).toLocaleString()}
-                              </span>
-                              <span className="unit-price struck">
-                                ₹{(item.unitPrice * item.quantity).toLocaleString()}
-                              </span>
-                              <span className="saved-badge">
-                                Save ₹{item.offerDetails?.savedAmount?.toLocaleString() || 0}
-                              </span>
-                            </>
-                          ) : (
-                            <span className="final-price">
-                              ₹{(item.finalPrice * item.quantity).toLocaleString()}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Offer Label */}
-                        {item.hasOffer && item.offerDetails && (
-                          <div className="offer-label">
-                            🎁 {item.offerDetails.offerLabel} ({item.offerDetails.offerPercentage}% OFF)
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="item-quantity">
-                        <button
-                          className="qty-btn minus"
-                          onClick={() => updateQuantity(item._id, item.quantity - 1, item.productId, item.productName)}
-                          disabled={item.quantity <= 1 || updatingItem === item._id}
-                        >
-                          −
-                        </button>
-                        <span className="qty-value">
-                          {updatingItem === item._id ? '...' : item.quantity}
-                        </span>
-                        <button
-                          className="qty-btn plus"
-                          onClick={() => updateQuantity(item._id, item.quantity + 1, item.productId, item.productName)}
-                          disabled={item.quantity >= 99 || updatingItem === item._id}
-                        >
-                          +
-                        </button>
-                      </div>
+                  {item.hasOffer && item.offerDetails && (
+                    <div className="offer-label">
+                      🎁 {item.offerDetails.offerLabel}
                     </div>
+                  )}
+
+                  <div className="qtyBox">
+                    <button
+                      onClick={() => updateQuantity(item._id, item.quantity - 1, item.productId, item.stock)}
+                      disabled={item.quantity <= 1 || updatingItemId === item._id}
+                    >
+                      -
+                    </button>
+                    <span className={updatingItemId === item._id ? 'updating' : ''}>
+                      {updatingItemId === item._id ? '...' : item.quantity}
+                    </span>
+                    <button
+                      onClick={() => updateQuantity(item._id, item.quantity + 1, item.productId, item.stock)}
+                      disabled={item.quantity >= item.stock || updatingItemId === item._id}
+                    >
+                      +
+                    </button>
                   </div>
-                ))}
+                </div>
               </div>
-
-              {/* Cart Summary */}
-              <div className="cart-summary">
-                <div className="summary-row">
-                  <span>Subtotal ({cartSummary.totalItems} items)</span>
-                  <span>₹{cartSummary.subtotal.toLocaleString()}</span>
-                </div>
-
-                {cartSummary.totalSavings > 0 && (
-                  <div className="summary-row discount">
-                    <span>Total Savings</span>
-                    <span className="savings">-₹{cartSummary.totalSavings.toLocaleString()}</span>
-                  </div>
-                )}
-
-                <div className="summary-row">
-                  <span>Shipping</span>
-                  <span>{cartSummary.shipping === 0 ? 'FREE' : `₹${cartSummary.shipping}`}</span>
-                </div>
-
-                <div className="summary-row">
-                  <span>Tax (GST 18%)</span>
-                  <span>₹{cartSummary.tax.toLocaleString()}</span>
-                </div>
-
-                <div className="summary-row total">
-                  <span>Total Amount</span>
-                  <span className="total-amount">₹{cartSummary.total.toLocaleString()}</span>
-                </div>
-
-                {cartSummary.subtotal < 1000 && (
-                  <div className="free-shipping-note">
-                    🚚 Add ₹{(1000 - cartSummary.subtotal).toLocaleString()} more for FREE shipping!
-                  </div>
-                )}
-              </div>
-            </>
+            ))
           )}
         </div>
 
-        {/* Cart Footer */}
         {cartItems.length > 0 && (
-          <div className="cart-footer">
-            <button className="continue-shopping" onClick={continueShopping}>
-              Continue Shopping
-            </button>
-            <button className="checkout-btn" onClick={proceedToCheckout}>
-              Proceed to Checkout
-              <span className="checkout-price">₹{cartSummary.total.toLocaleString()}</span>
+          <div className="right">
+            <div className="product__features">
+              <div className="feature-item">
+                <FaTruck />
+                <div className="feature-content">
+                  <p>DELIVERED ON TIME</p>
+                  <span>Standard and express delivery available</span>
+                </div>
+              </div>
+              <div className="feature-item">
+                <FaLock />
+                <div className="feature-content">
+                  <p>SECURE PAYMENT</p>
+                  <span>Faster, safer & more secure online payment</span>
+                </div>
+              </div>
+              <div className="feature-item">
+                <FaBoxOpen />
+                <div className="feature-content">
+                  <p>CRAFTED WITH CARE</p>
+                  <span>Made with attention to detail to deliver premium quality</span>
+                </div>
+              </div>
+              <div className="feature-item non-returnable">
+                <FaUndo />
+                <div className="feature-content">
+                  <p>NON-RETURNABLE</p>
+                  <span>For hygiene and quality assurance, this product cannot be returned</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="summary">
+              <h3>Order Summary</h3>
+
+              <div className="row">
+                <span>Total MRP</span>
+                <span>₹ {cartSummary.subtotal.toLocaleString()}</span>
+              </div>
+
+              {cartSummary.totalSavings > 0 && (
+                <div className="row discount-row">
+                  <span>Discount on MRP</span>
+                  <span className="savings">- ₹ {cartSummary.totalSavings.toLocaleString()}</span>
+                </div>
+              )}
+
+              <div className="row">
+                <span>Coupon Discount</span>
+                <span>- ₹0</span>
+              </div>
+
+              <div className="row">
+                <span>Shipping</span>
+                <span>{cartSummary.shipping === 0 ? 'FREE' : `₹ ${cartSummary.shipping}`}</span>
+              </div>
+
+              <div className="row">
+                <span>Tax (GST 18%)</span>
+                <span>₹ {cartSummary.tax.toLocaleString()}</span>
+              </div>
+
+              <hr />
+
+              <div className="row total">
+                <span>Total Amount</span>
+                <span>₹ {cartSummary.total.toLocaleString()}</span>
+              </div>
+
+              <div className="taxNote">All prices are inclusive of taxes</div>
+
+              {cartSummary.subtotal < 1000 && (
+                <div className="free-shipping-note">
+                  🚚 Add ₹{(1000 - cartSummary.subtotal).toLocaleString()} more for FREE shipping!
+                </div>
+              )}
+            </div>
+
+            <button className="checkout" onClick={proceedToCheckout}>
+              Check out
             </button>
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 };
 

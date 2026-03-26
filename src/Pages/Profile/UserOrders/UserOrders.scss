@@ -1,8 +1,11 @@
+// UserOrders.scss
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Inter:wght@300;400;500;600;700&display=swap");
 
+// ─── Tokens ────────────────────────────────────────────────────────────────────
 $brand: #4e221c;
 $brand-hover: #3a1814;
 $brand-light: rgba(78, 34, 28, 0.08);
+$brand-border: rgba(78, 34, 28, 0.15);
 $gold: #c98b30;
 $gold-light: rgba(201, 139, 48, 0.15);
 $bg-page: #fefcf2;
@@ -13,28 +16,43 @@ $text-primary: #2a1f12;
 $text-secondary: #6b5535;
 $text-muted: #a08060;
 $red: #c0392b;
+$red-light: rgba(192, 57, 43, 0.1);
 $green: #2d7a4f;
+$green-light: rgba(45, 122, 79, 0.1);
 $blue: #1a5fa8;
+$blue-light: rgba(26, 95, 168, 0.1);
+$font-display: "DM Sans", sans-serif;
+$font-body: "Inter", sans-serif;
+$radius-sm: 8px;
 $radius-md: 10px;
 $radius-lg: 14px;
+$radius-xl: 20px;
+$shadow-sm: 0 2px 8px rgba(42, 31, 18, 0.06);
 $shadow-md: 0 4px 16px rgba(42, 31, 18, 0.08);
+$shadow-lg: 0 8px 32px rgba(42, 31, 18, 0.12);
 $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-$green-light: rgba(45, 122, 79, 0.1);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Main Container - with top space for navbar
+// ═══════════════════════════════════════════════════════════════════════════════
 
 .user-orders {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 40px 24px;
-  font-family: 'Inter', sans-serif;
-  background: $bg-page;
   min-height: 100vh;
+  background: $bg-page;
+  font-family: $font-body;
+  padding: 100px 24px 60px;
 
   @media (max-width: 768px) {
-    padding: 24px 16px;
+    padding: 90px 20px 40px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 80px 16px 32px;
   }
 }
 
-// Header & Stats
+// ─── Header & Stats ────────────────────────────────────────────────────────────
+
 .uo-header {
   display: flex;
   justify-content: space-between;
@@ -44,17 +62,22 @@ $green-light: rgba(45, 122, 79, 0.1);
   margin-bottom: 32px;
 
   &__title {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 28px;
+    font-family: $font-display;
+    font-size: 32px;
     font-weight: 700;
     color: $brand;
+    letter-spacing: -0.02em;
+
+    @media (max-width: 480px) {
+      font-size: 28px;
+    }
   }
 }
 
 .uo-stats {
   display: flex;
   gap: 16px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .uo-stat {
@@ -64,21 +87,32 @@ $green-light: rgba(45, 122, 79, 0.1);
   padding: 12px 20px;
   text-align: center;
   min-width: 100px;
+  transition: all $transition;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+    border-color: $brand-border;
+  }
 
   &__val {
-    font-size: 24px;
+    font-family: $font-display;
+    font-size: 28px;
     font-weight: 700;
     color: $brand;
+    margin-bottom: 4px;
   }
 
   &__label {
     font-size: 12px;
     color: $text-muted;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 }
 
-// Filters
+// ─── Filters ────────────────────────────────────────────────────────────────────
+
 .uo-filters {
   display: flex;
   flex-wrap: wrap;
@@ -102,6 +136,7 @@ $green-light: rgba(45, 122, 79, 0.1);
   &:hover {
     border-color: $brand;
     color: $brand;
+    transform: translateY(-2px);
   }
 
   &.active {
@@ -111,45 +146,64 @@ $green-light: rgba(45, 122, 79, 0.1);
   }
 }
 
-// Order Card
+// ═══════════════════════════════════════════════════════════════════════════════
+// ORDERS LIST - GRID LAYOUT (Multiple orders in a row)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.uo-orders-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+// ─── Order Card - COMPACT CARD DESIGN ──────────────────────────────────────────
+
 .uo-order-card {
   background: $bg-card;
   border: 1px solid $border-light;
-  border-radius: $radius-lg;
-  margin-bottom: 20px;
+  border-radius: $radius-xl;
   overflow: hidden;
   transition: all $transition;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 
   &:hover {
     box-shadow: $shadow-md;
+    border-color: $brand-border;
+    transform: translateY(-4px);
   }
 
   &__header {
-    padding: 20px;
+    padding: 16px;
     background: linear-gradient(135deg, $brand-light, $gold-light);
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
     border-bottom: 1px solid $border-light;
-  }
-
-  &__info {
-    flex: 1;
   }
 
   &__id-row {
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: space-between;
     flex-wrap: wrap;
-    margin-bottom: 6px;
+    gap: 8px;
+    margin-bottom: 8px;
   }
 }
 
 .uo-order-id {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 16px;
+  font-family: $font-display;
+  font-size: 14px;
   font-weight: 700;
   color: $brand;
 }
@@ -158,9 +212,9 @@ $green-light: rgba(45, 122, 79, 0.1);
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 12px;
-  border-radius: 30px;
-  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
   font-weight: 600;
   color: white;
 
@@ -190,54 +244,63 @@ $green-light: rgba(45, 122, 79, 0.1);
 }
 
 .uo-order-date {
-  font-size: 12px;
+  font-size: 11px;
   color: $text-muted;
   margin: 0;
 }
 
 .uo-order-total {
-  text-align: right;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid $border-light;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 
   &__label {
-    display: block;
     font-size: 11px;
     color: $text-muted;
+    text-transform: uppercase;
   }
 
   &__amount {
-    font-size: 20px;
+    font-family: $font-display;
+    font-size: 18px;
     font-weight: 700;
     color: $brand;
   }
 }
 
-// Items preview
+// ─── Items Preview - Compact inside card ───────────────────────────────────────
+
 .uo-items-preview {
-  padding: 16px 20px;
+  padding: 12px 16px;
   border-bottom: 1px solid $border-light;
+  flex: 1;
 }
 
 .uo-item {
   display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 12px;
 
   &:last-child {
     margin-bottom: 0;
   }
 
   &__avatar {
-    width: 60px;
-    height: 60px;
+    width: 48px;
+    height: 48px;
     background: $brand-light;
-    border-radius: 8px;
+    border-radius: $radius-md;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     color: $brand;
     overflow: hidden;
+    flex-shrink: 0;
 
     img {
       width: 100%;
@@ -248,49 +311,61 @@ $green-light: rgba(45, 122, 79, 0.1);
 
   &__info {
     flex: 1;
+    min-width: 0;
   }
 
   &__name {
     font-weight: 600;
+    font-size: 13px;
     margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   &__chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 4px;
     margin-bottom: 6px;
   }
 
   &__price-row {
     display: flex;
-    gap: 16px;
-    font-size: 13px;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
     color: $text-muted;
-  }
 
-  &__price {
-    font-weight: 600;
-    color: $brand;
+    .uo-item__price {
+      font-weight: 600;
+      color: $brand;
+      font-size: 13px;
+    }
   }
 }
 
 .uo-chip {
   background: $brand-light;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 9px;
+  font-weight: 500;
   color: $text-secondary;
 }
 
 .uo-more-items {
   text-align: center;
-  font-size: 12px;
+  font-size: 11px;
   color: $text-muted;
+  padding: 6px;
+  background: $brand-light;
+  border-radius: $radius-sm;
   margin-top: 8px;
 }
 
-// Review section
+// ─── Review Section inside card ────────────────────────────────────────────────
+
 .uo-review-section {
   margin-top: 10px;
 }
@@ -299,13 +374,15 @@ $green-light: rgba(45, 122, 79, 0.1);
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 12px;
+  padding: 4px 10px;
   background: $gold-light;
   border: 1px solid $gold;
-  border-radius: 20px;
-  font-size: 12px;
+  border-radius: 16px;
+  font-size: 10px;
+  font-weight: 500;
   color: $gold;
   cursor: pointer;
+  transition: all $transition;
 
   &:hover {
     background: $gold;
@@ -317,77 +394,92 @@ $green-light: rgba(45, 122, 79, 0.1);
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
 
   &__badge {
     background: $green-light;
     padding: 2px 8px;
-    border-radius: 16px;
-    font-size: 12px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 500;
     color: $green;
   }
 
   &__btns {
     display: flex;
-    gap: 8px;
+    gap: 6px;
   }
 }
 
 .uo-review-btn {
   background: transparent;
   border: 1px solid $border-mid;
-  border-radius: 16px;
-  padding: 4px 10px;
-  font-size: 11px;
+  border-radius: 12px;
+  padding: 3px 8px;
+  font-size: 10px;
   cursor: pointer;
+  transition: all $transition;
 
   &--edit {
     color: $blue;
+    border-color: $blue;
 
     &:hover {
-      background: rgba(26, 95, 168, 0.1);
+      background: $blue-light;
     }
   }
 
   &--del {
     color: $red;
+    border-color: $red;
 
     &:hover {
-      background: rgba(192, 57, 43, 0.1);
+      background: $red-light;
     }
   }
 }
 
-// Order footer
+// ─── Order Footer - Compact ────────────────────────────────────────────────────
+
 .uo-order-card__footer {
-  padding: 12px 20px;
+  padding: 12px 16px;
   background: $bg-page;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
+  border-top: 1px solid $border-light;
 }
 
 .uo-order-meta {
   display: flex;
-  gap: 20px;
-  font-size: 12px;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
   color: $text-muted;
+  margin-bottom: 12px;
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
 }
 
 .uo-order-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
+
+  button {
+    flex: 1;
+  }
 }
 
 .uo-action-btn {
-  padding: 6px 16px;
+  padding: 6px 12px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   background: transparent;
+  transition: all $transition;
+  text-align: center;
 
   &--view {
     border: 1px solid $brand;
@@ -403,19 +495,20 @@ $green-light: rgba(45, 122, 79, 0.1);
     color: $red;
 
     &:hover {
-      background: rgba(192, 57, 43, 0.1);
+      background: $red-light;
     }
   }
 }
 
-// Pagination
+// ─── Pagination ────────────────────────────────────────────────────────────────
+
 .uo-pagination {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 16px;
-  margin-top: 32px;
-  padding-top: 20px;
+  margin-top: 16px;
+  padding-top: 24px;
   border-top: 1px solid $border-light;
 }
 
@@ -424,13 +517,16 @@ $green-light: rgba(45, 122, 79, 0.1);
   background: $bg-card;
   border: 1px solid $border-mid;
   border-radius: $radius-md;
-  cursor: pointer;
+  font-size: 13px;
   font-weight: 500;
+  color: $text-secondary;
+  cursor: pointer;
   transition: all $transition;
 
   &:hover:not(:disabled) {
     border-color: $brand;
     color: $brand;
+    transform: translateY(-2px);
   }
 
   &:disabled {
@@ -444,7 +540,8 @@ $green-light: rgba(45, 122, 79, 0.1);
   color: $text-muted;
 }
 
-// Modal overlay & content – critical for proper layering
+// ─── Modal Styles (same as before) ─────────────────────────────────────────────
+
 .uo-modal-overlay {
   position: fixed;
   top: 0;
@@ -452,25 +549,26 @@ $green-light: rgba(45, 122, 79, 0.1);
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(4px);
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  animation: fadeIn 0.2s ease-out;
 }
 
 .uo-modal {
   background: $bg-card;
-  border-radius: $radius-lg;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-  max-width: 100% ;
-  width: 80%;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-lg;
+  width: 100%;
+  max-width: 90vw;
   max-height: 90vh;
   overflow: auto;
   position: relative;
   z-index: 1010;
-  /* above overlay */
+  animation: slideUp 0.3s ease-out;
 
   &--sm {
     max-width: 450px;
@@ -490,19 +588,41 @@ $green-light: rgba(45, 122, 79, 0.1);
     position: sticky;
     top: 0;
     z-index: 2;
+
+    h3 {
+      font-family: $font-display;
+      font-size: 20px;
+      font-weight: 700;
+      color: $brand;
+      margin: 0;
+    }
+  }
+
+  &__sub {
+    font-size: 13px;
+    color: $text-muted;
+    margin: 4px 0 0 0;
   }
 
   &__close {
-    background: none;
-    border: none;
-    font-size: 28px;
-    line-height: 1;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: 1px solid $border-mid;
+    border-radius: 50%;
+    font-size: 20px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all $transition;
     color: $text-muted;
-    transition: color $transition;
 
     &:hover {
+      background: $red-light;
+      border-color: $red;
       color: $red;
+      transform: rotate(90deg);
     }
   }
 
@@ -523,19 +643,22 @@ $green-light: rgba(45, 122, 79, 0.1);
 }
 
 .uo-modal-btn {
-  padding: 8px 20px;
+  padding: 10px 24px;
   border-radius: $radius-md;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 13px;
   cursor: pointer;
+  transition: all $transition;
 
   &--outline {
     background: transparent;
-    border: 1px solid $border-mid;
+    border: 1.5px solid $border-mid;
     color: $text-secondary;
 
     &:hover {
       border-color: $brand;
       color: $brand;
+      transform: translateY(-2px);
     }
   }
 
@@ -546,6 +669,7 @@ $green-light: rgba(45, 122, 79, 0.1);
 
     &:hover {
       background: $brand-hover;
+      transform: translateY(-2px);
     }
   }
 
@@ -556,11 +680,13 @@ $green-light: rgba(45, 122, 79, 0.1);
 
     &:hover {
       background: darken($red, 10%);
+      transform: translateY(-2px);
     }
   }
 }
 
-// Timeline (inside details modal)
+// ─── Timeline (Modal Content) ──────────────────────────────────────────────────
+
 .uo-timeline {
   display: flex;
   justify-content: space-between;
@@ -591,23 +717,19 @@ $green-light: rgba(45, 122, 79, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 18px;
     margin-bottom: 8px;
-  }
-
-  &__info {
-    display: flex;
-    flex-direction: column;
   }
 
   &__label {
     font-weight: 600;
-    font-size: 13px;
+    font-size: 12px;
   }
 
   &__date {
-    font-size: 11px;
+    font-size: 10px;
     color: $text-muted;
+    margin-top: 2px;
   }
 }
 
@@ -626,25 +748,26 @@ $green-light: rgba(45, 122, 79, 0.1);
   }
 }
 
-// Other modal sections (used inside details)
+// ─── Section Styles (Modal Content) ───────────────────────────────────────────
+
 .uo-section {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 
   &__title {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 16px;
-    font-weight: 600;
+    font-family: $font-display;
+    font-size: 15px;
+    font-weight: 700;
     color: $brand;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     border-left: 3px solid $gold;
-    padding-left: 12px;
+    padding-left: 10px;
   }
 }
 
 .uo-detail-item {
   display: flex;
-  gap: 16px;
-  padding: 12px 0;
+  gap: 12px;
+  padding: 10px 0;
   border-bottom: 1px solid $border-light;
 
   &:last-child {
@@ -652,14 +775,21 @@ $green-light: rgba(45, 122, 79, 0.1);
   }
 
   &__avatar {
-    width: 56px;
-    height: 56px;
+    width: 50px;
+    height: 50px;
     background: $brand-light;
-    border-radius: 8px;
+    border-radius: $radius-md;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    flex-shrink: 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
   }
 
   &__info {
@@ -668,6 +798,7 @@ $green-light: rgba(45, 122, 79, 0.1);
 
   &__name {
     font-weight: 600;
+    font-size: 14px;
     margin-bottom: 4px;
   }
 
@@ -675,53 +806,45 @@ $green-light: rgba(45, 122, 79, 0.1);
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 12px;
-    margin-top: 8px;
-    font-size: 13px;
+    gap: 8px;
+    margin-top: 6px;
+    font-size: 12px;
   }
 
   &__total {
-    font-weight: 600;
+    font-weight: 700;
     color: $brand;
     margin-left: auto;
   }
 }
 
-.uo-offer-badge {
-  background: $green-light;
-  padding: 2px 6px;
-  border-radius: 12px;
-  font-size: 11px;
-  color: $green;
-}
-
 .uo-address-card {
   background: $bg-page;
-  padding: 16px;
+  padding: 12px;
   border-radius: $radius-md;
   border: 1px solid $border-light;
 
   &__name {
     font-weight: 600;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 
   &__contact {
-    font-size: 13px;
+    font-size: 12px;
     color: $text-muted;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   &__lines p {
-    margin: 0 0 4px;
-    font-size: 13px;
+    margin: 0 0 2px;
+    font-size: 12px;
   }
 }
 
 .uo-summary {
   background: $bg-page;
   border-radius: $radius-md;
-  padding: 16px;
+  padding: 12px;
   border: 1px solid $border-light;
 }
 
@@ -729,7 +852,7 @@ $green-light: rgba(45, 122, 79, 0.1);
   display: flex;
   justify-content: space-between;
   padding: 6px 0;
-  font-size: 13px;
+  font-size: 12px;
   color: $text-secondary;
   border-bottom: 1px solid $border-light;
 
@@ -739,8 +862,8 @@ $green-light: rgba(45, 122, 79, 0.1);
 
   &--total {
     font-weight: 700;
-    font-size: 16px;
-    margin-top: 8px;
+    font-size: 14px;
+    margin-top: 6px;
     padding-top: 8px;
     border-top: 1px solid $border-light;
     color: $brand;
@@ -751,60 +874,61 @@ $green-light: rgba(45, 122, 79, 0.1);
   }
 }
 
-.uo-free {
-  color: $green;
-  font-weight: 600;
-}
-
 .uo-payment-card {
   background: $bg-page;
   border: 1px solid $border-light;
   border-radius: $radius-md;
-  padding: 12px 16px;
+  padding: 10px 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
 }
 
 .uo-payment-status {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 12px;
 
   &--success {
+    background: $green-light;
     color: $green;
   }
 
   &--pending {
+    background: $gold-light;
     color: $gold;
   }
 
   &--failed {
+    background: $red-light;
     color: $red;
   }
 }
 
-// Review modal specifics
+// ─── Review Modal Specifics ────────────────────────────────────────────────────
+
 .uo-review-product {
   background: $brand-light;
-  padding: 12px 16px;
-  border-radius: $radius-md;
+  padding: 12px;
+  border-radius: $radius-lg;
   margin-bottom: 20px;
   text-align: center;
 
   &__name {
     font-weight: 700;
+    font-size: 14px;
     color: $brand;
   }
 }
 
 .uo-review-field {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 
   label {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: $text-secondary;
     display: block;
@@ -818,13 +942,14 @@ $green-light: rgba(45, 122, 79, 0.1);
     border-radius: $radius-md;
     resize: vertical;
     font-family: inherit;
+    font-size: 13px;
   }
 }
 
 .uo-stars {
   display: flex;
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .uo-star {
@@ -833,7 +958,6 @@ $green-light: rgba(45, 122, 79, 0.1);
   font-size: 28px;
   cursor: pointer;
   color: $border-mid;
-  transition: transform 0.1s;
 
   &.on {
     color: $gold;
@@ -844,66 +968,60 @@ $green-light: rgba(45, 122, 79, 0.1);
   }
 }
 
-.uo-rating-hint {
-  font-size: 12px;
-  color: $text-muted;
-}
-
-.uo-char-count {
-  text-align: right;
-  font-size: 11px;
-  color: $text-muted;
-  margin-top: 4px;
-}
-
 .uo-review-notes {
   background: $brand-light;
-  padding: 12px;
+  padding: 10px;
   border-radius: $radius-md;
-  font-size: 12px;
+  font-size: 11px;
   color: $text-secondary;
-  margin-top: 20px;
+  margin-top: 16px;
 
   p {
-    margin: 4px 0;
+    margin: 2px 0;
   }
 }
 
-.uo-req {
-  color: $red;
-}
+// ─── State Wrappers ────────────────────────────────────────────────────────────
 
-.uo-optional {
-  color: $text-muted;
-  font-weight: normal;
-}
-
-// Cancel confirm modal specific
-.uo-confirm-body {
+.uo-state-wrap,
+.uo-empty,
+.uo-auth-wall {
   text-align: center;
-  padding: 16px 0;
+  padding: 60px 20px;
+  background: $bg-card;
+  border-radius: $radius-xl;
+  border: 1px solid $border-light;
+
+  h2 {
+    font-family: $font-display;
+    font-size: 24px;
+    color: $brand;
+    margin-bottom: 12px;
+  }
+
+  p {
+    color: $text-secondary;
+    margin-bottom: 24px;
+  }
 }
 
-.uo-confirm-icon {
-  font-size: 48px;
-  margin-bottom: 12px;
-}
+.uo-shop-btn,
+.uo-auth-btn,
+.uo-retry-btn {
+  background: $brand;
+  color: white;
+  border: none;
+  padding: 10px 28px;
+  border-radius: $radius-md;
+  font-family: $font-display;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition;
 
-// Spinner
-.uo-btn-spinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: uo-spin 0.6s linear infinite;
-  margin-right: 6px;
-}
-
-@keyframes uo-spin {
-  to {
-    transform: rotate(360deg);
+  &:hover {
+    background: $brand-hover;
+    transform: translateY(-2px);
   }
 }
 
@@ -913,42 +1031,74 @@ $green-light: rgba(45, 122, 79, 0.1);
   border: 3px solid $border-mid;
   border-top-color: $brand;
   border-radius: 50%;
-  animation: uo-spin 0.8s linear infinite;
-  margin: 20px auto;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
 }
 
-.uo-state-wrap {
-  text-align: center;
-  padding: 60px 20px;
-  background: $bg-card;
-  border-radius: $radius-lg;
-  border: 1px solid $border-light;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.uo-empty,
-.uo-state-wrap,
-.uo-auth-wall {
-  text-align: center;
-  padding: 60px 20px;
-  background: $bg-card;
-  border-radius: $radius-lg;
-  border: 1px solid $border-light;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
-.uo-shop-btn,
-.uo-auth-btn,
-.uo-retry-btn {
-  background: $brand;
-  color: white;
-  border: none;
-  padding: 10px 24px;
-  border-radius: $radius-md;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all $transition;
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
 
-  &:hover {
-    background: $brand-hover;
-    transform: translateY(-2px);
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ─── Responsive ────────────────────────────────────────────────────────────────
+
+@media (max-width: 768px) {
+  .uo-orders-list {
+    grid-template-columns: 1fr;
+  }
+
+  .uo-timeline {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .uo-timeline-connector {
+    display: none;
+  }
+
+  .uo-timeline-step {
+    flex-direction: row;
+    width: 100%;
+    gap: 12px;
+    text-align: left;
+
+    &__icon {
+      margin-bottom: 0;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .uo-order-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .uo-order-actions {
+    flex-direction: column;
   }
 }

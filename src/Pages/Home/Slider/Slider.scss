@@ -1,0 +1,91 @@
+
+
+.frying {
+  width: 100%;
+
+  /* DESKTOP */
+  &__desktop {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+
+    @media (max-width: 768px) {
+      display: none;
+    }
+  }
+
+  &__card {
+    overflow: hidden;
+    padding-top: 30px;
+
+    img {
+      width: 100%;
+      height: 320px;
+      object-fit: cover;
+      display: block;
+    }
+  }
+
+  /* MOBILE */
+  &__mobile {
+    display: none;
+    overflow: hidden;
+    position: relative;
+
+    @media (max-width: 768px) {
+      display: block;
+    }
+  }
+
+  &__track {
+    display: flex;
+    transition: transform 0.6s ease;
+  }
+
+  &__slide {
+    min-width: 100%;
+
+    img {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+    }
+  }
+
+  /* Dots Navigation */
+  &__dots {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 0 20px;
+    // background-color: #fff5e9;
+    margin-top: -10px;
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #d4c5b5;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+    
+    &:hover {
+      background-color: #6b2c1f;
+      transform: scale(1.2);
+    }
+
+    &.active {
+      width: 24px;
+      border-radius: 12px;
+      background-color: #6b2c1f;
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+}

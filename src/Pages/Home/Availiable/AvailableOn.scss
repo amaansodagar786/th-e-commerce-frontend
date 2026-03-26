@@ -1,0 +1,77 @@
+
+
+.available {
+  width: 100%;
+  height: auto;
+  // background: #ffffff;
+  // margin-top: -30px;
+//   padding: 18px 0;
+
+  &__wrapper {
+    overflow: hidden;
+    // background:rgb(253, 253, 253);
+    margin-top: 20px;
+    background: white !important;
+  }
+
+  &__track {
+    display: flex;
+    width: max-content;
+    animation: scrollSlow 30s linear infinite; // 🐢 slow scroll
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 0px;
+    margin-right: 40px; // wide spacing like screenshot
+
+    img {
+      height: 85px; // 🔥 bigger logo
+      width: auto;
+    }
+
+    span {
+      font-size: 24px; // 🔥 bigger text
+      font-weight: 600;
+      color: #111;
+      letter-spacing: 1px;
+      font-family: 'DM Sans', sans-serif;
+    }
+  }
+}
+
+/* Smooth infinite */
+@keyframes scrollSlow {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* 📱 Mobile */
+@media (max-width: 768px) {
+  .available {
+    padding: 14px 0;
+
+    &__track {
+      animation: scrollSlow 25s linear infinite; // thoda fast mobile me
+    }
+
+    &__item {
+      margin-right: 30px;
+
+      img {
+        height: 70px;
+      }
+
+      span {
+        font-size: 16px;
+      }
+    }
+  }
+}

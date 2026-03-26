@@ -319,7 +319,7 @@ const ContactForm = () => {
                         </div>
 
                         <div className="contact-info-details">
-                            {/* Address */}
+                            {/* Address - UPDATED */}
                             <motion.div
                                 className="contact-info-item"
                                 whileHover={{ x: 5, transition: { duration: 0.2 } }}
@@ -330,18 +330,16 @@ const ContactForm = () => {
                                 <div className="contact-info-item__content">
                                     <h4>Our Location</h4>
                                     <p>
-                                        Satvsar Oil Industries,
-
-                                        Plot No. 45, Industrial Area,
-                                        <br />
-                                        Jaipur, Rajasthan - 302001
+                                        G.F - 39, Infinity Arcade,
                                         {/* <br />  */}
-                                        India
+                                        Near Pratapnagar<br /> Bridge, ONGC Road,
+                                        
+                                        Pratapnagar, Vadodara <br /> 390004, Gujarat (India)
                                     </p>
                                 </div>
                             </motion.div>
 
-                            {/* Phone */}
+                            {/* Phone - UPDATED */}
                             <motion.div
                                 className="contact-info-item"
                                 whileHover={{ x: 5, transition: { duration: 0.2 } }}
@@ -352,14 +350,14 @@ const ContactForm = () => {
                                 <div className="contact-info-item__content">
                                     <h4>Call Us</h4>
                                     <p>
-                                        <a href="tel:+919876543210">+91 98765 43210</a>
+                                        <a href="tel:+919274778081">+91 92747 78081</a>
                                         <br />
-                                        <a href="tel:+911412345678">+91 141 234 5678</a>
+                                        <a href="tel:+917861078081">+91 78610 78081</a>
                                     </p>
                                 </div>
                             </motion.div>
 
-                            {/* Email */}
+                            {/* Email - UPDATED */}
                             <motion.div
                                 className="contact-info-item"
                                 whileHover={{ x: 5, transition: { duration: 0.2 } }}
@@ -370,14 +368,12 @@ const ContactForm = () => {
                                 <div className="contact-info-item__content">
                                     <h4>Email Us</h4>
                                     <p>
-                                        <a href="mailto:hello@satvsar.com">hello@satvsar.com</a>
-                                        <br />
-                                        <a href="mailto:support@satvsar.com">support@satvsar.com</a>
+                                        <a href="mailto:info@satvsar.com">info@satvsar.com</a>
                                     </p>
                                 </div>
                             </motion.div>
 
-                            {/* Hours */}
+                            {/* Hours - Keep as is */}
                             <motion.div
                                 className="contact-info-item"
                                 whileHover={{ x: 5, transition: { duration: 0.2 } }}
@@ -421,7 +417,7 @@ const ContactForm = () => {
                                     <FaFacebookF />
                                 </motion.a>
                                 <motion.a
-                                    href="https://wa.me/919876543210"
+                                    href="https://wa.me/919274778081"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="contact-social__link contact-social__link--whatsapp"

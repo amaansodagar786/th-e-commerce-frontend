@@ -1,40 +1,62 @@
-import React from "react";
+
+
+import React, { useState, useEffect } from "react";
 import "./HeroSection.scss";
-
-// Swiper
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay } from "swiper/modules";
-import "swiper/css";
-
-// Hero Image
-import heroImage from "./images/hero.png";
+import heroBgImage from "../../../assets/images/home/hero/hero.png";
+import oilJarImage from "../../../assets/images/home/hero/oiljar.png";
 
 const HeroSection = () => {
-  return (
-    <section className="hero-section">
-      <Swiper
-        modules={[Autoplay]}
-        autoplay={{
-          delay: 3000,
-          disableOnInteraction: false,
-        }}
-        loop={true}
-        className="hero-swiper"
-      >
-        <SwiperSlide>
-          <div
-            className="hero-slide"
-            style={{ backgroundImage: `url(${heroImage})` }}
-          />
-        </SwiperSlide>
+  const [isVisible, setIsVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-        <SwiperSlide>
-          <div
-            className="hero-slide"
-            style={{ backgroundImage: `url(${heroImage})` }}
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 100);
+    
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  return (
+    <section 
+      className="hero" 
+      style={{ backgroundImage: `url(${heroBgImage})` }}
+    >
+      <div className="hero__overlay"></div>
+      <div className="hero__container">
+        <div className="hero__left">
+          <h1 className={`hero__main-text ${isVisible ? 'show' : ''}`}>
+            {isMobile ? (
+              "Pure Oil | Pure Care | Pure Satvsar"
+            ) : (
+              <>
+                Pure Oil.
+                <br />
+                Pure Care.
+                <br />
+                Pure Satvsar.
+              </>
+            )}
+          </h1>
+        </div>
+
+        <div className="hero__right">
+          <img 
+            src={oilJarImage} 
+            alt="Satvsar Pure Oil" 
+            className={`hero__oil-image ${isVisible ? 'show' : ''}`}
           />
-        </SwiperSlide>
-      </Swiper>
+        </div>
+      </div>
     </section>
   );
 };
