@@ -1,289 +1,319 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useRef, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import "./Navbar.scss";
-import axios from "axios";
-import CartSidebar from "../../Pages/Cart/Cart"; // Import the CartSidebar component
+import logoImage from "../../assets/images/logo/logo.png";
 
-function Navbar() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [wishlistCount, setWishlistCount] = useState(0);
+const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState("");
+  const { pathname } = useLocation();
+  const profileRef = useRef(null);
+  let hoverTimeout = useRef(null);
 
-  // Check login status on mount
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const user = localStorage.getItem("userName");
-    
-    if (token) {
-      setIsLoggedIn(true);
-      if (user) setUserName(user);
+  const isActive = (path) => pathname === path;
+
+  const navLinks = [
+    { to: "/", label: "HOME" },
+    { to: "/contact", label: "CONTACT" },
+    { to: "/distributorship", label: "DISTRIBUTORSHIP" }
+  ];
+
+  const profileLinks = [
+    { to: "/profile", label: "My Profile", icon: "user" },
+    { to: "/orders", label: "My Orders", icon: "package" },
+    { to: "/reviews", label: "My Reviews", icon: "star" },
+    { to: "/logout", label: "Logout", icon: "log-out" }
+  ];
+
+  // Get cart count from localStorage
+  const getCartCount = () => {
+    try {
+      const cartItem = JSON.parse(localStorage.getItem("cartItem"));
+      if (cartItem && cartItem.qty) {
+        return cartItem.qty;
+      }
+      return 0;
+    } catch (error) {
+      return 0;
     }
-  }, []);
-
-  // Fetch wishlist count
-  useEffect(() => {
-    const updateWishlistCount = async () => {
-      const token = localStorage.getItem("token");
-      const userId = localStorage.getItem("userId");
-
-      if (token && userId) {
-        try {
-          const response = await axios.get(
-            `${import.meta.env.VITE_API_URL}/wishlist/count?userId=${userId}`,
-            {
-              headers: { Authorization: `Bearer ${token}` }
-            }
-          );
-          setWishlistCount(response.data.count || 0);
-        } catch (error) {
-          console.error("Error fetching wishlist count:", error);
-          setWishlistCount(0);
-        }
-      } else {
-        setWishlistCount(0);
-      }
-    };
-
-    // Fetch cart count
-    const updateCartCount = async () => {
-      const token = localStorage.getItem("token");
-      const userId = localStorage.getItem("userId");
-
-      if (token && userId) {
-        try {
-          const response = await axios.get(
-            `${import.meta.env.VITE_API_URL}/cart/${userId}`,
-            {
-              headers: { Authorization: `Bearer ${token}` }
-            }
-          );
-          // Calculate total items in cart
-          const totalItems = response.data.summary?.totalItems || 
-                           response.data.cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
-          setCartCount(totalItems);
-        } catch (error) {
-          console.error("Error fetching cart count:", error);
-          setCartCount(0);
-        }
-      } else {
-        setCartCount(0);
-      }
-    };
-
-    // Update counts on initial load
-    updateWishlistCount();
-    updateCartCount();
-
-    // Listen for updates
-    const handleWishlistUpdate = () => updateWishlistCount();
-    const handleCartUpdate = () => updateCartCount();
-    const handleAuthChange = () => {
-      const token = localStorage.getItem("token");
-      const user = localStorage.getItem("userName");
-      setIsLoggedIn(!!token);
-      if (user) setUserName(user);
-      updateWishlistCount();
-      updateCartCount();
-    };
-
-    window.addEventListener('wishlistUpdated', handleWishlistUpdate);
-    window.addEventListener('cartUpdated', handleCartUpdate);
-    window.addEventListener('authChange', handleAuthChange);
-
-    return () => {
-      window.removeEventListener('wishlistUpdated', handleWishlistUpdate);
-      window.removeEventListener('cartUpdated', handleCartUpdate);
-      window.removeEventListener('authChange', handleAuthChange);
-    };
-  }, []);
-
-  // Handle logout
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userName");
-    setIsLoggedIn(false);
-    setUserName("");
-    setWishlistCount(0);
-    setCartCount(0);
-    window.dispatchEvent(new Event('authChange'));
-    alert("Logged out successfully!");
   };
 
-  // Close cart on escape key
+  // Update cart count function
+  const updateCartCount = () => {
+    const newCount = getCartCount();
+    setCartCount(newCount);
+  };
+
+  // Update cart count when component mounts and when storage changes
   useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === 'Escape' && isCartOpen) {
-        setIsCartOpen(false);
+    updateCartCount();
+
+    const handleStorageChange = (e) => {
+      if (e.key === "cartItem") {
+        updateCartCount();
       }
     };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [isCartOpen]);
+    window.addEventListener("storage", handleStorageChange);
+
+    const handleCartUpdated = () => {
+      updateCartCount();
+    };
+    window.addEventListener("cartUpdated", handleCartUpdated);
+
+    const interval = setInterval(() => {
+      updateCartCount();
+    }, 500);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("cartUpdated", handleCartUpdated);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Close profile dropdown when clicking outside (for desktop)
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Handle mouse enter for desktop hover
+  const handleMouseEnter = () => {
+    if (hoverTimeout.current) {
+      clearTimeout(hoverTimeout.current);
+    }
+    setIsProfileOpen(true);
+  };
+
+  // Handle mouse leave for desktop hover
+  const handleMouseLeave = () => {
+    hoverTimeout.current = setTimeout(() => {
+      setIsProfileOpen(false);
+    }, 200);
+  };
+
+  // Handle profile click to toggle dropdown
+  const handleProfileClick = () => {
+    setIsProfileOpen(!isProfileOpen);
+  };
+
+  // Close everything when hamburger closes
+  const handleHamburgerChange = (e) => {
+    setIsOpen(e.target.checked);
+    if (!e.target.checked) {
+      setIsProfileOpen(false);
+    }
+  };
+
+  // Icon components
+  const ProfileIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+
+  const UserIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+
+  const PackageIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16.5 9.4L7.5 4.2" />
+      <path d="M21 16.2V7.8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 7.8v8.4a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16.2z" />
+      <polyline points="3.3 7 12 12 20.7 7" />
+      <line x1="12" y1="22" x2="12" y2="12" />
+    </svg>
+  );
+
+  const StarIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+
+  const LogoutIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+
+  const CartIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="21" r="1" />
+      <circle cx="20" cy="21" r="1" />
+      <path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.6a2 2 0 0 0 2-1.6L23 5H6" />
+    </svg>
+  );
+
+  const ArrowIcon = ({ isOpen }) => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isOpen ? 'open' : ''}>
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+
+  const getIcon = (iconName) => {
+    switch (iconName) {
+      case 'user': return <UserIcon />;
+      case 'package': return <PackageIcon />;
+      case 'star': return <StarIcon />;
+      case 'log-out': return <LogoutIcon />;
+      default: return null;
+    }
+  };
 
   return (
     <>
-      <nav className="navbar">
-        <div className="nav-container">
-          {/* Logo */}
-          <Link to="/" className="logo" onClick={() => setMenuOpen(false)}>
-            MyStore
+      {/* Desktop Navbar */}
+      <nav className="desktop-navbar">
+        <div className="navbar-container">
+          <Link to="/" className="logo">
+            <img src={logoImage} alt="Satvsar" className="logo-image" />
           </Link>
 
-          {/* Navigation Links */}
-          <ul className={`nav-links ${menuOpen ? "open" : ""}`}>
-            <li><Link to="/" onClick={() => setMenuOpen(false)}>Home</Link></li>
-            <li><Link to="/products" onClick={() => setMenuOpen(false)}>Products</Link></li>
-            <li><Link to="/categories" onClick={() => setMenuOpen(false)}>Categories</Link></li>
-            <li><Link to="/about" onClick={() => setMenuOpen(false)}>About</Link></li>
-            <li><Link to="/contact" onClick={() => setMenuOpen(false)}>Contact</Link></li>
-          </ul>
+          <div className="nav-links">
+            {navLinks.map(({ to, label }) => (
+              <Link
+                key={to}
+                to={to}
+                className={isActive(to) ? 'active' : ''}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
 
-          {/* Icons Section */}
-          <div className="nav-icons">
-            {/* Wishlist Icon */}
-            <Link to="/wishlist" className="icon-link" onClick={() => setMenuOpen(false)}>
-              <div className="icon-container">
-                <svg className="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 21.35L10.55 20.03C5.4 15.36 2 12.28 2 8.5C2 5.42 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.09C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5C22 12.28 18.6 15.36 13.45 20.04L12 21.35Z"
-                    fill={wishlistCount > 0 ? "#ff4757" : "none"}
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                {wishlistCount > 0 && <span className="badge">{wishlistCount > 9 ? '9+' : wishlistCount}</span>}
-                <span className="icon-text">Wishlist</span>
+          <div className="right-icons">
+            <Link to="/cart" className="cart-wrapper">
+              <div className="cart-icon-container">
+                <CartIcon />
+                {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
               </div>
             </Link>
 
-            {/* Cart Icon - Now opens sidebar instead of page */}
-            <div 
-              className="icon-link cart-icon-wrapper" 
-              onClick={() => setIsCartOpen(true)}
-              style={{ cursor: 'pointer' }}
+            <div
+              className="profile-wrapper"
+              ref={profileRef}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
             >
-              <div className="icon-container">
-                <svg className="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 22C9.55228 22 10 21.5523 10 21C10 20.4477 9.55228 20 9 20C8.44772 20 8 20.4477 8 21C8 21.5523 8.44772 22 9 22Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path d="M20 22C20.5523 22 21 21.5523 21 21C21 20.4477 20.5523 20 20 20C19.4477 20 19 20.4477 19 21C19 21.5523 19.4477 22 20 22Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path d="M1 1H5L7.68 14.39C7.77144 14.8504 8.02191 15.264 8.38755 15.5583C8.75318 15.8526 9.2107 16.009 9.68 16H19.4C19.8693 16.009 20.3268 15.8526 20.6925 15.5583C21.0581 15.264 21.3086 14.8504 21.4 14.39L23 6H6"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                {cartCount > 0 && <span className="badge cart-badge">{cartCount > 9 ? '9+' : cartCount}</span>}
-                <span className="icon-text">Cart</span>
+              <div
+                className={`profile-icon ${isProfileOpen ? 'active' : ''}`}
+                onClick={handleProfileClick}
+              >
+                <ProfileIcon />
+              </div>
+
+              <div className={`profile-dropdown ${isProfileOpen ? 'open' : ''}`}>
+                <div className="dropdown-header">
+                  <span className="user-greeting">Hi, User</span>
+                </div>
+                <div className="dropdown-links">
+                  {profileLinks.map(({ to, label, icon }) => (
+                    <Link
+                      key={to}
+                      to={to}
+                      className="dropdown-link"
+                      onClick={() => setIsProfileOpen(false)}
+                    >
+                      <span className="dropdown-icon">{getIcon(icon)}</span>
+                      <span className="dropdown-label">{label}</span>
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
-
-            {/* User/Login Icon */}
-            {isLoggedIn ? (
-              <div className="user-dropdown">
-                <div className="user-info">
-                  <svg className="icon user-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <span className="user-name">Hi, {userName || "User"}</span>
-                </div>
-                <div className="dropdown-menu">
-                  <Link to="/profile" className="dropdown-item" onClick={() => setMenuOpen(false)}>
-                    <svg className="dropdown-icon" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
-                    </svg>
-                    My Profile
-                  </Link>
-                  <Link to="/orders" className="dropdown-item" onClick={() => setMenuOpen(false)}>
-                    <svg className="dropdown-icon" viewBox="0 0 24 24" fill="none">
-                      <path d="M19 3H5C3.89 3 3 3.9 3 5V19C3 20.1 3.89 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V5H19V19ZM12 17C13.66 17 15 15.66 15 14C15 12.34 13.66 11 12 11C10.34 11 9 12.34 9 14C9 15.66 10.34 17 12 17ZM6 6H18V10H6V6Z" fill="currentColor"/>
-                    </svg>
-                    My Orders
-                  </Link>
-
-                  <Link to="/my-reviews" className="dropdown-item" onClick={() => setMenuOpen(false)}>
-                    <svg className="dropdown-icon" viewBox="0 0 24 24" fill="none">
-                      <path d="M19 3H5C3.89 3 3 3.9 3 5V19C3 20.1 3.89 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V5H19V19ZM12 17C13.66 17 15 15.66 15 14C15 12.34 13.66 11 12 11C10.34 11 9 12.34 9 14C9 15.66 10.34 17 12 17ZM6 6H18V10H6V6Z" fill="currentColor"/>
-                    </svg>
-                    My Reviews
-                  </Link>
-                  <div className="dropdown-divider"></div>
-                  <button className="dropdown-item logout-btn" onClick={handleLogout}>
-                    <svg className="dropdown-icon" viewBox="0 0 24 24" fill="none">
-                      <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.59L17 17L22 12L17 7ZM4 19H12V21H4C2.9 21 2 20.1 2 19V5C2 3.9 2.9 3 4 3H12V5H4V19Z" fill="currentColor"/>
-                    </svg>
-                    Logout
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <Link to="/login" className="icon-link" onClick={() => setMenuOpen(false)}>
-                <div className="icon-container">
-                  <svg className="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <span className="icon-text">Login</span>
-                </div>
-              </Link>
-            )}
-          </div>
-
-          {/* Hamburger Menu */}
-          <div
-            className={`hamburger ${menuOpen ? "active" : ""}`}
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            <span></span>
-            <span></span>
-            <span></span>
           </div>
         </div>
       </nav>
 
-      {/* Cart Sidebar */}
-      <CartSidebar 
-        isOpen={isCartOpen} 
-        onClose={() => setIsCartOpen(false)} 
-      />
+      {/* Mobile Navbar */}
+      <nav className={`mobile-navbar ${isOpen ? 'menu-open' : ''}`}>
+        <div className="mobile-navbar-container">
+          <Link to="/" className="mobile-logo">
+            <img src={logoImage} alt="Satvsar" className="mobile-logo-image" />
+          </Link>
+
+          <label className="hamburger">
+            <input
+              type="checkbox"
+              checked={isOpen}
+              onChange={handleHamburgerChange}
+            />
+            <svg viewBox="0 0 32 32">
+              <path
+                className="line line-top-bottom"
+                d="M27 10 13 10C10.8 10 9 8.2 9 6 9 3.5 10.8 2 13 2 15.2 2 17 3.8 17 6L17 26C17 28.2 15.2 30 13 30 10.8 30 9 28.2 9 26 9 23.8 10.8 22 13 22L27 22"
+              />
+              <path className="line" d="M7 16 27 16" />
+            </svg>
+          </label>
+        </div>
+
+        <div className={`mobile-menu-links ${isOpen ? 'open' : ''}`}>
+          {/* Navigation Links */}
+          {navLinks.map(({ to, label }) => (
+            <Link
+              key={to}
+              to={to}
+              className={isActive(to) ? 'active' : ''}
+              onClick={() => setIsOpen(false)}
+            >
+              {label}
+            </Link>
+          ))}
+
+          {/* Cart right above profile section */}
+          <Link to="/cart" className="mobile-cart-link" onClick={() => setIsOpen(false)}>
+            <div className="mobile-cart-icon-container">
+              <CartIcon />
+              {cartCount > 0 && <span className="mobile-cart-badge">{cartCount}</span>}
+            </div>
+            <span>Cart</span>
+          </Link>
+
+          {/* Profile section - with cart exactly above it */}
+          <div className="mobile-profile-section">
+            <div
+              className="mobile-profile-header"
+              onClick={handleProfileClick}
+            >
+              <ProfileIcon />
+              <span>Hi, User</span>
+              <ArrowIcon isOpen={isProfileOpen} />
+            </div>
+            <div className={`mobile-profile-dropdown ${isProfileOpen ? 'open' : ''}`}>
+              {profileLinks.map(({ to, label, icon }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className="mobile-profile-link"
+                  onClick={() => {
+                    setIsOpen(false);
+                    setIsProfileOpen(false);
+                  }}
+                >
+                  <span className="mobile-dropdown-icon">{getIcon(icon)}</span>
+                  <span className="mobile-dropdown-label">{label}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </nav>
     </>
   );
-}
+};
 
 export default Navbar;

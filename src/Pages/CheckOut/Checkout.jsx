@@ -336,6 +336,8 @@ const Checkout = () => {
           finalPrice: item.finalPrice,
           // Add GST fields
           taxSlab: item.taxSlab || 18,
+          hsn: item.hsn || "",
+          category: item.category || "",
           baseValue: gstCalculation.baseValue,
           taxAmount: gstCalculation.taxAmount,
           cgstAmount: gstCalculation.cgstAmount,

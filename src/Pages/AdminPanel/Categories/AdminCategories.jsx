@@ -1,457 +1,486 @@
-// AdminCategories.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import AdminLayout from "../AdminLayout/AdminLayout";
 import "./AdminCategories.scss";
 
-const AdminCategories = () => {
-  const [categories, setCategories] = useState([]);
-  const [categoryName, setCategoryName] = useState("");
-  const [categoryImage, setCategoryImage] = useState(null);
-  const [editId, setEditId] = useState(null);
-  const [editImage, setEditImage] = useState(null);
-  const [previewImage, setPreviewImage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  
-  const navigate = useNavigate(); // Initialize navigate
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 
-  // ✅ TOKEN VALIDATION FUNCTION
+const getToken = () => localStorage.getItem("adminToken");
+const getRole = () => localStorage.getItem("role");
+const authHeader = () => ({
+  Authorization: `Bearer ${getToken()}`,
+  "Content-Type": "multipart/form-data",
+});
+
+// ─── Component ─────────────────────────────────────────────────────────────────
+
+const AdminCategories = () => {
+  const navigate = useNavigate();
+
+  const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Form state
+  const [categoryName, setCategoryName] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [previewImage, setPreviewImage] = useState("");
+
+  // Edit mode
+  const [editId, setEditId] = useState(null);
+  const [editExisting, setEditExisting] = useState("");
+
+  // Delete confirm
+  const [deleteId, setDeleteId] = useState(null);
+  const [deleteName, setDeleteName] = useState("");
+
+  // ── Auth Guard ───────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    const token = getToken();
+    const role = getRole();
+    if (!token || role !== "admin") navigate("/admin/login");
+  }, [navigate]);
+
   const validateToken = () => {
-    const token = localStorage.getItem("adminToken");
-    const role = localStorage.getItem("role");
-    
-    if (!token || !role || role !== "admin") {
-      // Clear invalid tokens
-      localStorage.removeItem("adminToken");
-      localStorage.removeItem("role");
-      localStorage.removeItem("adminId");
-      
-      // Redirect to login
-      navigate("/admin/login");
-      return false;
-    }
-    
-    // Optional: You can also validate token format
-    const tokenParts = token.split('.');
-    if (tokenParts.length !== 3) {
+    const token = getToken();
+    const role = getRole();
+    if (!token || role !== "admin") {
       localStorage.removeItem("adminToken");
       localStorage.removeItem("role");
       localStorage.removeItem("adminId");
       navigate("/admin/login");
       return false;
     }
-    
     return true;
   };
 
-  // ✅ GET AUTH HEADERS
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem("adminToken");
-    if (!token) {
-      throw new Error("No authentication token found");
-    }
-    return {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "multipart/form-data"
-    };
-  };
+  // ── Fetch ────────────────────────────────────────────────────────────────────
 
-  // FETCH ALL CATEGORIES
   const fetchCategories = async () => {
+    if (!validateToken()) return;
     try {
-      // Check token before making request
-      if (!validateToken()) return;
-      
       setIsLoading(true);
-      setError("");
-      
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/categories/get`
-      );
-      
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/categories/get`);
       setCategories(res.data);
     } catch (err) {
-      console.error("Error fetching categories:", err);
-      
-      // Handle unauthorized access
       if (err.response?.status === 401 || err.response?.status === 403) {
-        setError("Session expired. Please login again.");
-        localStorage.removeItem("adminToken");
-        localStorage.removeItem("role");
-        localStorage.removeItem("adminId");
+        toast.error("Session expired. Redirecting...");
+        localStorage.clear();
         setTimeout(() => navigate("/admin/login"), 2000);
       } else {
-        setError(err.response?.data?.message || "Failed to fetch categories");
+        toast.error(err.response?.data?.message || "Failed to fetch categories");
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  useEffect(() => { fetchCategories(); }, []);
 
-  // ADD CATEGORY
-  const addCategory = async () => {
+  // ── Image Select ─────────────────────────────────────────────────────────────
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be less than 5MB");
+      return;
+    }
+
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Only image files are allowed (JPEG, PNG, GIF, WEBP)");
+      return;
+    }
+
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setPreviewImage(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const removeSelectedImage = () => {
+    setImageFile(null);
+    setPreviewImage("");
+  };
+
+  // ── Add ──────────────────────────────────────────────────────────────────────
+
+  const handleAddCategory = async () => {
+    if (!validateToken()) return;
+    if (!categoryName.trim()) return toast.error("Category name is required");
+
     try {
-      // Check token
-      if (!validateToken()) return;
-      
-      // Validate inputs
-      if (!categoryName.trim()) {
-        alert("Please enter category name");
-        return;
-      }
-      
-      setIsLoading(true);
-      setError("");
-      
-      // Create FormData
-      const formData = new FormData();
-      formData.append("name", categoryName.trim());
-      if (categoryImage) {
-        formData.append("image", categoryImage);
-      }
+      setFormLoading(true);
+      const fd = new FormData();
+      fd.append("name", categoryName.trim());
+      if (imageFile) fd.append("image", imageFile); // optional
 
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/categories/add`,
-        formData,
-        { 
-          headers: getAuthHeaders()
-        }
-      );
+      await axios.post(`${import.meta.env.VITE_API_URL}/categories/add`, fd, {
+        headers: authHeader(),
+      });
 
-      // Reset form
-      setCategoryName("");
-      setCategoryImage(null);
-      setPreviewImage("");
+      toast.success("Category added successfully!");
+      resetForm();
       fetchCategories();
-      
-      alert("Category added successfully!");
     } catch (err) {
-      console.error("Error adding category:", err);
-      
-      // Handle specific error cases
       if (err.response?.status === 401 || err.response?.status === 403) {
-        alert("Session expired. Please login again.");
+        toast.error("Session expired. Please login again.");
         localStorage.clear();
         navigate("/admin/login");
-      } else if (err.response?.status === 400) {
-        alert(err.response.data.message || "Invalid request");
       } else if (err.response?.status === 409) {
-        alert("Category already exists!");
+        toast.error("Category already exists!");
       } else {
-        alert(err.response?.data?.message || "Failed to add category");
+        toast.error(err.response?.data?.message || "Failed to add category");
       }
     } finally {
-      setIsLoading(false);
+      setFormLoading(false);
     }
   };
 
-  // UPDATE CATEGORY
-  const updateCategory = async () => {
+  // ── Update ───────────────────────────────────────────────────────────────────
+
+  const handleUpdateCategory = async () => {
+    if (!validateToken()) return;
+    if (!categoryName.trim()) return toast.error("Category name is required");
+
     try {
-      // Check token
-      if (!validateToken()) return;
-      
-      // Validate inputs
-      if (!categoryName.trim()) {
-        alert("Please enter category name");
-        return;
-      }
-      
-      setIsLoading(true);
-      setError("");
-      
-      // Create FormData
-      const formData = new FormData();
-      formData.append("name", categoryName.trim());
-      if (editImage) {
-        formData.append("image", editImage);
-      }
+      setFormLoading(true);
+      const fd = new FormData();
+      fd.append("name", categoryName.trim());
+      if (imageFile) fd.append("image", imageFile); // optional — keep existing if not provided
 
       await axios.put(
         `${import.meta.env.VITE_API_URL}/categories/update/${editId}`,
-        formData,
-        { 
-          headers: getAuthHeaders()
-        }
+        fd,
+        { headers: authHeader() }
       );
 
-      // Reset form
-      setCategoryName("");
-      setEditId(null);
-      setEditImage(null);
-      setPreviewImage("");
+      toast.success("Category updated successfully!");
+      resetForm();
       fetchCategories();
-      
-      alert("Category updated successfully!");
     } catch (err) {
-      console.error("Error updating category:", err);
-      
       if (err.response?.status === 401 || err.response?.status === 403) {
-        alert("Session expired. Please login again.");
+        toast.error("Session expired. Please login again.");
         localStorage.clear();
         navigate("/admin/login");
       } else if (err.response?.status === 404) {
-        alert("Category not found!");
+        toast.error("Category not found!");
       } else {
-        alert(err.response?.data?.message || "Failed to update category");
+        toast.error(err.response?.data?.message || "Failed to update category");
       }
     } finally {
-      setIsLoading(false);
+      setFormLoading(false);
     }
   };
 
-  // DELETE CATEGORY
-  const deleteCategory = async (id) => {
+  // ── Delete ───────────────────────────────────────────────────────────────────
+
+  const handleDeleteCategory = async () => {
+    if (!validateToken()) return;
     try {
-      // Check token
-      if (!validateToken()) return;
-      
-      if (!window.confirm(`Are you sure you want to delete this category?`)) {
-        return;
-      }
-      
-      setIsLoading(true);
-      
+      setDeleteLoading(true);
       await axios.delete(
-        `${import.meta.env.VITE_API_URL}/categories/delete/${id}`,
-        { headers: { Authorization: `Bearer ${localStorage.getItem("adminToken")}` } }
+        `${import.meta.env.VITE_API_URL}/categories/delete/${deleteId}`,
+        { headers: { Authorization: `Bearer ${getToken()}` } }
       );
-
+      toast.success("Category deleted successfully!");
+      setDeleteId(null);
+      setDeleteName("");
       fetchCategories();
-      alert("Category deleted successfully!");
     } catch (err) {
-      console.error("Error deleting category:", err);
-      
       if (err.response?.status === 401 || err.response?.status === 403) {
-        alert("Session expired. Please login again.");
+        toast.error("Session expired. Please login again.");
         localStorage.clear();
         navigate("/admin/login");
       } else if (err.response?.status === 404) {
-        alert("Category not found!");
+        toast.error("Category not found!");
       } else {
-        alert(err.response?.data?.message || "Failed to delete category");
+        toast.error(err.response?.data?.message || "Failed to delete category");
       }
     } finally {
-      setIsLoading(false);
+      setDeleteLoading(false);
     }
   };
 
-  // Handle image selection
-  const handleImageSelect = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file size (5MB = 5 * 1024 * 1024 bytes)
-      if (file.size > 5 * 1024 * 1024) {
-        alert("File size must be less than 5MB");
-        return;
-      }
-      
-      // Validate file type
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-      if (!validTypes.includes(file.type)) {
-        alert("Only image files are allowed (JPEG, JPG, PNG, GIF, WEBP)");
-        return;
-      }
-      
-      if (editId) {
-        setEditImage(file);
-      } else {
-        setCategoryImage(file);
-      }
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // ── Edit / Reset ─────────────────────────────────────────────────────────────
 
-  // Set edit mode
   const handleEdit = (cat) => {
     setEditId(cat.categoryId);
     setCategoryName(cat.name);
+    setEditExisting(cat.image || "");
     setPreviewImage(cat.image || "");
-    setEditImage(null);
-    setCategoryImage(null);
+    setImageFile(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Cancel edit mode
-  const cancelEdit = () => {
-    setEditId(null);
+  const resetForm = () => {
     setCategoryName("");
+    setImageFile(null);
     setPreviewImage("");
-    setEditImage(null);
-    setCategoryImage(null);
-    setError("");
+    setEditId(null);
+    setEditExisting("");
   };
 
-  // Logout function
-  const handleLogout = () => {
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("role");
-    localStorage.removeItem("adminId");
-    navigate("/admin/login");
-  };
-
-  // Check if user is admin on component mount
-  useEffect(() => {
-    const role = localStorage.getItem("role");
-    const token = localStorage.getItem("adminToken");
-    
-    if (!token || role !== "admin") {
-      navigate("/admin/login");
-    }
-  }, [navigate]);
-
-  // If not admin, show access denied
-  const role = localStorage.getItem("role");
-  const token = localStorage.getItem("adminToken");
-  
-  if (!token || role !== "admin") {
-    return (
-      <div className="access-denied">
-        <h2>❌ Access Denied: Admin Only</h2>
-        <p>Please login as admin to access this page.</p>
-        <button onClick={() => navigate("/admin/login")}>Go to Login</button>
-      </div>
-    );
-  }
+  // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="admin-cat">
-      {/* Header with logout */}
-      <div className="admin-header">
-        <h1>Manage Categories</h1>
-        <button onClick={handleLogout} className="logout-btn">
-          Logout
-        </button>
-      </div>
+    <AdminLayout>
+      <div className="admin-cat">
 
-      {/* Error Message */}
-      {error && (
-        <div className="error-message">
-          <span>{error}</span>
-          <button onClick={() => setError("")}>×</button>
+        {/* ── PAGE HEADER ── */}
+        <div className="ac-header">
+          <div className="ac-header__left">
+            <h1 className="ac-header__title">Categories</h1>
+            <span className="ac-header__count">{categories.length} total</span>
+          </div>
         </div>
-      )}
 
-      {/* Loading Indicator */}
-      {isLoading && (
-        <div className="loading-overlay">
-          <div className="spinner"></div>
-          <p>Processing...</p>
-        </div>
-      )}
+        <div className="ac-layout">
 
-      <div className="cat-form">
-        <input
-          type="text"
-          placeholder="Category Name"
-          value={categoryName}
-          onChange={(e) => setCategoryName(e.target.value)}
-          disabled={isLoading}
-        />
-
-        {/* Image Upload */}
-        <div className="image-upload-section">
-          <label className="image-upload-label" style={isLoading ? {opacity: 0.6, cursor: 'not-allowed'} : {}}>
-            <span>{previewImage ? "Change Image" : "Select Image"}</span>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageSelect}
-              style={{ display: "none" }}
-              disabled={isLoading}
-            />
-          </label>
-          
-          {previewImage && (
-            <div className="image-preview">
-              <img src={previewImage} alt="Preview" />
-              <p>Image Preview (Max: 5MB)</p>
+          {/* ── FORM PANEL ── */}
+          <div className="ac-form-panel">
+            <div className="ac-form-panel__title">
+              {editId ? "Edit Category" : "Add New Category"}
             </div>
-          )}
-        </div>
 
-        <div className="form-buttons">
-          {editId ? (
-            <>
-              <button 
-                onClick={updateCategory} 
-                className="update-btn"
-                disabled={isLoading}
-              >
-                {isLoading ? "Updating..." : "Update Category"}
-              </button>
-              <button 
-                onClick={cancelEdit} 
-                className="cancel-btn"
-                disabled={isLoading}
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <button 
-              onClick={addCategory} 
-              className="add-btn"
-              disabled={isLoading}
-            >
-              {isLoading ? "Adding..." : "Add Category"}
-            </button>
-          )}
-        </div>
-      </div>
+            <div className="ac-form">
 
-      <div className="cat-list">
-        <h2>All Categories ({categories.length})</h2>
-        
-        {categories.length === 0 ? (
-          <p className="no-categories">No categories found. Add your first category!</p>
-        ) : (
-          categories.map((cat) => (
-            <div key={cat.categoryId} className="cat-item">
-              <div className="cat-info">
-                <span className="cat-name">{cat.name}</span>
-                {cat.image && (
-                  <div className="cat-image-preview">
-                    <img src={cat.image} alt={cat.name} />
+              {/* Name */}
+              <div className="ac-form-group">
+                <label>
+                  Category Name <span className="ac-req">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Scented Candles"
+                  value={categoryName}
+                  onChange={(e) => setCategoryName(e.target.value)}
+                  disabled={formLoading}
+                />
+              </div>
+
+              {/* Image — Optional */}
+              <div className="ac-form-group">
+                <label>
+                  Category Image
+                  <span className="ac-optional-tag">Optional</span>
+                </label>
+
+                {previewImage ? (
+                  <div className="ac-image-preview-wrap">
+                    <img src={previewImage} alt="Preview" className="ac-image-preview" />
+                    <div className="ac-image-actions">
+                      <label className="ac-btn ac-btn--outline ac-btn--sm">
+                        Change Image
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageSelect}
+                          disabled={formLoading}
+                          hidden
+                        />
+                      </label>
+                      {imageFile && (
+                        <button
+                          type="button"
+                          className="ac-btn ac-btn--danger-outline ac-btn--sm"
+                          onClick={removeSelectedImage}
+                          disabled={formLoading}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    {editId && !imageFile && editExisting && (
+                      <p className="ac-image-note">
+                        Current image. Upload a new one to replace it.
+                      </p>
+                    )}
+                    {imageFile && (
+                      <p className="ac-image-note">New: {imageFile.name}</p>
+                    )}
                   </div>
-                )}
-                {!cat.image && (
-                  <span className="no-image">No Image</span>
+                ) : (
+                  <label className={`ac-file-upload-label ${formLoading ? "ac-disabled" : ""}`}>
+                    <span className="ac-file-icon">🖼</span>
+                    <span>Click to upload image (Max 5MB)</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      disabled={formLoading}
+                      hidden
+                    />
+                  </label>
                 )}
               </div>
 
-              <div className="actions">
-                <button
-                  className="edit"
-                  onClick={() => handleEdit(cat)}
-                  disabled={isLoading}
-                >
-                  Edit
-                </button>
+              {/* Buttons */}
+              <div className="ac-form-actions">
+                {editId ? (
+                  <>
+                    <button
+                      className="ac-btn ac-btn--outline"
+                      onClick={resetForm}
+                      disabled={formLoading}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="ac-btn ac-btn--primary"
+                      onClick={handleUpdateCategory}
+                      disabled={formLoading}
+                    >
+                      {formLoading ? (
+                        <><span className="ac-btn-spinner" /> Updating...</>
+                      ) : "Update Category"}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="ac-btn ac-btn--primary"
+                    onClick={handleAddCategory}
+                    disabled={formLoading}
+                  >
+                    {formLoading ? (
+                      <><span className="ac-btn-spinner" /> Adding...</>
+                    ) : "+ Add Category"}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
 
+          {/* ── CATEGORIES LIST ── */}
+          <div className="ac-list-panel">
+            <div className="ac-list-panel__title">All Categories</div>
+
+            {isLoading && categories.length === 0 ? (
+              <div className="ac-state">
+                <div className="ac-state__spinner" />
+                <p>Loading categories...</p>
+              </div>
+            ) : categories.length === 0 ? (
+              <div className="ac-state">
+                <div className="ac-state__icon">🏷️</div>
+                <p>No categories yet. Add your first one!</p>
+              </div>
+            ) : (
+              <div className="ac-grid">
+                {categories.map((cat) => (
+                  <div
+                    key={cat.categoryId}
+                    className={`ac-card ${editId === cat.categoryId ? "ac-card--editing" : ""}`}
+                  >
+                    <div className="ac-card__img-wrap">
+                      {cat.image ? (
+                        <img src={cat.image} alt={cat.name} className="ac-card__img" />
+                      ) : (
+                        <div className="ac-card__no-img">🕯️</div>
+                      )}
+                      {editId === cat.categoryId && (
+                        <div className="ac-card__editing-badge">Editing</div>
+                      )}
+                    </div>
+
+                    <div className="ac-card__info">
+                      <div className="ac-card__name">{cat.name}</div>
+                      {!cat.image && (
+                        <span className="ac-card__no-img-label">No image</span>
+                      )}
+                    </div>
+
+                    <div className="ac-card__actions">
+                      <button
+                        className="ac-action-btn ac-action-btn--edit"
+                        onClick={() => handleEdit(cat)}
+                        disabled={isLoading || formLoading}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="ac-action-btn ac-action-btn--delete"
+                        onClick={() => { setDeleteId(cat.categoryId); setDeleteName(cat.name); }}
+                        disabled={isLoading || formLoading}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ════════════════════════════════════════════
+            DELETE CONFIRM MODAL
+        ════════════════════════════════════════════ */}
+        {deleteId && (
+          <div
+            className="ac-modal-overlay"
+            onClick={() => { setDeleteId(null); setDeleteName(""); }}
+          >
+            <div className="ac-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="ac-modal__header">
+                <h3 className="ac-modal__title">Delete Category</h3>
                 <button
-                  className="delete"
-                  onClick={() => deleteCategory(cat.categoryId)}
-                  disabled={isLoading}
+                  className="ac-modal__close"
+                  onClick={() => { setDeleteId(null); setDeleteName(""); }}
+                >×</button>
+              </div>
+
+              <div className="ac-modal__body">
+                <div className="ac-delete-confirm">
+                  <div className="ac-delete-confirm__icon">🗑️</div>
+                  <p>
+                    Are you sure you want to delete{" "}
+                    <strong>"{deleteName}"</strong>?
+                    This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+
+              <div className="ac-modal__footer">
+                <button
+                  className="ac-btn ac-btn--outline"
+                  onClick={() => { setDeleteId(null); setDeleteName(""); }}
+                  disabled={deleteLoading}
                 >
-                  Delete
+                  Cancel
+                </button>
+                <button
+                  className="ac-btn ac-btn--danger"
+                  onClick={handleDeleteCategory}
+                  disabled={deleteLoading}
+                >
+                  {deleteLoading ? (
+                    <><span className="ac-btn-spinner" /> Deleting...</>
+                  ) : "Yes, Delete"}
                 </button>
               </div>
             </div>
-          ))
+          </div>
         )}
+
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          theme="light"
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          pauseOnHover
+        />
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

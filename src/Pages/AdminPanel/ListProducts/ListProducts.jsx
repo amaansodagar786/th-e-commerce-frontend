@@ -1,52 +1,85 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import AdminLayout from "../AdminLayout/AdminLayout";
 import "./ListProducts.scss";
 
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+const getToken = () => localStorage.getItem("adminToken");
+const authHeader = () => ({ Authorization: `Bearer ${getToken()}` });
+
+const formatPrice = (price) =>
+  price ? `₹${parseFloat(price).toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "₹0.00";
+
+const getDisplayPrice = (product) => {
+  if (product.colors?.length > 0) {
+    const prices = product.colors.map((c) => c.currentPrice).filter(Boolean);
+    if (prices.length > 0) {
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+      return min === max ? formatPrice(min) : `${formatPrice(min)} – ${formatPrice(max)}`;
+    }
+  }
+  return "₹0.00";
+};
+
+const TAX_OPTIONS = [
+  { value: 5,  label: "5%"  },
+  { value: 18, label: "18%" },
+  { value: 24, label: "24%" },
+];
+
+const EMPTY_FORM = {
+  productName:    "",
+  description:    "",
+  categoryId:     "",
+  categoryName:   "",
+  hsnCode:        "",
+  taxSlab:        18,
+  type:           "simple",
+  modelName:      "",
+  SKU:            "",
+  specifications: [],
+  colors: [{
+    colorId:           `temp_${Date.now()}`,
+    colorName:         "White",
+    sizes:             [],
+    images:            [],
+    originalPrice:     "",
+    currentPrice:      "",
+    colorSpecifications: [],
+  }],
+};
+
+// ─── Component ─────────────────────────────────────────────────────────────────
+
 const ListProducts = () => {
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [formMode, setFormMode] = useState("add");
-  const [deleteId, setDeleteId] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [products,          setProducts]          = useState([]);
+  const [categories,        setCategories]        = useState([]);
+  const [loading,           setLoading]           = useState(false);
+  const [formLoading,       setFormLoading]       = useState(false);
+  const [showForm,          setShowForm]          = useState(false);
+  const [formMode,          setFormMode]          = useState("add");
+  const [deleteId,          setDeleteId]          = useState(null);
+  const [deleteLoading,     setDeleteLoading]     = useState(false);
+  const [searchTerm,        setSearchTerm]        = useState("");
 
-  // Form states
-  const [formData, setFormData] = useState({
-    productName: "",
-    description: "",
-    categoryId: "",
-    categoryName: "",
-    hsnCode: "",
-    taxSlab: 18, // Default tax slab
-    type: "simple", // Always simple
-    // Simple product fields
-    modelName: "", // Will auto-fill with product name
-    SKU: "",
-    specifications: [],
-    colors: [] // Will auto-create with White color
-  });
-
-  // File states
-  const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [formData,          setFormData]          = useState(EMPTY_FORM);
+  const [thumbnailFile,     setThumbnailFile]     = useState(null);
   const [existingThumbnail, setExistingThumbnail] = useState("");
-  const [colorImages, setColorImages] = useState([]); // For the default White color
+  const [colorImages,       setColorImages]       = useState([]);
 
-  // Tax slab options
-  const taxSlabOptions = [
-    { value: 5, label: "5%" },
-    { value: 18, label: "18%" },
-    { value: 24, label: "24%" }
-  ];
+  // ── Fetch ────────────────────────────────────────────────────────────────────
 
-  // Fetch products and categories
   const fetchProducts = async () => {
     try {
       setLoading(true);
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/products/all`);
       setProducts(res.data);
-    } catch (err) {
-      console.error("Error fetching products:", err);
-      alert("Failed to load products");
+    } catch {
+      toast.error("Failed to load products");
     } finally {
       setLoading(false);
     }
@@ -56,9 +89,8 @@ const ListProducts = () => {
     try {
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/categories/get`);
       setCategories(res.data);
-    } catch (err) {
-      console.error("Error fetching categories:", err);
-      alert("Failed to load categories");
+    } catch {
+      toast.error("Failed to load categories");
     }
   };
 
@@ -67,823 +99,649 @@ const ListProducts = () => {
     fetchCategories();
   }, []);
 
-  // Handle input changes
+  // ── Form Handlers ────────────────────────────────────────────────────────────
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     if (name === "categoryId") {
-      const selectedCat = categories.find(cat => cat.categoryId === value);
-      setFormData({
-        ...formData,
-        categoryId: value,
-        categoryName: selectedCat ? selectedCat.name : "",
-        modelName: formData.productName // Auto-update model name if product name is being changed
-      });
+      const cat = categories.find((c) => c.categoryId === value);
+      setFormData((p) => ({ ...p, categoryId: value, categoryName: cat?.name || "" }));
     } else if (name === "productName") {
-      // Auto-update model name when product name changes
-      setFormData({
-        ...formData,
-        productName: value,
-        modelName: value // Model name always same as product name
-      });
+      setFormData((p) => ({ ...p, productName: value, modelName: value }));
     } else if (name === "taxSlab") {
-      setFormData({ 
-        ...formData, 
-        [name]: parseInt(value) // Convert to number
-      });
+      setFormData((p) => ({ ...p, taxSlab: parseInt(value) }));
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData((p) => ({ ...p, [name]: value }));
     }
   };
 
-  // GLOBAL SPECIFICATIONS
-  const handleSpecChange = (index, field, value) => {
-    const updatedSpecs = [...formData.specifications];
-    updatedSpecs[index][field] = value;
-    setFormData({ ...formData, specifications: updatedSpecs });
-  };
-
-  const addSpecField = () => {
-    setFormData({
-      ...formData,
-      specifications: [...formData.specifications, { key: "", value: "" }]
+  const handlePriceChange = (field, value) => {
+    setFormData((p) => {
+      const colors = [...p.colors];
+      colors[0] = { ...colors[0], [field]: value };
+      return { ...p, colors };
     });
   };
 
-  const removeSpecField = (index) => {
-    const updatedSpecs = formData.specifications.filter((_, i) => i !== index);
-    setFormData({ ...formData, specifications: updatedSpecs });
-  };
+  // Specs
+  const addSpec    = () => setFormData((p) => ({ ...p, specifications: [...p.specifications, { key: "", value: "" }] }));
+  const removeSpec = (i) => setFormData((p) => ({ ...p, specifications: p.specifications.filter((_, idx) => idx !== i) }));
+  const updateSpec = (i, field, val) =>
+    setFormData((p) => {
+      const s = [...p.specifications];
+      s[i] = { ...s[i], [field]: val };
+      return { ...p, specifications: s };
+    });
 
-  // COLOR IMAGES for the default White color
+  // Images
+  const handleThumbnailChange   = (e) => e.target.files[0] && setThumbnailFile(e.target.files[0]);
   const handleColorImagesChange = (e) => {
-    if (e.target.files.length > 0) {
-      const newFiles = Array.from(e.target.files);
-      setColorImages([...colorImages, ...newFiles]);
-    }
+    if (e.target.files.length > 0)
+      setColorImages((p) => [...p, ...Array.from(e.target.files)]);
   };
+  const removeColorImage = (i) => setColorImages((p) => p.filter((_, idx) => idx !== i));
 
-  const removeColorImage = (imageIndex) => {
-    setColorImages(colorImages.filter((_, i) => i !== imageIndex));
-  };
+  // ── Submit: Add ──────────────────────────────────────────────────────────────
 
-  // IMAGE HANDLING
-  const handleThumbnailChange = (e) => {
-    if (e.target.files[0]) {
-      setThumbnailFile(e.target.files[0]);
-    }
-  };
+  const handleAddProduct = async () => {
+    if (!formData.productName.trim())                             return toast.error("Product name is required");
+    if (!formData.categoryId)                                     return toast.error("Please select a category");
+    if (!formData.SKU?.trim())                                    return toast.error("SKU is required");
+    if (!formData.colors?.[0]?.currentPrice || formData.colors[0].currentPrice <= 0)
+                                                                  return toast.error("Please enter a valid current price");
+    if (!formData.taxSlab)                                        return toast.error("Please select a tax slab");
+    if (!thumbnailFile)                                           return toast.error("Thumbnail image is required");
 
-  // Helper to check if image is a URL
-  const isImageUrl = (img) => {
-    return typeof img === 'string' && (img.startsWith('http') || img.startsWith('/'));
-  };
-
-  // Helper to get image source
-  const getImageSrc = (img) => {
-    if (isImageUrl(img)) {
-      return img;
-    } else if (img instanceof File) {
-      return URL.createObjectURL(img);
-    }
-    return "";
-  };
-
-  // Helper to get image name
-  const getImageName = (img) => {
-    if (isImageUrl(img)) {
-      return img.split('/').pop();
-    } else if (img instanceof File) {
-      return img.name;
-    }
-    return "Image";
-  };
-
-  // ADD PRODUCT
-  const addProduct = async () => {
     try {
-      // Validation
-      if (!formData.productName.trim()) {
-        alert("Product name is required");
-        return;
-      }
-      if (!formData.categoryId) {
-        alert("Please select a category");
-        return;
-      }
-      if (!formData.SKU?.trim()) {
-        alert("SKU is required");
-        return;
-      }
-      if (!formData.colors?.[0]?.currentPrice || formData.colors[0].currentPrice <= 0) {
-        alert("Please enter a valid current price");
-        return;
-      }
-      if (!formData.taxSlab) {
-        alert("Please select a tax slab");
-        return;
-      }
+      setFormLoading(true);
 
-      if (!thumbnailFile && formMode === "add") {
-        alert("Thumbnail image is required");
-        return;
-      }
+      const fd = new FormData();
+      fd.append("productName",  formData.productName);
+      fd.append("description",  formData.description || "");
+      fd.append("categoryId",   formData.categoryId);
+      fd.append("categoryName", formData.categoryName || "");
+      fd.append("hsnCode",      formData.hsnCode || "");
+      fd.append("taxSlab",      formData.taxSlab);
+      fd.append("type",         "simple");
+      fd.append("modelName",    formData.modelName || formData.productName);
+      fd.append("SKU",          formData.SKU);
 
-      const token = localStorage.getItem("adminToken");
-      if (!token) {
-        alert("Please login first");
-        return;
-      }
-
-      // Prepare the default White color
-      const whiteColor = {
-        colorId: `temp_${Date.now()}_1`,
-        colorName: "White",
-        sizes: [],
-        images: [],
-        originalPrice: formData.colors[0]?.originalPrice || 0,
-        currentPrice: formData.colors[0]?.currentPrice || 0,
-        colorSpecifications: []
-      };
-
-      const formDataToSend = new FormData();
-
-      // Append basic data
-      formDataToSend.append("productName", formData.productName);
-      formDataToSend.append("description", formData.description || "");
-      formDataToSend.append("categoryId", formData.categoryId);
-      formDataToSend.append("categoryName", formData.categoryName || "");
-      formDataToSend.append("hsnCode", formData.hsnCode || "");
-      formDataToSend.append("taxSlab", formData.taxSlab);
-      formDataToSend.append("type", "simple"); // Always simple
-      formDataToSend.append("modelName", formData.modelName || formData.productName); // Auto-fill
-      formDataToSend.append("SKU", formData.SKU);
-
-      // Append specifications if any
       const nonEmptySpecs = formData.specifications.filter(
-        spec => spec.key?.trim() !== "" && spec.value?.trim() !== ""
+        (s) => s.key?.trim() && s.value?.trim()
       );
-      if (nonEmptySpecs.length > 0) {
-        formDataToSend.append("specifications", JSON.stringify(nonEmptySpecs));
-      }
+      if (nonEmptySpecs.length > 0)
+        fd.append("specifications", JSON.stringify(nonEmptySpecs));
 
-      // Append the default White color
-      formDataToSend.append("colors", JSON.stringify([whiteColor]));
+      const whiteColor = {
+        colorId:             `temp_${Date.now()}_1`,
+        colorName:           "White",
+        sizes:               [],
+        images:              [],
+        originalPrice:       formData.colors[0]?.originalPrice || 0,
+        currentPrice:        formData.colors[0]?.currentPrice  || 0,
+        colorSpecifications: [],
+      };
+      fd.append("colors", JSON.stringify([whiteColor]));
+      fd.append("thumbnail", thumbnailFile);
 
-      // Append thumbnail file
-      if (thumbnailFile) {
-        formDataToSend.append("thumbnail", thumbnailFile);
-      }
+      colorImages.forEach((img) => {
+        if (img instanceof File) fd.append("colorImages[0]", img);
+      });
 
-      // Append color images for the default White color
-      if (colorImages.length > 0) {
-        colorImages.forEach((imgFile, index) => {
-          if (imgFile instanceof File) {
-            formDataToSend.append(`colorImages[0]`, imgFile);
-          }
-        });
-      }
+      await axios.post(`${import.meta.env.VITE_API_URL}/products/add`, fd, {
+        headers: { ...authHeader(), "Content-Type": "multipart/form-data" },
+      });
 
-      setLoading(true);
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/products/add`,
-        formDataToSend,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data"
-          }
-        }
-      );
-
-      alert("Product added successfully!");
+      toast.success("Product added successfully!");
       resetForm();
       fetchProducts();
     } catch (err) {
-      console.error("Error adding product:", err);
-      alert(err.response?.data?.error || "Failed to add product");
+      toast.error(err.response?.data?.error || "Failed to add product");
     } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
   };
 
-  // UPDATE PRODUCT
-  const updateProduct = async () => {
+  // ── Submit: Update ───────────────────────────────────────────────────────────
+
+  const handleUpdateProduct = async () => {
+    if (!formData.productId) return toast.error("Product ID is missing");
+
     try {
-      if (!formData.productId) {
-        alert("Product ID is missing");
-        return;
-      }
+      setFormLoading(true);
 
-      const token = localStorage.getItem("adminToken");
-      if (!token) {
-        alert("Please login first");
-        return;
-      }
-
-      // Prepare updated colors (preserve existing colorId if updating)
       const existingColors = formData.colors || [];
       const updatedColor = {
-        colorId: existingColors[0]?.colorId || `temp_${Date.now()}_1`,
-        colorName: "White",
-        sizes: [],
-        images: existingColors[0]?.images?.filter(img => typeof img === 'string') || [],
-        originalPrice: formData.colors[0]?.originalPrice || 0,
-        currentPrice: formData.colors[0]?.currentPrice || 0,
-        colorSpecifications: []
+        colorId:             existingColors[0]?.colorId || `temp_${Date.now()}_1`,
+        colorName:           "White",
+        sizes:               [],
+        images:              existingColors[0]?.images?.filter((i) => typeof i === "string") || [],
+        originalPrice:       formData.colors[0]?.originalPrice || 0,
+        currentPrice:        formData.colors[0]?.currentPrice  || 0,
+        colorSpecifications: [],
       };
 
-      const formDataToSend = new FormData();
+      const fd = new FormData();
+      fd.append("productName",  formData.productName);
+      fd.append("description",  formData.description || "");
+      fd.append("categoryId",   formData.categoryId);
+      fd.append("categoryName", formData.categoryName || "");
+      fd.append("hsnCode",      formData.hsnCode || "");
+      fd.append("taxSlab",      formData.taxSlab);
+      fd.append("type",         "simple");
+      fd.append("modelName",    formData.modelName || formData.productName);
+      fd.append("SKU",          formData.SKU || "");
 
-      // Append basic data
-      formDataToSend.append("productName", formData.productName);
-      formDataToSend.append("description", formData.description || "");
-      formDataToSend.append("categoryId", formData.categoryId);
-      formDataToSend.append("categoryName", formData.categoryName || "");
-      formDataToSend.append("hsnCode", formData.hsnCode || "");
-      formDataToSend.append("taxSlab", formData.taxSlab);
-      formDataToSend.append("type", "simple");
-      formDataToSend.append("modelName", formData.modelName || formData.productName);
-      formDataToSend.append("SKU", formData.SKU || "");
-
-      // Append specifications
       const nonEmptySpecs = formData.specifications.filter(
-        spec => spec.key?.trim() !== "" && spec.value?.trim() !== ""
+        (s) => s.key?.trim() && s.value?.trim()
       );
-      formDataToSend.append("specifications", JSON.stringify(nonEmptySpecs));
+      fd.append("specifications", JSON.stringify(nonEmptySpecs));
+      fd.append("colors", JSON.stringify([updatedColor]));
 
-      // Append colors
-      formDataToSend.append("colors", JSON.stringify([updatedColor]));
+      if (thumbnailFile) fd.append("thumbnail", thumbnailFile);
+      colorImages.forEach((img) => {
+        if (img instanceof File) fd.append("colorImages[0]", img);
+      });
 
-      // Append thumbnail file
-      if (thumbnailFile) {
-        formDataToSend.append("thumbnail", thumbnailFile);
-      }
-
-      // Append new color images
-      if (colorImages.length > 0) {
-        colorImages.forEach((imgFile, index) => {
-          if (imgFile instanceof File) {
-            formDataToSend.append(`colorImages[0]`, imgFile);
-          }
-        });
-      }
-
-      setLoading(true);
       await axios.put(
         `${import.meta.env.VITE_API_URL}/products/update/${formData.productId}`,
-        formDataToSend,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data"
-          }
-        }
+        fd,
+        { headers: { ...authHeader(), "Content-Type": "multipart/form-data" } }
       );
 
-      alert("Product updated successfully!");
+      toast.success("Product updated successfully!");
       resetForm();
       fetchProducts();
     } catch (err) {
-      console.error("Error updating product:", err);
-      alert(err.response?.data?.error || "Failed to update product");
+      toast.error(err.response?.data?.error || "Failed to update product");
     } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
   };
 
-  // DELETE PRODUCT
-  const deleteProduct = async () => {
+  // ── Delete ───────────────────────────────────────────────────────────────────
+
+  const handleDeleteProduct = async () => {
+    if (!deleteId) return;
     try {
-      if (!deleteId) return;
-
-      const token = localStorage.getItem("adminToken");
-      if (!token) {
-        alert("Please login first");
-        return;
-      }
-
-      setLoading(true);
-      await axios.delete(
-        `${import.meta.env.VITE_API_URL}/products/delete/${deleteId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      alert("Product deactivated successfully!");
+      setDeleteLoading(true);
+      await axios.delete(`${import.meta.env.VITE_API_URL}/products/delete/${deleteId}`, {
+        headers: authHeader(),
+      });
+      toast.success("Product deactivated successfully!");
       setDeleteId(null);
       fetchProducts();
     } catch (err) {
-      console.error("Error deleting product:", err);
-      alert(err.response?.data?.error || "Failed to delete product");
+      toast.error(err.response?.data?.error || "Failed to delete product");
     } finally {
-      setLoading(false);
+      setDeleteLoading(false);
     }
   };
 
-  // OPEN UPDATE FORM
+  // ── Open Update Form ─────────────────────────────────────────────────────────
+
   const openUpdateForm = (product) => {
     setFormMode("update");
-
-    const preparedData = {
+    setFormData({
       ...product,
-      modelName: product.modelName || product.productName, // Auto-fill model name
+      modelName:      product.modelName      || product.productName,
       specifications: product.specifications || [],
-      colors: product.colors || [{
-        colorId: `temp_${Date.now()}_1`,
-        colorName: "White",
-        sizes: [],
-        images: [],
-        originalPrice: "",
-        currentPrice: "",
-        colorSpecifications: []
-      }],
-      hsnCode: product.hsnCode || "",
-      taxSlab: product.taxSlab || 18
-    };
-
-    setFormData(preparedData);
+      hsnCode:        product.hsnCode        || "",
+      taxSlab:        product.taxSlab        || 18,
+      colors: product.colors?.length > 0
+        ? product.colors
+        : [{ colorId: `temp_${Date.now()}`, colorName: "White", sizes: [], images: [], originalPrice: "", currentPrice: "", colorSpecifications: [] }],
+    });
     setExistingThumbnail(product.thumbnailImage || "");
     setThumbnailFile(null);
-    
-    // Set existing color images if any
-    if (preparedData.colors[0]?.images) {
-      setColorImages([]); // We'll only show existing URLs, not file objects
-    } else {
-      setColorImages([]);
-    }
-    
+    setColorImages([]);
     setShowForm(true);
   };
 
-  // RESET FORM
+  // ── Reset ────────────────────────────────────────────────────────────────────
+
   const resetForm = () => {
-    setFormData({
-      productName: "",
-      description: "",
-      categoryId: "",
-      categoryName: "",
-      hsnCode: "",
-      taxSlab: 18,
-      type: "simple",
-      modelName: "",
-      SKU: "",
-      specifications: [],
-      colors: [{
-        colorId: `temp_${Date.now()}_1`,
-        colorName: "White",
-        sizes: [],
-        images: [],
-        originalPrice: "",
-        currentPrice: "",
-        colorSpecifications: []
-      }]
-    });
+    setFormData({ ...EMPTY_FORM, colors: [{ ...EMPTY_FORM.colors[0], colorId: `temp_${Date.now()}` }] });
     setThumbnailFile(null);
     setExistingThumbnail("");
     setColorImages([]);
     setShowForm(false);
+    setFormMode("add");
   };
 
-  // Format price
-  const formatPrice = (price) => {
-    return price ? parseFloat(price).toFixed(2) : "0.00";
-  };
+  // ── Filtered ─────────────────────────────────────────────────────────────────
 
-  // Get display price
-  const getDisplayPrice = (product) => {
-    if (product.type === "simple") {
-      if (product.colors && product.colors.length > 0) {
-        const prices = product.colors.map(c => c.currentPrice).filter(p => p);
-        if (prices.length > 0) {
-          const minPrice = Math.min(...prices);
-          const maxPrice = Math.max(...prices);
-          return minPrice === maxPrice ?
-            `₹${formatPrice(minPrice)}` :
-            `₹${formatPrice(minPrice)} - ₹${formatPrice(maxPrice)}`;
-        }
-      }
-      return "₹0.00";
-    } else {
-      return "Variable Pricing";
-    }
-  };
+  const filtered = products.filter(
+    (p) =>
+      !searchTerm ||
+      p.productName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.categoryName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.SKU?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  // Get color count
-  const getColorCount = (product) => {
-    if (product.type === "simple") {
-      return product.colors?.length || 0;
-    } else {
-      let total = 0;
-      if (product.models) {
-        product.models.forEach(model => {
-          total += model.colors?.length || 0;
-        });
-      }
-      return total;
-    }
-  };
+  // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="list-products">
-      <div className="header">
-        <h2>Products ({products.length})</h2>
-        <button
-          onClick={() => {
-            setFormMode("add");
-            resetForm();
-            setShowForm(true);
-          }}
-          disabled={loading}
-        >
-          + Add Product
-        </button>
-      </div>
+    <AdminLayout>
+      <div className="list-products">
 
-      {loading && products.length === 0 ? (
-        <div className="loading">Loading products...</div>
-      ) : products.length === 0 ? (
-        <div className="no-products">
-          <p>No products found. Add your first product!</p>
+        {/* ── HEADER ── */}
+        <div className="lp-header">
+          <div className="lp-header__left">
+            <h1 className="lp-header__title">Products</h1>
+            <span className="lp-header__count">{products.length} total</span>
+          </div>
+          <button
+            className="btn btn--primary"
+            onClick={() => { setFormMode("add"); resetForm(); setShowForm(true); }}
+            disabled={loading}
+          >
+            + Add Product
+          </button>
         </div>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Image</th>
-              <th>Name</th>
-              <th>Category</th>
-              <th>Type</th>
-              <th>SKU</th>
-              <th>Variants</th>
-              <th>HSN</th>
-              <th>Tax Slab</th>
-              <th>Price</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((p) => (
-              <tr key={p.productId}>
-                <td>
-                  {p.thumbnailImage && (
-                    <img
-                      src={p.thumbnailImage}
-                      alt={p.productName}
-                      className="thumbnail"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "https://via.placeholder.com/50x50?text=No+Image";
-                      }}
-                    />
-                  )}
-                </td>
-                <td>{p.productName}</td>
-                <td>{p.categoryName}</td>
-                <td>
-                  <span className={`type-badge ${p.type}`}>
-                    {p.type}
-                  </span>
-                </td>
-                <td>{p.SKU || "-"}</td>
-                <td>
-                  <span className="variant-count">
-                    {getColorCount(p)} color(s)
-                  </span>
-                </td>
-                <td>{p.hsnCode || "-"}</td>
-                <td>{p.taxSlab || 18}%</td>
-                <td>
-                  {getDisplayPrice(p)}
-                </td>
-                <td>
-                  <span className={`status ${p.isActive ? 'active' : 'inactive'}`}>
-                    {p.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-                <td className="actions">
-                  <button
-                    className="edit"
-                    onClick={() => openUpdateForm(p)}
-                    disabled={loading}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="delete"
-                    onClick={() => setDeleteId(p.productId)}
-                    disabled={loading}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
 
-      {showForm && (
-        <div className="popup">
-          <div className="popup-box large">
-            <div className="popup-header">
-              <h3>{formMode === "add" ? "Add Product" : "Update Product"}</h3>
-              <button className="close-btn" onClick={resetForm}>×</button>
-            </div>
+        {/* ── SEARCH ── */}
+        <div className="lp-search-wrap">
+          <div className="lp-search">
+            <span className="lp-search__icon">⌕</span>
+            <input
+              type="text"
+              placeholder="Search by name, category or SKU..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button className="lp-search__clear" onClick={() => setSearchTerm("")}>×</button>
+            )}
+          </div>
+        </div>
 
-            <div className="form">
-              <div className="form-section">
-                <h4>Basic Information</h4>
-                <div className="row">
-                  <div className="form-group">
-                    <label>Product Name *</label>
-                    <input
-                      name="productName"
-                      placeholder="Enter product name"
-                      value={formData.productName}
-                      onChange={handleChange}
-                      required
-                    />
-                    <small className="note">(Model name will be auto-filled same as product name)</small>
-                  </div>
+        {/* ── TABLE ── */}
+        {loading && products.length === 0 ? (
+          <div className="lp-state">
+            <div className="lp-state__spinner" />
+            <p>Loading products...</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="lp-state">
+            <div className="lp-state__icon">📦</div>
+            <p>{searchTerm ? "No products match your search" : "No products yet. Add your first product!"}</p>
+          </div>
+        ) : (
+          <div className="lp-table-wrap">
+            <table className="lp-table">
+              <thead>
+                <tr>
+                  <th>Image</th>
+                  <th>Product</th>
+                  <th>Category</th>
+                  <th>SKU</th>
+                  <th>HSN</th>
+                  <th>Tax</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((p) => (
+                  <tr key={p.productId}>
+                    <td className="td-img">
+                      {p.thumbnailImage ? (
+                        <img
+                          src={p.thumbnailImage}
+                          alt={p.productName}
+                          className="product-thumb"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "https://via.placeholder.com/48x48?text=N/A";
+                          }}
+                        />
+                      ) : (
+                        <div className="product-thumb product-thumb--empty">—</div>
+                      )}
+                    </td>
 
-                  <div className="form-group">
-                    <label>Category *</label>
-                    <select
-                      name="categoryId"
-                      value={formData.categoryId}
-                      onChange={handleChange}
-                      required
-                    >
-                      <option value="">Select Category</option>
-                      {categories.map(cat => (
-                        <option key={cat.categoryId} value={cat.categoryId}>
-                          {cat.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                    <td className="td-name">
+                      <div className="product-name">{p.productName}</div>
+                      <div className="product-variants">
+                        {p.colors?.length || 0} variant(s)
+                      </div>
+                    </td>
 
-                <div className="row">
-                  <div className="form-group">
-                    <label>HSN Code</label>
-                    <input
-                      name="hsnCode"
-                      placeholder="Enter HSN Code"
-                      value={formData.hsnCode}
-                      onChange={handleChange}
-                    />
-                  </div>
+                    <td className="td-cat">
+                      <span className="cat-chip">{p.categoryName || "—"}</span>
+                    </td>
 
-                  <div className="form-group">
-                    <label>Tax Slab *</label>
-                    <select
-                      name="taxSlab"
-                      value={formData.taxSlab}
-                      onChange={handleChange}
-                      required
-                    >
-                      {taxSlabOptions.map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                    <td className="td-sku">{p.SKU || "—"}</td>
+                    <td className="td-hsn">{p.hsnCode || "—"}</td>
 
-                <div className="row">
-                  <div className="form-group">
-                    <label>SKU *</label>
-                    <input
-                      name="SKU"
-                      placeholder="Enter SKU"
-                      value={formData.SKU}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                </div>
+                    <td className="td-tax">
+                      <span className="tax-chip">{p.taxSlab || 18}%</span>
+                    </td>
 
-                <div className="form-group">
-                  <label>Product Description</label>
-                  <textarea
-                    name="description"
-                    placeholder="Enter product description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={3}
-                  />
-                </div>
-              </div>
+                    <td className="td-price">
+                      <span className="price-val">{getDisplayPrice(p)}</span>
+                    </td>
 
-              <div className="form-section">
-                <h4>Thumbnail Image {formMode === "add" && "*"}</h4>
-                <div className="form-group">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleThumbnailChange}
-                  />
-                  {thumbnailFile && (
-                    <div className="file-preview">
-                      Selected: {thumbnailFile.name}
-                    </div>
-                  )}
-                  {!thumbnailFile && existingThumbnail && (
-                    <div className="existing-image">
-                      <p>Current thumbnail:</p>
-                      <img
-                        src={existingThumbnail}
-                        alt="Current thumbnail"
-                        className="thumb-preview"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
+                    <td className="td-status">
+                      <span className={`status-dot ${p.isActive ? "active" : "inactive"}`}>
+                        <span className="dot" />
+                        {p.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </td>
 
-              <div className="form-section">
-                <h4>Product Specifications</h4>
-                <div className="section-header">
-                  <button type="button" onClick={addSpecField} className="add-btn small">
-                    + Add Specification
-                  </button>
-                </div>
-
-                {formData.specifications.length === 0 ? (
-                  <p className="no-items">No specifications added yet.</p>
-                ) : (
-                  formData.specifications.map((spec, index) => (
-                    <div key={index} className="spec-row">
-                      <input
-                        placeholder="Key"
-                        value={spec.key}
-                        onChange={(e) => handleSpecChange(index, 'key', e.target.value)}
-                        className="spec-input"
-                      />
-                      <input
-                        placeholder="Value"
-                        value={spec.value}
-                        onChange={(e) => handleSpecChange(index, 'value', e.target.value)}
-                        className="spec-input"
-                      />
+                    <td className="td-actions">
                       <button
-                        type="button"
-                        className="remove-btn small"
-                        onClick={() => removeSpecField(index)}
+                        className="action-btn action-btn--edit"
+                        onClick={() => openUpdateForm(p)}
+                        disabled={loading}
                       >
-                        ×
+                        Edit
                       </button>
-                    </div>
-                  ))
-                )}
+                      <button
+                        className="action-btn action-btn--delete"
+                        onClick={() => setDeleteId(p.productId)}
+                        disabled={loading}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* ════════════════════════════════════════════════
+            FORM MODAL
+        ════════════════════════════════════════════════ */}
+        {showForm && (
+          <div className="modal-overlay" onClick={resetForm}>
+            <div className="modal modal--xl" onClick={(e) => e.stopPropagation()}>
+
+              <div className="modal-header">
+                <div>
+                  <h3 className="modal-title">
+                    {formMode === "add" ? "Add New Product" : "Update Product"}
+                  </h3>
+                  <p className="modal-sub">
+                    {formMode === "add" ? "Fill in the product details below" : `Editing: ${formData.productName}`}
+                  </p>
+                </div>
+                <button className="modal-close" onClick={resetForm}>×</button>
               </div>
 
-              <div className="form-section">
-                <h4>Product Details</h4>
-                <div className="row">
-                  <div className="form-group">
-                    <label>Original Price</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={formData.colors[0]?.originalPrice || ""}
-                      onChange={(e) => {
-                        const updatedColors = [...formData.colors];
-                        if (updatedColors[0]) {
-                          updatedColors[0].originalPrice = e.target.value;
-                        }
-                        setFormData({ ...formData, colors: updatedColors });
-                      }}
-                    />
+              <div className="modal-body">
+
+                {/* Basic Info */}
+                <div className="form-section">
+                  <div className="form-section__title">Basic Information</div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Product Name <span className="req">*</span></label>
+                      <input
+                        name="productName"
+                        placeholder="Enter product name"
+                        value={formData.productName}
+                        onChange={handleChange}
+                      />
+                      <small>Model name will be auto-filled same as product name</small>
+                    </div>
+                    <div className="form-group">
+                      <label>Category <span className="req">*</span></label>
+                      <select name="categoryId" value={formData.categoryId} onChange={handleChange}>
+                        <option value="">Select Category</option>
+                        {categories.map((cat) => (
+                          <option key={cat.categoryId} value={cat.categoryId}>{cat.name}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
-                  <div className="form-group">
-                    <label>Current Price *</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={formData.colors[0]?.currentPrice || ""}
-                      onChange={(e) => {
-                        const updatedColors = [...formData.colors];
-                        if (updatedColors[0]) {
-                          updatedColors[0].currentPrice = e.target.value;
-                        }
-                        setFormData({ ...formData, colors: updatedColors });
-                      }}
-                      required
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>SKU <span className="req">*</span></label>
+                      <input
+                        name="SKU"
+                        placeholder="Enter SKU"
+                        value={formData.SKU}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>HSN Code</label>
+                      <input
+                        name="hsnCode"
+                        placeholder="Enter HSN Code"
+                        value={formData.hsnCode}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Tax Slab <span className="req">*</span></label>
+                      <select name="taxSlab" value={formData.taxSlab} onChange={handleChange}>
+                        {TAX_OPTIONS.map((o) => (
+                          <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group" />
+                  </div>
+
+                  <div className="form-group form-group--full">
+                    <label>Description</label>
+                    <textarea
+                      name="description"
+                      placeholder="Enter product description..."
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={3}
                     />
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label>Product Images</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleColorImagesChange}
-                  />
-                  {(colorImages.length > 0 || (formData.colors[0]?.images?.length > 0)) && (
-                    <div className="color-images">
-                      <p>Selected images: {colorImages.length + (formData.colors[0]?.images?.filter(img => typeof img === 'string').length || 0)}</p>
-                      <div className="color-thumbs">
-                        {/* Existing images from database */}
-                        {formData.colors[0]?.images?.map((img, imgIndex) => {
-                          if (typeof img === 'string') {
-                            return (
-                              <div key={`existing-${imgIndex}`} className="image-item">
-                                <img
-                                  src={img}
-                                  alt={`Product ${imgIndex + 1}`}
-                                  className="gallery-thumb"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    // Note: We can't remove existing images from frontend in update mode
-                                    // Backend will handle this
-                                  }}
-                                  className="remove-image-btn"
-                                  title="Cannot remove from frontend"
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            );
-                          }
-                          return null;
-                        })}
-                        
-                        {/* Newly uploaded images */}
-                        {colorImages.map((img, imgIndex) => (
-                          <div key={`new-${imgIndex}`} className="image-item">
-                            <div className="file-info">
-                              <span className="image-name">{getImageName(img)}</span>
+                {/* Pricing */}
+                <div className="form-section">
+                  <div className="form-section__title">Pricing</div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Original Price (MRP)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="₹ 0.00"
+                        value={formData.colors[0]?.originalPrice || ""}
+                        onChange={(e) => handlePriceChange("originalPrice", e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Selling Price <span className="req">*</span></label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="₹ 0.00"
+                        value={formData.colors[0]?.currentPrice || ""}
+                        onChange={(e) => handlePriceChange("currentPrice", e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Images */}
+                <div className="form-section">
+                  <div className="form-section__title">
+                    Thumbnail Image {formMode === "add" && <span className="req">*</span>}
+                  </div>
+                  <div className="form-group">
+                    <div className="file-upload-wrap">
+                      <label className="file-upload-label">
+                        <span className="file-upload-icon">📁</span>
+                        <span>{thumbnailFile ? thumbnailFile.name : "Choose thumbnail image"}</span>
+                        <input type="file" accept="image/*" onChange={handleThumbnailChange} hidden />
+                      </label>
+                    </div>
+                    {!thumbnailFile && existingThumbnail && (
+                      <div className="existing-thumb">
+                        <span className="existing-label">Current:</span>
+                        <img src={existingThumbnail} alt="Current thumbnail" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <div className="form-section__title">Product Gallery Images</div>
+                  <div className="form-group">
+                    <div className="file-upload-wrap">
+                      <label className="file-upload-label">
+                        <span className="file-upload-icon">🖼</span>
+                        <span>Add product images (multiple allowed)</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleColorImagesChange}
+                          hidden
+                        />
+                      </label>
+                    </div>
+
+                    {/* Existing images from DB */}
+                    {formData.colors[0]?.images?.filter((i) => typeof i === "string").length > 0 && (
+                      <div className="image-grid">
+                        {formData.colors[0].images
+                          .filter((i) => typeof i === "string")
+                          .map((img, idx) => (
+                            <div key={`ex-${idx}`} className="image-grid__item">
+                              <img src={img} alt={`Product ${idx + 1}`} />
+                              <span className="image-grid__label">Saved</span>
                             </div>
+                          ))}
+                      </div>
+                    )}
+
+                    {/* Newly added files */}
+                    {colorImages.length > 0 && (
+                      <div className="image-grid">
+                        {colorImages.map((img, idx) => (
+                          <div key={`new-${idx}`} className="image-grid__item">
+                            <img src={URL.createObjectURL(img)} alt={img.name} />
                             <button
                               type="button"
-                              onClick={() => removeColorImage(imgIndex)}
-                              className="remove-image-btn"
-                              title="Remove this image"
-                            >
-                              ×
-                            </button>
+                              className="image-grid__remove"
+                              onClick={() => removeColorImage(idx)}
+                            >×</button>
                           </div>
                         ))}
                       </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Specifications */}
+                <div className="form-section">
+                  <div className="form-section__header">
+                    <div className="form-section__title">Specifications</div>
+                    <button type="button" className="btn btn--sm btn--outline" onClick={addSpec}>
+                      + Add Spec
+                    </button>
+                  </div>
+
+                  {formData.specifications.length === 0 ? (
+                    <p className="empty-specs">No specifications added yet.</p>
+                  ) : (
+                    <div className="specs-list">
+                      {formData.specifications.map((spec, i) => (
+                        <div key={i} className="spec-row">
+                          <input
+                            placeholder="Key (e.g. Weight)"
+                            value={spec.key}
+                            onChange={(e) => updateSpec(i, "key", e.target.value)}
+                          />
+                          <input
+                            placeholder="Value (e.g. 200g)"
+                            value={spec.value}
+                            onChange={(e) => updateSpec(i, "value", e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            className="spec-remove"
+                            onClick={() => removeSpec(i)}
+                          >×</button>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
+
+              </div>{/* modal-body */}
+
+              <div className="modal-footer">
+                <button className="btn btn--outline" onClick={resetForm} disabled={formLoading}>
+                  Cancel
+                </button>
+                <button
+                  className="btn btn--primary"
+                  onClick={formMode === "add" ? handleAddProduct : handleUpdateProduct}
+                  disabled={formLoading}
+                >
+                  {formLoading ? (
+                    <><span className="btn-spinner" /> {formMode === "add" ? "Adding..." : "Updating..."}</>
+                  ) : (
+                    formMode === "add" ? "Add Product" : "Update Product"
+                  )}
+                </button>
               </div>
             </div>
+          </div>
+        )}
 
-            <div className="btns">
-              <button className="cancel" onClick={resetForm} disabled={loading}>
-                Cancel
-              </button>
-
-              {formMode === "add" ? (
-                <button className="save" onClick={addProduct} disabled={loading}>
-                  {loading ? "Adding..." : "Add Product"}
+        {/* ════════════════════════════════════════════════
+            DELETE CONFIRM MODAL
+        ════════════════════════════════════════════════ */}
+        {deleteId && (
+          <div className="modal-overlay" onClick={() => setDeleteId(null)}>
+            <div className="modal modal--sm" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header modal-header--danger">
+                <h3 className="modal-title">Confirm Delete</h3>
+                <button className="modal-close" onClick={() => setDeleteId(null)}>×</button>
+              </div>
+              <div className="modal-body">
+                <div className="delete-confirm">
+                  <div className="delete-confirm__icon">🗑️</div>
+                  <p>This will <strong>deactivate</strong> the product. It won't be visible on the store. Are you sure?</p>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn--outline" onClick={() => setDeleteId(null)} disabled={deleteLoading}>
+                  Cancel
                 </button>
-              ) : (
-                <button className="save" onClick={updateProduct} disabled={loading}>
-                  {loading ? "Updating..." : "Update Product"}
+                <button className="btn btn--danger" onClick={handleDeleteProduct} disabled={deleteLoading}>
+                  {deleteLoading ? <><span className="btn-spinner btn-spinner--dark" /> Deleting...</> : "Yes, Delete"}
                 </button>
-              )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {deleteId && (
-        <div className="popup">
-          <div className="popup-box">
-            <h3>Confirm Delete</h3>
-            <p>This will deactivate the product. Are you sure?</p>
-            <div className="btns">
-              <button className="cancel" onClick={() => setDeleteId(null)} disabled={loading}>
-                Cancel
-              </button>
-              <button className="delete" onClick={deleteProduct} disabled={loading}>
-                {loading ? "Deleting..." : "Yes, Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          theme="light"
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          pauseOnHover
+        />
+      </div>
+    </AdminLayout>
   );
 };
 

@@ -1,939 +1,1535 @@
-/* AdminOrders.scss
-   FULL updated styles for the AdminOrders.jsx you uploaded.
-   - No JSX changes required
-   - Includes modal header styling for "Order Details - #ORD..."
-   - Clean, elegant, responsive
-*/
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Inter:wght@300;400;500;600&display=swap");
 
-/* ---------- Root ---------- */
+// ─── Tokens ────────────────────────────────────────────────────────────────────
+
+$brand: #4e221c;
+$brand-hover: #3a1814;
+$brand-light: rgba(78, 34, 28, 0.08);
+$brand-border: rgba(78, 34, 28, 0.15);
+$brand-glow: rgba(78, 34, 28, 0.12);
+
+$bg-page: #fefcf2;
+$bg-card: #ffffff;
+$bg-input: #faf8f4;
+$border-light: #ede8df;
+$border-mid: #ddd5c8;
+
+$text-primary: #2a1f12;
+$text-secondary: #6b5535;
+$text-muted: #a08060;
+$text-dim: #c4a882;
+
+// Status palette
+$green: #2d7a4f;
+$green-bg: #edf7f1;
+$green-bd: #b6dfc8;
+$amber: #92600a;
+$amber-bg: #fef7e6;
+$amber-bd: #f5d98a;
+$red: #c0392b;
+$red-bg: #fdf0ee;
+$red-bd: #f5c0b8;
+$blue: #1a5fa8;
+$blue-bg: #eaf2fc;
+$blue-bd: #a8cdf5;
+$indigo: #3730a3;
+$indigo-bg: #eef2ff;
+$indigo-bd: #a5b4fc;
+$teal: #0f766e;
+$teal-bg: #f0fdfa;
+$teal-bd: #99f6e4;
+$gray: #6b7280;
+$gray-bg: #f3f4f6;
+$gray-bd: #d1d5db;
+
+$font-display: "DM Sans", sans-serif;
+$font-body: "Inter", sans-serif;
+
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 14px;
+$radius-xl: 18px;
+
+$shadow-sm: 0 1px 4px rgba(42, 31, 18, 0.06);
+$shadow-md: 0 4px 16px rgba(42, 31, 18, 0.08);
+$shadow-lg: 0 8px 32px rgba(42, 31, 18, 0.14);
+
+$transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+// ─── Base ──────────────────────────────────────────────────────────────────────
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
+
 .admin-orders {
-    max-width: 1350px;
-    margin: 0 auto;
-    padding: 22px;
-    background: #f6f8fb;
+    padding: 28px 28px 48px;
+    background: $bg-page;
     min-height: 100vh;
-    color: #2b3340;
-    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-        "Helvetica Neue", Arial;
+    font-family: $font-body;
+    color: $text-primary;
+}
 
-    /* ---------------- Header ---------------- */
-    .admin-header {
+// ─── Buttons ───────────────────────────────────────────────────────────────────
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: $radius-md;
+    font-family: $font-display;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all $transition;
+    white-space: nowrap;
+
+    &--primary {
+        background: $brand;
+        color: #fff;
+
+        &:hover:not(:disabled) {
+            background: $brand-hover;
+            box-shadow: 0 4px 14px rgba(78, 34, 28, 0.28);
+            transform: translateY(-1px);
+        }
+    }
+
+    &--outline {
+        background: $bg-card;
+        color: $brand;
+        border: 1.5px solid $brand-border;
+
+        &:hover:not(:disabled) {
+            background: $brand-light;
+            border-color: $brand;
+        }
+    }
+
+    &:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
+    .btn-icon {
+        font-size: 15px;
+    }
+
+    .btn-icon.spin {
+        animation: spin 0.8s linear infinite;
+        display: inline-block;
+    }
+}
+
+.btn-spinner {
+    width: 13px;
+    height: 13px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// ─── Page Header ───────────────────────────────────────────────────────────────
+
+.ao-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 16px;
+    flex-wrap: wrap;
+
+    &__left {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        background: #ffffff;
-        padding: 18px 24px;
-        border-radius: 12px;
-        box-shadow: 0 5px 18px rgba(36, 50, 72, 0.06);
-        margin-bottom: 26px;
-
-        h1 {
-            margin: 0;
-            font-size: 1.95rem;
-            font-weight: 700;
-            color: #1f2a37;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 12px;
-
-            button {
-                padding: 9px 16px;
-                border-radius: 8px;
-                border: none;
-                font-weight: 600;
-                cursor: pointer;
-                letter-spacing: 0.2px;
-                transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
-            }
-
-            .refresh-btn {
-                background: linear-gradient(180deg, #3aa0e6, #2f83c2);
-                color: #fff;
-                box-shadow: 0 6px 18px rgba(47, 131, 194, 0.16);
-
-                &:hover {
-                    transform: translateY(-2px);
-                }
-
-                &:disabled {
-                    opacity: 0.6;
-                    cursor: not-allowed;
-                    transform: none;
-                    box-shadow: none;
-                }
-            }
-
-            .logout-btn {
-                background: linear-gradient(180deg, #ff6b6b, #d94f4f);
-                color: #fff;
-                box-shadow: 0 6px 18px rgba(217, 79, 79, 0.12);
-
-                &:hover {
-                    transform: translateY(-2px);
-                }
-            }
-        }
-    }
-
-    /* ---------------- Stats Cards ---------------- */
-    .stats-cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-        gap: 16px;
-        margin-bottom: 22px;
-
-        .stat-card {
-            background: #fff;
-            border-radius: 10px;
-            padding: 18px;
-            box-shadow: 0 6px 20px rgba(33, 43, 54, 0.04);
-            text-align: center;
-            transition: transform .12s ease;
-
-            &:hover {
-                transform: translateY(-4px);
-            }
-
-            .stat-value {
-                font-size: 1.75rem;
-                font-weight: 700;
-                color: #162028;
-            }
-
-            .stat-label {
-                margin-top: 6px;
-                font-size: 0.88rem;
-                color: #697586;
-                text-transform: uppercase;
-                letter-spacing: 0.6px;
-            }
-        }
-    }
-
-    /* ---------------- Filters Section ---------------- */
-    .filters-section {
-        background: #fff;
-        padding: 18px;
-        border-radius: 12px;
-        box-shadow: 0 6px 18px rgba(36, 50, 72, 0.04);
-        margin-bottom: 20px;
-        display: flex;
-        flex-direction: column;
         gap: 12px;
+    }
 
-        .search-box {
-            position: relative;
+    &__title {
+        font-family: $font-display;
+        font-size: 26px;
+        font-weight: 700;
+        color: $brand;
+        letter-spacing: -0.02em;
+    }
 
-            input {
-                width: 100%;
-                padding: 12px 44px 12px 14px;
-                border-radius: 10px;
-                border: 1.5px solid #e2e8f0;
-                background: #fbfcfe;
-                font-size: 0.98rem;
-                transition: border-color .12s ease, box-shadow .12s ease;
+    &__count {
+        background: $brand-light;
+        color: $brand;
+        border: 1px solid $brand-border;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-family: $font-body;
+        font-size: 12.5px;
+        font-weight: 600;
+    }
 
-                &:focus {
-                    outline: none;
-                    border-color: #3aa0e6;
-                    box-shadow: 0 6px 18px rgba(58, 160, 230, 0.08);
-                    background: #fff;
-                }
+    &__actions {
+        display: flex;
+        gap: 10px;
+    }
+}
 
-                &:disabled {
-                    background: #f4f6f9;
-                    cursor: not-allowed;
-                    opacity: 0.9;
-                }
-            }
+// ─── Stats ─────────────────────────────────────────────────────────────────────
 
-            .search-icon {
-                position: absolute;
-                right: 12px;
-                top: 50%;
-                transform: translateY(-50%);
-                font-size: 1.05rem;
-                color: #7b8692;
-                pointer-events: none;
-            }
+.ao-stats {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.ao-stat {
+    background: $bg-card;
+    border: 1px solid $border-light;
+    border-radius: $radius-lg;
+    padding: 18px 16px;
+    text-align: center;
+    box-shadow: $shadow-sm;
+    border-top: 3px solid $border-mid;
+    transition: transform $transition, box-shadow $transition;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: $shadow-md;
+    }
+
+    &--total {
+        border-top-color: $brand;
+    }
+
+    &--revenue {
+        border-top-color: $green;
+    }
+
+    &--pending {
+        border-top-color: $amber;
+    }
+
+    &--processing {
+        border-top-color: $blue;
+    }
+
+    &--shipped {
+        border-top-color: $indigo;
+    }
+
+    &--delivered {
+        border-top-color: $green;
+    }
+
+    &__val {
+        font-family: $font-display;
+        font-size: 22px;
+        font-weight: 700;
+        color: $text-primary;
+        line-height: 1.1;
+        margin-bottom: 5px;
+    }
+
+    &__label {
+        font-family: $font-body;
+        font-size: 11px;
+        font-weight: 600;
+        color: $text-muted;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+}
+
+// ─── Type Tabs ─────────────────────────────────────────────────────────────────
+
+.ao-tabs {
+    display: flex;
+    position: relative;
+    background: $bg-card;
+    border: 1px solid $border-light;
+    border-radius: $radius-md;
+    padding: 5px;
+    gap: 4px;
+    margin-bottom: 18px;
+    width: fit-content;
+}
+
+.ao-tab {
+    flex: 1;
+    min-width: 130px;
+    padding: 9px 20px;
+    background: transparent;
+    border: none;
+    border-radius: $radius-sm;
+    font-family: $font-display;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: $text-muted;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    transition: color $transition;
+    white-space: nowrap;
+
+    &.active {
+        color: $brand;
+        font-weight: 700;
+    }
+
+    &:hover:not(.active) {
+        color: $text-secondary;
+    }
+}
+
+.ao-tab-indicator {
+    position: absolute;
+    top: 5px;
+    bottom: 5px;
+    background: $brand-light;
+    border: 1.5px solid $brand-border;
+    border-radius: $radius-sm;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+}
+
+// ─── Filters ───────────────────────────────────────────────────────────────────
+
+.ao-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.ao-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    max-width: 480px;
+
+    &__icon {
+        position: absolute;
+        left: 14px;
+        font-size: 18px;
+        color: $text-muted;
+        pointer-events: none;
+    }
+
+    input {
+        width: 100%;
+        padding: 11px 40px 11px 40px;
+        background: $bg-card;
+        border: 1.5px solid $border-mid;
+        border-radius: $radius-md;
+        font-family: $font-body;
+        font-size: 14px;
+        color: $text-primary;
+        outline: none;
+        transition: border-color $transition, box-shadow $transition;
+
+        &::placeholder {
+            color: $text-dim;
         }
 
-        .status-filters {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-
-            .filter-btn {
-                padding: 8px 16px;
-                border-radius: 999px;
-                border: 1px solid #e2e8f0;
-                background: #f6f8fb;
-                cursor: pointer;
-                font-size: 0.9rem;
-                color: #24303b;
-                transition: all .12s ease;
-
-                &:hover {
-                    background: #3498db;
-                    color: white;
-                    border-color: #3498db;
-                }
-
-                &.active {
-                    background: #3498db;
-                    color: white;
-                    border-color: #3498db;
-                    box-shadow: 0 6px 18px rgba(52, 152, 219, 0.10);
-                }
-
-                &:disabled {
-                    opacity: .6;
-                    cursor: not-allowed;
-                }
-            }
+        &:focus {
+            border-color: $brand;
+            box-shadow: 0 0 0 3px $brand-glow;
         }
     }
 
-    /* ---------------- Error Message ---------------- */
-    .error-message {
+    &__clear {
+        position: absolute;
+        right: 12px;
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: $text-muted;
+        cursor: pointer;
+        width: 28px;
+        height: 28px;
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: #fff3f3;
-        border-left: 4px solid #ff6b6b;
-        color: #9b2c2c;
-        padding: 12px 16px;
-        border-radius: 8px;
-        margin-bottom: 16px;
-
-        button {
-            background: none;
-            border: none;
-            font-size: 18px;
-            color: #9b2c2c;
-            cursor: pointer;
-            padding: 4px;
-        }
-    }
-
-    /* ---------------- Loading Overlay ---------------- */
-    .loading-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(255, 255, 255, 0.92);
-        z-index: 4000;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
         align-items: center;
         justify-content: center;
+        border-radius: 50%;
+        transition: all $transition;
 
-        .spinner {
-            width: 54px;
-            height: 54px;
-            border-radius: 50%;
-            border: 6px solid #edf2f7;
-            border-top-color: #3498db;
-            animation: spin 1s linear infinite;
+        &:hover {
+            background: $brand-light;
+            color: $brand;
         }
+    }
+}
 
-        p {
-            color: #2b3340;
-            font-size: 1.05rem;
+.ao-status-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.status-tab {
+    padding: 8px 14px;
+    border-radius: $radius-md;
+    border: 1.5px solid $border-mid;
+    background: $bg-card;
+    font-family: $font-body;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: $text-secondary;
+    cursor: pointer;
+    transition: all $transition;
+
+    &:hover:not(.active) {
+        border-color: $brand;
+        color: $brand;
+        background: $brand-light;
+    }
+
+    &.active {
+        background: $brand;
+        color: #fff;
+        border-color: $brand;
+    }
+
+    &--pending.active {
+        background: $amber;
+        border-color: $amber;
+    }
+
+    &--processing.active {
+        background: $blue;
+        border-color: $blue;
+    }
+
+    &--shipped.active {
+        background: $indigo;
+        border-color: $indigo;
+    }
+
+    &--delivered.active {
+        background: $green;
+        border-color: $green;
+    }
+
+    &--cancelled.active {
+        background: $red;
+        border-color: $red;
+    }
+}
+
+// ─── State ─────────────────────────────────────────────────────────────────────
+
+.ao-state {
+    background: $bg-card;
+    border: 1px solid $border-light;
+    border-radius: $radius-lg;
+    padding: 60px 24px;
+    text-align: center;
+    color: $text-muted;
+    font-family: $font-body;
+    font-size: 15px;
+
+    &__icon {
+        font-size: 40px;
+        margin-bottom: 12px;
+    }
+
+    &__spinner {
+        width: 34px;
+        height: 34px;
+        border: 3px solid $brand-light;
+        border-top-color: $brand;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        margin: 0 auto 16px;
+    }
+}
+
+// ─── Table ─────────────────────────────────────────────────────────────────────
+
+.ao-table-wrap {
+    background: $bg-card;
+    border: 1px solid $border-light;
+    border-radius: $radius-lg;
+    overflow: hidden;
+    box-shadow: $shadow-sm;
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.ao-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+
+    thead {
+        background: #faf7f2;
+        border-bottom: 2px solid $border-mid;
+
+        th {
+            padding: 13px 14px;
+            text-align: left;
+            font-family: $font-body;
+            font-size: 11px;
+            font-weight: 700;
+            color: $text-muted;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            white-space: nowrap;
+        }
+    }
+
+    tbody {
+        .ao-row {
+            border-bottom: 1px solid $border-light;
+            cursor: pointer;
+            transition: background $transition;
+
+            &:last-child {
+                border-bottom: none;
+            }
+
+            &:hover {
+                background: #fdf9f3;
+            }
+
+            td {
+                padding: 14px;
+                vertical-align: middle;
+            }
+        }
+    }
+}
+
+// ─── Table Cells ───────────────────────────────────────────────────────────────
+
+.td-order {
+    min-width: 130px;
+
+    .order-num {
+        font-family: $font-display;
+        font-size: 13.5px;
+        font-weight: 700;
+        color: $brand;
+        margin-bottom: 4px;
+    }
+}
+
+.td-customer {
+    min-width: 150px;
+
+    .cust-name {
+        font-family: $font-display;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: $text-primary;
+        margin-bottom: 3px;
+    }
+
+    .cust-phone {
+        font-size: 12px;
+        color: $text-muted;
+    }
+}
+
+.td-items {
+    min-width: 180px;
+
+    .items-count {
+        font-size: 13px;
+        font-weight: 600;
+        color: $text-secondary;
+        margin-bottom: 5px;
+    }
+
+    .items-preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .item-chip {
+        font-size: 11px;
+        padding: 2px 8px;
+        background: $bg-input;
+        border: 1px solid $border-mid;
+        border-radius: 20px;
+        color: $text-secondary;
+        white-space: nowrap;
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        &--more {
+            background: $brand-light;
+            border-color: $brand-border;
+            color: $brand;
             font-weight: 600;
         }
     }
+}
 
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
+.td-amount {
+    min-width: 110px;
+
+    .amount-val {
+        font-family: $font-display;
+        font-size: 14px;
+        font-weight: 700;
+        color: $text-primary;
+        margin-bottom: 3px;
     }
 
-    /* ---------------- Orders Table ---------------- */
-    .orders-table-container {
-        background: #fff;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 8px 24px rgba(18, 36, 56, 0.04);
-        margin-bottom: 18px;
+    .amount-saved {
+        font-size: 11.5px;
+        color: $green;
+        font-weight: 500;
+    }
+}
 
-        .orders-table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 900px;
+.td-date {
+    min-width: 100px;
+    font-size: 13px;
+    color: $text-secondary;
+    white-space: nowrap;
+}
 
-            thead {
-                background: linear-gradient(90deg, #2b3442, #252d36);
-            }
+.td-type {
+    min-width: 110px;
+}
 
-            thead th {
-                padding: 14px 16px;
-                color: #fff;
-                font-size: 0.82rem;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: .6px;
-                text-align: left;
-            }
+.type-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: $radius-sm;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: $font-body;
 
-            tbody tr {
-                border-bottom: 1px solid #eef2f6;
-                transition: background .12s ease;
-
-                &:hover {
-                    background: #fbfdff;
-                }
-            }
-
-            tbody td {
-                padding: 14px 16px;
-                vertical-align: middle;
-                font-size: 0.95rem;
-                color: #1f2a37;
-
-                .order-id {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 6px;
-
-                    strong {
-                        font-weight: 700;
-                        color: #14202a;
-                    }
-
-                    .buy-now-badge {
-                        display: inline-block;
-                        padding: 4px 8px;
-                        background: rgba(77, 181, 255, 0.10);
-                        color: #0b66a3;
-                        border-radius: 999px;
-                        font-size: 0.78rem;
-                        font-weight: 600;
-                        border: 1px solid rgba(77, 181, 255, 0.14);
-                        width: fit-content;
-                    }
-                }
-
-                .customer-info {
-                    .customer-name {
-                        font-weight: 600;
-                        color: #0f1a22;
-                    }
-
-                    .customer-contact {
-                        color: #6e7b86;
-                        font-size: 0.88rem;
-                    }
-                }
-
-                .items-info {
-                    .items-preview {
-                        display: flex;
-                        gap: 6px;
-                        margin-top: 6px;
-                        flex-wrap: wrap;
-                    }
-
-                    .item-tag {
-                        background: #f1f5f9;
-                        padding: 4px 8px;
-                        border-radius: 8px;
-                        font-size: 0.82rem;
-                        color: #3d4954;
-                    }
-
-                    .more-items {
-                        color: #3498db;
-                        font-size: 0.85rem;
-                        font-style: italic;
-                    }
-                }
-
-                .amount {
-                    .amount-value {
-                        font-weight: 700;
-                        color: #14202a;
-                        display: block;
-                    }
-
-                    .savings {
-                        color: #1fa67a;
-                        font-size: 0.88rem;
-                        margin-top: 4px;
-                    }
-                }
-
-                .date-info {
-                    color: #6e7b86;
-                    font-size: 0.9rem;
-                }
-
-                .status-badge {
-                    display: inline-block;
-                    padding: 6px 12px;
-                    border-radius: 999px;
-                    color: #fff;
-                    font-weight: 700;
-                    font-size: 0.82rem;
-                    min-width: 96px;
-                    text-align: center;
-                }
-
-                .payment-info {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 6px;
-
-                    .payment-method {
-                        font-weight: 600;
-                    }
-
-                    .payment-status {
-                        padding: 4px 8px;
-                        border-radius: 999px;
-                        font-weight: 700;
-                        font-size: 0.82rem;
-                        text-transform: uppercase;
-                        display: inline-block;
-                    }
-                }
-
-                .action-buttons {
-                    display: flex;
-                    gap: 8px;
-                    align-items: center;
-                }
-
-                .view-btn,
-                .status-btn {
-                    padding: 8px 12px;
-                    border-radius: 8px;
-                    border: none;
-                    cursor: pointer;
-                    font-weight: 700;
-                }
-
-                .view-btn {
-                    background: #3498db;
-                    color: #fff;
-                }
-
-                .status-btn {
-                    background: #f39c12;
-                    color: #fff;
-                }
-            }
-
-            .no-orders {
-                text-align: center;
-                padding: 36px;
-                color: #7b8792;
-                font-size: 1.05rem;
-            }
-        }
+    &--online {
+        background: $blue-bg;
+        color: $blue;
+        border: 1px solid $blue-bd;
     }
 
-    /* ---------------- Pagination ---------------- */
-    .pagination {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 16px;
-        padding: 12px;
+    &--offline {
+        background: $brand-light;
+        color: $brand;
+        border: 1px solid $brand-border;
     }
+}
+
+.td-status {
+    min-width: 120px;
+}
+
+// ─── Status Badge ──────────────────────────────────────────────────────────────
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    border-radius: 20px;
+    font-family: $font-body;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+
+    &--pending {
+        background: $amber-bg;
+        color: $amber;
+        border: 1px solid $amber-bd;
+    }
+
+    &--processing {
+        background: $blue-bg;
+        color: $blue;
+        border: 1px solid $blue-bd;
+    }
+
+    &--confirmed {
+        background: $teal-bg;
+        color: $teal;
+        border: 1px solid $teal-bd;
+    }
+
+    &--shipped {
+        background: $indigo-bg;
+        color: $indigo;
+        border: 1px solid $indigo-bd;
+    }
+
+    &--delivered {
+        background: $green-bg;
+        color: $green;
+        border: 1px solid $green-bd;
+    }
+
+    &--cancelled {
+        background: $red-bg;
+        color: $red;
+        border: 1px solid $red-bd;
+    }
+
+    &--returned {
+        background: $gray-bg;
+        color: $gray;
+        border: 1px solid $gray-bd;
+    }
+}
+
+.dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+
+    &--amber {
+        background: $amber;
+    }
+
+    &--blue {
+        background: $blue;
+    }
+
+    &--teal {
+        background: $teal;
+    }
+
+    &--indigo {
+        background: $indigo;
+    }
+
+    &--green {
+        background: $green;
+    }
+
+    &--red {
+        background: $red;
+    }
+
+    &--gray {
+        background: $gray;
+    }
+}
+
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: $font-body;
+
+    &--buynow {
+        background: $indigo-bg;
+        color: $indigo;
+        border: 1px solid $indigo-bd;
+    }
+}
+
+// ─── Payment ───────────────────────────────────────────────────────────────────
+
+.td-payment {
+    min-width: 110px;
+
+    .pay-method {
+        font-size: 13px;
+        font-weight: 500;
+        color: $text-secondary;
+        margin-bottom: 4px;
+    }
+}
+
+.pay-status {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: $radius-sm;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    &--paid {
+        background: $green-bg;
+        color: $green;
+        border: 1px solid $green-bd;
+    }
+
+    &--pending {
+        background: $amber-bg;
+        color: $amber;
+        border: 1px solid $amber-bd;
+    }
+
+    &--failed {
+        background: $red-bg;
+        color: $red;
+        border: 1px solid $red-bd;
+    }
+
+    &--refunded {
+        background: $blue-bg;
+        color: $blue;
+        border: 1px solid $blue-bd;
+    }
+}
+
+// ─── Action ────────────────────────────────────────────────────────────────────
+
+.td-action {
+    min-width: 80px;
+}
+
+.view-btn {
+    padding: 7px 14px;
+    background: $brand-light;
+    color: $brand;
+    border: 1.5px solid $brand-border;
+    border-radius: $radius-sm;
+    font-family: $font-display;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all $transition;
+
+    &:hover {
+        background: $brand;
+        color: #fff;
+        border-color: $brand;
+    }
+}
+
+// ─── Pagination ────────────────────────────────────────────────────────────────
+
+.ao-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 16px 0;
 
     .page-btn {
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        padding: 9px 18px;
-        border-radius: 8px;
+        padding: 8px 18px;
+        background: $bg-card;
+        border: 1.5px solid $border-mid;
+        border-radius: $radius-md;
+        font-family: $font-display;
+        font-size: 13px;
+        font-weight: 600;
+        color: $brand;
         cursor: pointer;
-        font-weight: 700;
+        transition: all $transition;
+
+        &:hover:not(:disabled) {
+            background: $brand;
+            color: #fff;
+            border-color: $brand;
+        }
 
         &:disabled {
-            opacity: .5;
+            opacity: 0.4;
             cursor: not-allowed;
         }
     }
 
     .page-info {
-        color: #6e7b86;
+        font-family: $font-body;
+        font-size: 13.5px;
+        color: $text-secondary;
+        font-weight: 500;
+
+        .page-total {
+            color: $text-muted;
+        }
+    }
+}
+
+// ─── Modal ─────────────────────────────────────────────────────────────────────
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(42, 31, 18, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    animation: fadeIn 0.25s ease;
+    backdrop-filter: blur(2px);
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+}
+
+.modal {
+    background: $bg-card;
+    border-radius: $radius-xl;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: $shadow-lg;
+    animation: slideUp 0.28s ease;
+    scrollbar-width: thin;
+    scrollbar-color: $border-mid transparent;
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(28px) scale(0.97);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    &--lg {
+        max-width: 640px;
+    }
+}
+
+.modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 26px 18px;
+    border-bottom: 1px solid $border-light;
+    position: sticky;
+    top: 0;
+    background: $bg-card;
+    z-index: 1;
+
+    &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        border-radius: $radius-xl $radius-xl 0 0;
+    }
+
+    &--online::before {
+        background: linear-gradient(90deg, $blue, rgba(26, 95, 168, 0.3), transparent);
+    }
+
+    &--offline::before {
+        background: linear-gradient(90deg, $brand, rgba(78, 34, 28, 0.3), transparent);
+    }
+}
+
+.modal-title {
+    font-family: $font-display;
+    font-size: 18px;
+    font-weight: 700;
+    color: $brand;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+}
+
+.modal-sub {
+    font-family: $font-body;
+    font-size: 12.5px;
+    color: $text-muted;
+}
+
+.modal-close {
+    background: $brand-light;
+    border: none;
+    color: $brand;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all $transition;
+    line-height: 1;
+
+    &:hover {
+        background: $brand;
+        color: #fff;
+        transform: rotate(90deg);
+    }
+}
+
+.modal-body {
+    padding: 20px 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.modal-footer {
+    padding: 16px 26px;
+    border-top: 1px solid $border-light;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    position: sticky;
+    bottom: 0;
+    background: $bg-card;
+}
+
+// ─── Modal Sections ────────────────────────────────────────────────────────────
+
+.modal-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    &--highlighted {
+        background: $brand-light;
+        border: 1.5px solid $brand-border;
+        border-radius: $radius-md;
+        padding: 16px;
+    }
+}
+
+.section-title {
+    font-family: $font-display;
+    font-size: 12px;
+    font-weight: 700;
+    color: $text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .section-count {
+        background: $brand-light;
+        color: $brand;
+        border: 1px solid $brand-border;
+        padding: 1px 7px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+}
+
+// ─── Info Grid ─────────────────────────────────────────────────────────────────
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    background: $bg-page;
+    border: 1px solid $border-light;
+    border-radius: $radius-sm;
+    padding: 10px 12px;
+
+    span {
+        font-family: $font-body;
+        font-size: 11px;
+        color: $text-muted;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
         font-weight: 600;
     }
 
-    /* ---------------- Order Details Modal (FULL) ---------------- */
-    .order-details-modal {
-        position: fixed;
-        inset: 0;
+    strong {
+        font-family: $font-display;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: $text-primary;
+        word-break: break-word;
+    }
+
+    &--full {
+        grid-column: span 2;
+    }
+}
+
+// ─── Status Form ───────────────────────────────────────────────────────────────
+
+.status-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    label {
+        font-family: $font-body;
+        font-size: 11px;
+        font-weight: 700;
+        color: $text-secondary;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    input,
+    select {
+        padding: 10px 12px;
+        background: $bg-card;
+        border: 1.5px solid $border-mid;
+        border-radius: $radius-md;
+        font-family: $font-body;
+        font-size: 13.5px;
+        color: $text-primary;
+        outline: none;
+        width: 100%;
+        transition: border-color $transition, box-shadow $transition;
+
+        &::placeholder {
+            color: $text-dim;
+        }
+
+        &:focus {
+            border-color: $brand;
+            box-shadow: 0 0 0 3px $brand-glow;
+        }
+    }
+
+    select {
+        cursor: pointer;
+    }
+}
+
+.status-form__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.current-status-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .current-status-label {
+        font-family: $font-body;
+        font-size: 12px;
+        color: $text-muted;
+        font-weight: 600;
+    }
+}
+
+// ─── Order Items ───────────────────────────────────────────────────────────────
+
+.order-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    background: $bg-page;
+    border: 1px solid $border-light;
+    border-radius: $radius-md;
+    padding: 14px;
+    flex-wrap: wrap;
+
+    &__info {
+        flex: 1;
+        min-width: 160px;
+    }
+
+    &__name {
+        font-family: $font-display;
+        font-size: 14px;
+        font-weight: 600;
+        color: $text-primary;
+        margin-bottom: 6px;
+    }
+
+    &__meta {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 5000;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
 
-        .modal-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(5, 15, 26, 0.56);
-            transition: opacity .18s ease;
-        }
+    &__pricing {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        min-width: 160px;
+        border-left: 1px solid $border-light;
+        padding-left: 14px;
+    }
+}
 
-        .modal-content {
-            position: relative;
-            top: 0 !important;
-            left: 0 !important;
-            width: 92%;
-            max-width: 980px;
-            max-height: 92vh;
-            background: #ffffff;
-            border-radius: 14px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 18px 60px rgba(11, 22, 36, 0.28);
-            animation: modalIn .18s ease both;
-        }
+.meta-chip {
+    font-size: 11.5px;
+    padding: 2px 8px;
+    background: $bg-card;
+    border: 1px solid $border-mid;
+    border-radius: 20px;
+    color: $text-muted;
+}
 
-        @keyframes modalIn {
-            from {
-                transform: translateY(8px) scale(.995);
-                opacity: 0
-            }
+.pricing-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
 
-            to {
-                transform: none;
-                opacity: 1
-            }
-        }
+    span {
+        font-family: $font-body;
+        font-size: 12px;
+        color: $text-muted;
+    }
 
-        /* ---- Modal Header: styles the full h2 title (includes #ORD... since JSX has single h2) ---- */
-        .modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 18px 22px;
-            background: linear-gradient(90deg, #223042 0%, #1c252c 100%);
-            color: #fff;
+    strong {
+        font-family: $font-display;
+        font-size: 13px;
+        font-weight: 600;
+        color: $text-primary;
+    }
 
-            h2 {
-                margin: 0;
-                font-size: 1.25rem;
-                font-weight: 800;
-                letter-spacing: 0.3px;
-                color: #ffffff;
-                display: inline-block;
-                max-width: calc(100% - 64px);
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
+    &--discount {
 
-            /* subtle visual emphasis for the title so the included order id stands out visually
-         (can't target substring since JSX doesn't have span) */
-            h2 {
-                background: linear-gradient(90deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
-                padding: 8px 12px;
-                border-radius: 8px;
-                box-shadow: 0 6px 16px rgba(10, 18, 24, 0.18);
-                border: 1px solid rgba(255, 255, 255, 0.04);
-            }
-
-            .close-btn {
-                background: rgba(255, 255, 255, 0.06);
-                border: none;
-                color: #fff;
-                padding: 8px 10px;
-                border-radius: 8px;
-                font-size: 1.05rem;
-                cursor: pointer;
-                transition: background .12s ease, transform .12s ease;
-            }
-
-            .close-btn:hover {
-                background: rgba(255, 255, 255, 0.12);
-                transform: translateY(-2px);
-            }
-        }
-
-        /* ---- Modal Body ---- */
-        .modal-body {
-            padding: 22px;
-            overflow-y: auto;
-            display: block;
-            flex: 1;
-            background: #fbfdff;
-
-            .section {
-                margin-bottom: 24px;
-                padding-bottom: 18px;
-                border-bottom: 1px solid #eef4fa;
-
-                &:last-child {
-                    border-bottom: none;
-                    margin-bottom: 0;
-                    padding-bottom: 0;
-                }
-
-                h3 {
-                    margin: 0 0 12px 0;
-                    font-size: 1.12rem;
-                    color: #12202a;
-                    font-weight: 700;
-                }
-            }
-
-            /* Info grid (Order info like order id, date, mode, status) */
-            .info-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 12px;
-
-                .info-item {
-                    label {
-                        display: block;
-                        font-size: 0.86rem;
-                        color: #6b7b86;
-                        margin-bottom: 6px;
-                        font-weight: 700;
-                    }
-
-                    span {
-                        display: block;
-                        color: #15202a;
-                        font-weight: 700;
-                        font-size: 0.98rem;
-                    }
-                }
-            }
-
-            /* Status update form */
-            .status-update-form {
-                margin-top: 8px;
-
-                .form-group {
-                    margin-bottom: 12px;
-
-                    label {
-                        display: block;
-                        margin-bottom: 8px;
-                        font-weight: 700;
-                        color: #243240;
-                    }
-
-                    select,
-                    textarea,
-                    input {
-                        width: 100%;
-                        padding: 10px 12px;
-                        border-radius: 8px;
-                        border: 1px solid #e2e8f0;
-                        background: #fff;
-                        transition: box-shadow .12s ease, border-color .12s ease;
-                        font-size: 0.95rem;
-                    }
-
-                    select:focus,
-                    textarea:focus,
-                    input:focus {
-                        outline: none;
-                        border-color: #3498db;
-                        box-shadow: 0 8px 22px rgba(52, 152, 219, 0.08);
-                    }
-
-                    textarea {
-                        min-height: 86px;
-                        resize: vertical;
-                    }
-                }
-
-                .form-actions {
-                    display: flex;
-                    gap: 10px;
-                    margin-top: 10px;
-                }
-
-                .update-status-btn {
-                    background: linear-gradient(180deg, #3498db, #2f83c2);
-                    color: #fff;
-                    padding: 10px 18px;
-                    border-radius: 8px;
-                    border: none;
-                    cursor: pointer;
-                    font-weight: 700;
-                }
-
-                .cancel-btn {
-                    background: #cbd5e1;
-                    color: #12202a;
-                    padding: 10px 16px;
-                    border-radius: 8px;
-                    border: none;
-                    cursor: pointer;
-                    font-weight: 700;
-                }
-            }
-
-            /* Customer details and payment details */
-            .customer-details,
-            .payment-details {
-                .detail-row {
-                    padding: 8px 0;
-                    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
-                    display: flex;
-                    gap: 12px;
-                    align-items: center;
-                    justify-content: flex-start;
-
-                    &:last-child {
-                        border-bottom: none;
-                    }
-
-                    strong {
-                        display: inline-block;
-                        min-width: 120px;
-                        color: #6b7b86;
-                        font-weight: 700;
-                    }
-
-                    .payment-status {
-                        padding: 6px 10px;
-                        border-radius: 999px;
-                        font-weight: 800;
-                        font-size: 0.9rem;
-                        text-transform: uppercase;
-                        display: inline-block;
-                    }
-                }
-            }
-
-            /* Order items list */
-            .order-items-list {
-                display: flex;
-                flex-direction: column;
-                gap: 12px;
-
-                .order-item {
-                    display: flex;
-                    gap: 12px;
-                    align-items: flex-start;
-                    justify-content: space-between;
-                    background: #ffffff;
-                    padding: 12px;
-                    border-radius: 10px;
-                    border: 1px solid #eef4fa;
-
-                    .item-info {
-                        flex: 1;
-
-                        .item-name {
-                            font-weight: 800;
-                            color: #12202a;
-                            margin-bottom: 8px;
-                        }
-
-                        .item-variants {
-                            display: flex;
-                            gap: 8px;
-                            margin-bottom: 8px;
-
-                            span {
-                                background: #f1f5f9;
-                                padding: 5px 10px;
-                                border-radius: 999px;
-                                font-size: 0.86rem;
-                                color: #2b3945;
-                            }
-                        }
-
-                        .item-sku {
-                            color: #6b7b86;
-                            font-size: 0.88rem;
-                        }
-                    }
-
-                    .item-pricing {
-                        text-align: right;
-                        min-width: 220px;
-                        display: flex;
-                        flex-direction: column;
-                        gap: 6px;
-
-                        .price-row {
-                            display: flex;
-                            justify-content: space-between;
-                            color: #5b6a74;
-                            font-size: 0.95rem;
-                        }
-
-                        .price-row.discount {
-                            color: #1fa67a;
-                        }
-
-                        .price-row.total {
-                            font-weight: 800;
-                            color: #111827;
-                            font-size: 1rem;
-                            margin-top: 6px;
-                            padding-top: 8px;
-                            border-top: 1px dashed #e6eef6;
-                        }
-                    }
-                }
-            }
-
-            /* Order summary */
-            .order-summary {
-                background: #fff;
-                padding: 14px;
-                border-radius: 10px;
-                border: 1px solid #eef4fa;
-                width: 100%;
-                max-width: 520px;
-
-                .summary-row {
-                    display: flex;
-                    justify-content: space-between;
-                    padding: 8px 0;
-                    color: #4b5a63;
-                    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
-
-                    &:last-child {
-                        border-bottom: none;
-                    }
-
-                    &.grand-total {
-                        font-weight: 900;
-                        color: #0b1b24;
-                        font-size: 1.04rem;
-                        margin-top: 6px;
-                        padding-top: 8px;
-                        border-top: 1px solid rgba(226, 232, 240, 0.6);
-                    }
-
-                    &.discount {
-                        color: #1fa67a;
-                    }
-                }
-            }
-        }
-
-        /* ---- Modal Footer ---- */
-        .modal-footer {
-            padding: 14px 18px;
-            background: #f7fafd;
-            display: flex;
-            justify-content: flex-end;
-            border-top: 1px solid #eef4fa;
-
-            .close-modal-btn {
-                background: #6b7280;
-                color: #ffffff;
-                padding: 10px 18px;
-                border-radius: 8px;
-                border: none;
-                font-weight: 700;
-                cursor: pointer;
-
-                &:hover {
-                    transform: translateY(-2px);
-                }
-            }
+        span,
+        strong {
+            color: $red;
         }
     }
 
-    /* ---------------- Access Denied ---------------- */
-    .access-denied {
-        text-align: center;
-        padding: 48px 20px;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 8px 24px rgba(16, 24, 40, 0.04);
-        margin-top: 30px;
+    &--total {
+        border-top: 1px solid $border-light;
+        padding-top: 5px;
+        margin-top: 2px;
 
-        h2 {
-            color: #e74c3c;
+        span {
+            font-weight: 600;
+            color: $text-secondary;
         }
 
-        p {
-            color: #6b7b86;
-            margin: 12px 0 20px;
+        strong {
+            font-size: 14px;
+            color: $brand;
         }
+    }
+}
 
-        button {
-            background: linear-gradient(180deg, #3498db, #2f83c2);
-            color: #fff;
-            padding: 12px 20px;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
+// ─── Order Summary ─────────────────────────────────────────────────────────────
+
+.order-summary {
+    background: $bg-page;
+    border: 1px solid $border-light;
+    border-radius: $radius-md;
+    overflow: hidden;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid $border-light;
+    font-family: $font-body;
+    font-size: 13.5px;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    span {
+        color: $text-secondary;
+    }
+
+    &--discount span:last-child {
+        color: $red;
+        font-weight: 600;
+    }
+
+    &--free span:last-child {
+        color: $green;
+        font-weight: 600;
+    }
+
+    &--sub {
+        padding: 7px 14px 7px 28px;
+        background: #fdf9f3;
+
+        span {
+            font-size: 12.5px;
+            color: $text-muted;
+        }
+    }
+
+    &--total {
+        background: $brand-light;
+        border-top: 1.5px solid $brand-border;
+
+        span {
+            font-family: $font-display;
+            font-size: 14.5px;
             font-weight: 700;
+            color: $brand;
+        }
+    }
+}
+
+// ─── Remarks ───────────────────────────────────────────────────────────────────
+
+.remarks-text {
+    font-family: $font-body;
+    font-size: 13.5px;
+    color: $text-secondary;
+    background: $bg-page;
+    border: 1px solid $border-light;
+    border-radius: $radius-sm;
+    padding: 12px 14px;
+    line-height: 1.6;
+}
+
+// ─── Scrollbar ─────────────────────────────────────────────────────────────────
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: $border-mid;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: $brand;
+}
+
+// ─── Toastify ──────────────────────────────────────────────────────────────────
+
+:root {
+    --toastify-color-light: #ffffff;
+    --toastify-text-color-light: #2a1f12;
+    --toastify-color-success: #2d7a4f;
+    --toastify-color-error: #c0392b;
+    --toastify-font-family: "Inter", sans-serif;
+    --toastify-toast-bd-radius: 10px;
+}
+
+.Toastify__toast {
+    border: 1px solid $border-light;
+    box-shadow: $shadow-md;
+}
+
+.Toastify__progress-bar--success {
+    background: $brand;
+}
+
+// ─── Responsive ────────────────────────────────────────────────────────────────
+
+@media (max-width: 1200px) {
+    .ao-stats {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 1024px) {
+    .ao-stats {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-orders {
+        padding: 16px 16px 40px;
+    }
+
+    .ao-header {
+        &__title {
+            font-size: 22px;
+        }
+
+        &__actions {
+            width: 100%;
+
+            .btn {
+                flex: 1;
+                justify-content: center;
+            }
         }
     }
 
-    /* ---------------- Responsive tweaks ---------------- */
-    @media (max-width: 1024px) {
-        .orders-table-container .orders-table {
-            display: block;
-            overflow-x: auto;
-            min-width: 700px;
+    .ao-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+
+        .ao-stat--revenue {
+            grid-column: span 2;
+        }
+
+        .ao-stat__val {
+            font-size: 18px;
         }
     }
 
-    @media (max-width: 820px) {
-        .admin-header {
-            flex-direction: column;
-            gap: 12px;
+    .ao-tabs {
+        width: 100%;
+
+        .ao-tab {
+            min-width: unset;
+            flex: 1;
+            padding: 9px 10px;
+            font-size: 12.5px;
+        }
+    }
+
+    .ao-filters {
+        gap: 10px;
+    }
+
+    .ao-search {
+        max-width: 100%;
+    }
+
+    .ao-status-tabs {
+        .status-tab {
+            flex: 1;
             text-align: center;
-        }
-
-        .stats-cards {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .filters-section {
-            padding: 14px;
+            font-size: 11.5px;
+            padding: 7px 8px;
         }
     }
 
-    @media (max-width: 560px) {
-        padding: 12px;
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
 
-        .stats-cards {
-            grid-template-columns: 1fr;
+    .info-item--full {
+        grid-column: span 1;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .status-form__actions {
+        flex-direction: column;
+        align-items: stretch;
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    .order-item {
+        flex-direction: column;
+
+        &__pricing {
+            border-left: none;
+            border-top: 1px solid $border-light;
+            padding-left: 0;
+            padding-top: 12px;
+        }
+    }
+
+    .modal {
+        border-radius: $radius-lg;
+    }
+
+    .modal-body {
+        padding: 16px 18px;
+    }
+
+    .modal-header {
+        padding: 18px 18px 14px;
+    }
+
+    .modal-footer {
+        padding: 12px 18px;
+
+        .btn {
+            flex: 1;
+            justify-content: center;
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-orders {
+        padding: 12px 12px 36px;
+    }
+
+    .ao-stats {
+        grid-template-columns: 1fr 1fr;
+
+        .ao-stat--revenue {
+            grid-column: span 2;
         }
 
-        .orders-table-container .orders-table {
-            min-width: 100%;
+        .ao-stat {
+            padding: 14px 10px;
         }
 
-        .order-details-modal .modal-content {
-            width: 96%;
-            max-width: 680px;
+        .ao-stat__val {
+            font-size: 16px;
         }
+    }
 
-        .modal-header h2 {
-            white-space: normal;
-            font-size: 1.05rem;
-        }
+    .ao-tab {
+        font-size: 12px;
+        padding: 8px 6px;
+    }
 
-        .modal-body {
-            padding: 14px;
+    .modal-overlay {
+        padding: 0;
+        align-items: flex-end;
+    }
 
-            .order-items-list .order-item {
-                flex-direction: column;
-                gap: 10px;
-            }
+    .modal {
+        border-radius: $radius-lg $radius-lg 0 0;
+        max-height: 92vh;
 
-            .order-summary {
-                max-width: 100%;
-                margin-top: 12px;
-            }
+        &--lg {
+            max-width: 100%;
         }
     }
 }

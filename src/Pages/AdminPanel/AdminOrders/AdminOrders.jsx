@@ -1,766 +1,850 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import AdminLayout from "../AdminLayout/AdminLayout";
 import "./AdminOrders.scss";
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+const getToken = () => localStorage.getItem("adminToken");
+
+const authHeader = () => ({
+  Authorization: `Bearer ${getToken()}`,
+  "Content-Type": "application/json",
+});
+
+const formatDate = (dateString) =>
+  new Date(dateString).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+const formatDateTime = (dateString) =>
+  new Date(dateString).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const formatCurrency = (val) =>
+  `₹${Number(val || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+
+const maskPhone = (phone) => {
+  if (!phone) return "N/A";
+  const s = String(phone);
+  return `${s.slice(0, 4)}****${s.slice(-2)}`;
+};
+
+// ─── Status config ─────────────────────────────────────────────────────────────
+
+const STATUS_CONFIG = {
+  pending: { label: "Pending", cls: "pending", dot: "amber" },
+  processing: { label: "Processing", cls: "processing", dot: "blue" },
+  confirmed: { label: "Confirmed", cls: "confirmed", dot: "teal" },
+  shipped: { label: "Shipped", cls: "shipped", dot: "indigo" },
+  delivered: { label: "Delivered", cls: "delivered", dot: "green" },
+  cancelled: { label: "Cancelled", cls: "cancelled", dot: "red" },
+  returned: { label: "Returned", cls: "returned", dot: "gray" },
+};
+
+const PAYMENT_LABELS = {
+  cod: "Cash on Delivery",
+  cash: "Cash",
+  card: "Card",
+  upi: "UPI",
+};
+
+// ─── Component ─────────────────────────────────────────────────────────────────
 
 const AdminOrders = () => {
   const navigate = useNavigate();
+  const searchRef = useRef(null);
+
+  // ── State ───────────────────────────────────────────────────────────────────
   const [orders, setOrders] = useState([]);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [stats, setStats] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [filters, setFilters] = useState({
-    status: "all",
-    search: "",
-    page: 1,
-    limit: 20
-  });
-  const [stats, setStats] = useState({
-    totalOrders: 0,
-    totalRevenue: 0,
-    pendingOrders: 0,
-    processingOrders: 0,
-    shippedOrders: 0,
-    deliveredOrders: 0
-  });
-  const [statusUpdate, setStatusUpdate] = useState({
-    orderId: "",
-    status: "",
-    notes: ""
-  });
+  const [statusLoading, setStatusLoading] = useState(false);
 
-  // Status colors for UI
-  const statusColors = {
-    'pending': '#f39c12',
-    'processing': '#17a2b8',
-    'shipped': '#3498db',
-    'delivered': '#2ecc71',
-    'cancelled': '#e74c3c',
-    'returned': '#95a5a6'
-  };
+  // Tabs: "online" | "offline" | "all"
+  const [activeTab, setActiveTab] = useState("online");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0 });
 
-  const statusLabels = {
-    'pending': '⏳ Pending',
-    'processing': '🔄 Processing',
-    'shipped': '🚚 Shipped',
-    'delivered': '✅ Delivered',
-    'cancelled': '❌ Cancelled',
-    'returned': '↩️ Returned'
-  };
+  // Modal
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [statusUpdate, setStatusUpdate] = useState({ status: "", notes: "" });
 
-  // ✅ TOKEN VALIDATION FUNCTION
-  const validateToken = () => {
-    const token = localStorage.getItem("adminToken");
+  // ── Auth guard ──────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const token = getToken();
     const role = localStorage.getItem("role");
-    
-    if (!token || !role || role !== "admin") {
-      localStorage.removeItem("adminToken");
-      localStorage.removeItem("role");
-      localStorage.removeItem("adminId");
-      navigate("/admin/login");
-      return false;
-    }
-    
-    const tokenParts = token.split('.');
-    if (tokenParts.length !== 3) {
-      localStorage.removeItem("adminToken");
-      localStorage.removeItem("role");
-      localStorage.removeItem("adminId");
-      navigate("/admin/login");
-      return false;
-    }
-    
-    return true;
-  };
+    if (!token || role !== "admin") navigate("/admin/login");
+  }, [navigate]);
 
-  // ✅ GET AUTH HEADERS
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem("adminToken");
-    if (!token) {
-      throw new Error("No authentication token found");
-    }
-    return {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json"
-    };
-  };
-
-  // 📋 FETCH ALL ORDERS
-  const fetchOrders = async () => {
+  // ── Fetch orders ────────────────────────────────────────────────────────────
+  const fetchOrders = useCallback(async (overrides = {}) => {
     try {
-      if (!validateToken()) return;
-      
       setIsLoading(true);
-      setError("");
-      
-      const queryParams = new URLSearchParams({
-        page: filters.page,
-        limit: filters.limit,
-        status: filters.status !== "all" ? filters.status : "",
-        search: filters.search
-      }).toString();
 
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/orders/all/orders?${queryParams}`,
-        { headers: getAuthHeaders() }
+      const tab = overrides.tab ?? activeTab;
+      const status = overrides.status ?? statusFilter;
+      const search = overrides.search ?? searchTerm;
+      const page = overrides.page ?? pagination.page;
+
+      const params = new URLSearchParams({
+        page,
+        limit: pagination.limit,
+        ...(tab !== "all" && { orderType: tab }),
+        ...(status !== "all" && { status }),
+        ...(search && { search }),
+      });
+
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/orders/all/orders?${params}`,
+        { headers: authHeader() }
       );
 
-      if (response.data.success) {
-        setOrders(response.data.orders || []);
-        setStats(response.data.stats || {
-          totalOrders: 0,
-          totalRevenue: 0,
-          pendingOrders: 0,
-          processingOrders: 0,
-          shippedOrders: 0,
-          deliveredOrders: 0
-        });
+      if (res.data.success) {
+        setOrders(res.data.orders || []);
+        setStats(res.data.stats || {});
+        setPagination((prev) => ({
+          ...prev,
+          total: res.data.pagination?.total || 0,
+          page,
+        }));
       }
     } catch (err) {
-      console.error("Error fetching orders:", err);
-      
       if (err.response?.status === 401 || err.response?.status === 403) {
-        setError("Session expired. Please login again.");
-        localStorage.removeItem("adminToken");
-        localStorage.removeItem("role");
-        localStorage.removeItem("adminId");
+        toast.error("Session expired. Redirecting to login...");
+        localStorage.clear();
         setTimeout(() => navigate("/admin/login"), 2000);
       } else {
-        setError(err.response?.data?.message || "Failed to fetch orders");
+        toast.error(err.response?.data?.message || "Failed to fetch orders");
       }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [activeTab, statusFilter, searchTerm, pagination.page, pagination.limit, navigate]);
 
-  // 📊 FETCH ORDER STATS
-  const fetchOrderStats = async () => {
-    try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/orders/admin/stats`,
-        { headers: getAuthHeaders() }
-      );
-
-      if (response.data.success) {
-        setStats(response.data.stats);
-      }
-    } catch (err) {
-      console.error("Error fetching stats:", err);
-    }
-  };
-
+  // Fetch on tab / status / page change
   useEffect(() => {
     fetchOrders();
-    fetchOrderStats();
-  }, [filters.page, filters.status]);
+  }, [activeTab, statusFilter, pagination.page]);
 
-  // 🔍 VIEW ORDER DETAILS
-  const handleViewOrderDetails = (order) => {
-    setSelectedOrder(order);
-    setShowOrderDetails(true);
-    setStatusUpdate({
-      orderId: order.orderId,
-      status: order.orderStatus,
-      notes: order.notes || ""
-    });
+  // ── Debounced search ────────────────────────────────────────────────────────
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchOrders({ search: searchTerm, page: 1 });
+      setPagination((prev) => ({ ...prev, page: 1 }));
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // ── Tab change ──────────────────────────────────────────────────────────────
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setStatusFilter("all");
+    setPagination((prev) => ({ ...prev, page: 1 }));
+    fetchOrders({ tab, status: "all", page: 1 });
   };
 
-  // ✏️ UPDATE ORDER STATUS
-  const handleUpdateStatus = async () => {
-    try {
-      if (!validateToken()) return;
-      
-      if (!statusUpdate.status) {
-        alert("Please select a status");
-        return;
-      }
+  // ── Open modal ──────────────────────────────────────────────────────────────
+  const openModal = (order) => {
+    setSelectedOrder(order);
+    setStatusUpdate({
+      status: order.orderStatus || "",
+      notes: order.notes || "",
+    });
+    setShowModal(true);
+  };
 
-      setIsLoading(true);
-      
-      const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/orders/${statusUpdate.orderId}/status`,
-        {
-          status: statusUpdate.status,
-          notes: statusUpdate.notes
-        },
-        { headers: getAuthHeaders() }
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedOrder(null);
+  };
+
+  // ── Update status (online only) ─────────────────────────────────────────────
+  const handleUpdateStatus = async () => {
+    if (!statusUpdate.status) return toast.error("Please select a status");
+    if (!selectedOrder) return;
+
+    try {
+      setStatusLoading(true);
+
+      const res = await axios.put(
+        `${import.meta.env.VITE_API_URL}/orders/${selectedOrder.orderNumber}/status`,
+        { status: statusUpdate.status, notes: statusUpdate.notes },
+        { headers: authHeader() }
       );
 
-      if (response.data.success) {
-        alert("✅ Order status updated successfully!");
-        
+      if (res.data.success) {
+        toast.success("Order status updated successfully!");
+
         // Update local state
-        setOrders(prevOrders => 
-          prevOrders.map(order => 
-            order.orderId === statusUpdate.orderId 
-              ? { ...order, ...response.data.order }
-              : order
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.orderNumber === selectedOrder.orderNumber
+              ? { ...o, ...res.data.order }
+              : o
           )
         );
-        
-        if (selectedOrder) {
-          setSelectedOrder(response.data.order);
-        }
-        
-        // Refresh stats
-        fetchOrderStats();
+        setSelectedOrder((prev) => ({ ...prev, ...res.data.order }));
+        fetchOrders();
       }
     } catch (err) {
-      console.error("Error updating order status:", err);
-      
       if (err.response?.status === 401 || err.response?.status === 403) {
-        alert("Session expired. Please login again.");
+        toast.error("Session expired. Please login again.");
         localStorage.clear();
         navigate("/admin/login");
       } else {
-        alert(err.response?.data?.message || "Failed to update order status");
+        toast.error(err.response?.data?.message || "Failed to update status");
       }
     } finally {
-      setIsLoading(false);
+      setStatusLoading(false);
     }
   };
 
-  // 🔎 SEARCH ORDERS
-  const handleSearch = (e) => {
-    const value = e.target.value;
-    setFilters(prev => ({ ...prev, search: value, page: 1 }));
-    
-    // Debounce search
-    clearTimeout(searchTimeout);
-    const searchTimeout = setTimeout(() => {
-      fetchOrders();
-    }, 500);
-  };
+  // ── Computed ────────────────────────────────────────────────────────────────
+  const totalPages = Math.ceil(pagination.total / pagination.limit);
 
-  // 📅 FORMAT DATE
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
+  const getCustomerName = (order) =>
+    order.orderType === "online"
+      ? order.deliveryAddress?.fullName
+      : order.customer?.name || "N/A";
 
-  // 📞 FORMAT PHONE
-  const formatPhone = (phone) => {
-    if (!phone) return "N/A";
-    return `${phone.slice(0, 5)}****${phone.slice(-2)}`;
-  };
+  const getCustomerPhone = (order) =>
+    order.orderType === "online"
+      ? maskPhone(order.deliveryAddress?.mobile)
+      : maskPhone(order.customer?.mobile);
 
-  // 🚪 LOGOUT FUNCTION
-  const handleLogout = () => {
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("role");
-    localStorage.removeItem("adminId");
-    navigate("/admin/login");
-  };
-
-  // Check if user is admin on component mount
-  useEffect(() => {
-    const role = localStorage.getItem("role");
-    const token = localStorage.getItem("adminToken");
-    
-    if (!token || role !== "admin") {
-      navigate("/admin/login");
-    }
-  }, [navigate]);
-
-  // If not admin, show access denied
-  const role = localStorage.getItem("role");
-  const token = localStorage.getItem("adminToken");
-  
-  if (!token || role !== "admin") {
-    return (
-      <div className="access-denied">
-        <h2>❌ Access Denied: Admin Only</h2>
-        <p>Please login as admin to access this page.</p>
-        <button onClick={() => navigate("/admin/login")}>Go to Login</button>
-      </div>
-    );
-  }
-
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="admin-orders">
-      {/* Header with logout */}
-      <div className="admin-header">
-        <h1>📦 Manage Orders</h1>
-        <div className="header-actions">
-          <button onClick={() => fetchOrders()} className="refresh-btn">
-            🔄 Refresh
-          </button>
-          <button onClick={handleLogout} className="logout-btn">
-            Logout
-          </button>
-        </div>
-      </div>
+    <AdminLayout>
+      <div className="admin-orders">
 
-      {/* Stats Cards */}
-      <div className="stats-cards">
-        <div className="stat-card">
-          <div className="stat-value">{stats.totalOrders}</div>
-          <div className="stat-label">Total Orders</div>
+        {/* ── PAGE HEADER ── */}
+        <div className="ao-header">
+          <div className="ao-header__left">
+            <h1 className="ao-header__title">Orders</h1>
+            <span className="ao-header__count">{pagination.total} total</span>
+          </div>
+          <div className="ao-header__actions">
+            <button
+              className="btn btn--outline"
+              onClick={() => fetchOrders()}
+              disabled={isLoading}
+            >
+              <span className={`btn-icon ${isLoading ? "spin" : ""}`}>↻</span>
+              Refresh
+            </button>
+          </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-value">₹{stats.totalRevenue?.toLocaleString() || 0}</div>
-          <div className="stat-label">Total Revenue</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{stats.pendingOrders}</div>
-          <div className="stat-label">Pending</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{stats.processingOrders}</div>
-          <div className="stat-label">Processing</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{stats.shippedOrders}</div>
-          <div className="stat-label">Shipped</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{stats.deliveredOrders}</div>
-          <div className="stat-label">Delivered</div>
-        </div>
-      </div>
 
-      {/* Filters & Search */}
-      <div className="filters-section">
-        <div className="search-box">
-          <input
-            type="text"
-            placeholder="Search by Order ID, Customer Name, Product..."
-            value={filters.search}
-            onChange={handleSearch}
-            disabled={isLoading}
+        {/* ── STAT CARDS ── */}
+        <div className="ao-stats">
+          {[
+            { label: "Total Orders", val: stats.totalOrders || 0, cls: "total" },
+            { label: "Total Revenue", val: formatCurrency(stats.totalRevenue || 0), cls: "revenue", },
+            { label: "Pending", val: stats.statusBreakdown?.find(s => s._id === "pending")?.count || 0, cls: "pending" },
+            { label: "Processing", val: stats.statusBreakdown?.find(s => s._id === "processing")?.count || 0, cls: "processing" },
+            { label: "Shipped", val: stats.statusBreakdown?.find(s => s._id === "shipped")?.count || 0, cls: "shipped" },
+            { label: "Delivered", val: stats.statusBreakdown?.find(s => s._id === "delivered")?.count || 0, cls: "delivered" },
+          ].map((s, i) => (
+            <div key={i} className={`ao-stat ao-stat--${s.cls}`}>
+              <div className="ao-stat__val">{s.val}</div>
+              <div className="ao-stat__label">{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── TYPE TABS ── */}
+        <div className="ao-tabs">
+          {[
+            { key: "online", label: "Online Orders" },
+            { key: "offline", label: "Offline Orders" },
+            { key: "all", label: "All Orders" },
+          ].map((t) => (
+            <button
+              key={t.key}
+              className={`ao-tab ${activeTab === t.key ? "active" : ""}`}
+              onClick={() => handleTabChange(t.key)}
+            >
+              {t.label}
+            </button>
+          ))}
+          <div
+            className="ao-tab-indicator"
+            style={{
+              left: activeTab === "online" ? "0%"
+                : activeTab === "offline" ? "33.33%"
+                  : "66.66%",
+              width: "33.33%",
+            }}
           />
-          <span className="search-icon">🔍</span>
         </div>
 
-        <div className="status-filters">
-          <button 
-            className={`filter-btn ${filters.status === "all" ? "active" : ""}`}
-            onClick={() => setFilters(prev => ({ ...prev, status: "all", page: 1 }))}
-          >
-            All Orders
-          </button>
-          <button 
-            className={`filter-btn ${filters.status === "pending" ? "active" : ""}`}
-            onClick={() => setFilters(prev => ({ ...prev, status: "pending", page: 1 }))}
-          >
-            ⏳ Pending
-          </button>
-          <button 
-            className={`filter-btn ${filters.status === "processing" ? "active" : ""}`}
-            onClick={() => setFilters(prev => ({ ...prev, status: "processing", page: 1 }))}
-          >
-            🔄 Processing
-          </button>
-          <button 
-            className={`filter-btn ${filters.status === "shipped" ? "active" : ""}`}
-            onClick={() => setFilters(prev => ({ ...prev, status: "shipped", page: 1 }))}
-          >
-            🚚 Shipped
-          </button>
-          <button 
-            className={`filter-btn ${filters.status === "delivered" ? "active" : ""}`}
-            onClick={() => setFilters(prev => ({ ...prev, status: "delivered", page: 1 }))}
-          >
-            ✅ Delivered
-          </button>
-          <button 
-            className={`filter-btn ${filters.status === "cancelled" ? "active" : ""}`}
-            onClick={() => setFilters(prev => ({ ...prev, status: "cancelled", page: 1 }))}
-          >
-            ❌ Cancelled
-          </button>
-        </div>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="error-message">
-          <span>{error}</span>
-          <button onClick={() => setError("")}>×</button>
-        </div>
-      )}
-
-      {/* Loading Indicator */}
-      {isLoading && (
-        <div className="loading-overlay">
-          <div className="spinner"></div>
-          <p>Loading orders...</p>
-        </div>
-      )}
-
-      {/* Orders Table */}
-      <div className="orders-table-container">
-        <table className="orders-table">
-          <thead>
-            <tr>
-              <th>Order ID</th>
-              <th>Customer</th>
-              <th>Items</th>
-              <th>Amount</th>
-              <th>Date</th>
-              <th>Status</th>
-              <th>Payment</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.length === 0 ? (
-              <tr>
-                <td colSpan="8" className="no-orders">
-                  📭 No orders found
-                </td>
-              </tr>
-            ) : (
-              orders.map((order) => (
-                <tr key={order._id}>
-                  <td className="order-id">
-                    <strong>#{order.orderId}</strong>
-                    {order.checkoutMode === "buy-now" && (
-                      <span className="buy-now-badge">Buy Now</span>
-                    )}
-                  </td>
-                  <td>
-                    <div className="customer-info">
-                      <div className="customer-name">{order.deliveryAddress?.fullName || "N/A"}</div>
-                      <div className="customer-contact">
-                        {formatPhone(order.deliveryAddress?.mobile)}
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="items-info">
-                      {order.items.length} item{order.items.length > 1 ? "s" : ""}
-                      <div className="items-preview">
-                        {order.items.slice(0, 2).map((item, idx) => (
-                          <span key={idx} className="item-tag">
-                            {item.productName}
-                          </span>
-                        ))}
-                        {order.items.length > 2 && (
-                          <span className="more-items">+{order.items.length - 2} more</span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="amount">
-                    <div className="amount-value">₹{order.pricing?.total?.toLocaleString() || 0}</div>
-                    {order.pricing?.totalSavings > 0 && (
-                      <div className="savings">Saved: ₹{order.pricing.totalSavings.toLocaleString()}</div>
-                    )}
-                  </td>
-                  <td>
-                    <div className="date-info">
-                      {formatDate(order.createdAt)}
-                    </div>
-                  </td>
-                  <td>
-                    <div 
-                      className="status-badge"
-                      style={{ backgroundColor: statusColors[order.orderStatus] || '#666' }}
-                    >
-                      {statusLabels[order.orderStatus] || order.orderStatus}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="payment-info">
-                      <span className="payment-method">
-                        {order.payment?.method === "cod" ? "💵 COD" : 
-                         order.payment?.method === "card" ? "💳 Card" : "📱 UPI"}
-                      </span>
-                      <span className={`payment-status ${order.payment?.status}`}>
-                        {order.payment?.status || "pending"}
-                      </span>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="action-buttons">
-                      <button
-                        className="view-btn"
-                        onClick={() => handleViewOrderDetails(order)}
-                        disabled={isLoading}
-                      >
-                        📋 View
-                      </button>
-                      <button
-                        className="status-btn"
-                        onClick={() => {
-                          setSelectedOrder(order);
-                          setShowOrderDetails(true);
-                          setStatusUpdate({
-                            orderId: order.orderId,
-                            status: order.orderStatus,
-                            notes: order.notes || ""
-                          });
-                        }}
-                        disabled={isLoading}
-                      >
-                        ✏️ Status
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+        {/* ── SEARCH + STATUS FILTER ── */}
+        <div className="ao-filters">
+          <div className="ao-search">
+            <span className="ao-search__icon">⌕</span>
+            <input
+              ref={searchRef}
+              type="text"
+              placeholder="Search by order number, customer name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button
+                className="ao-search__clear"
+                onClick={() => setSearchTerm("")}
+              >×</button>
             )}
-          </tbody>
-        </table>
+          </div>
 
-        {/* Pagination */}
-        {stats.totalOrders > filters.limit && (
-          <div className="pagination">
+          {/* Status filters — only for online / all tabs */}
+          {activeTab !== "offline" && (
+            <div className="ao-status-tabs">
+              {["all", "pending", "processing", "shipped", "delivered", "cancelled"].map((s) => (
+                <button
+                  key={s}
+                  className={`status-tab ${statusFilter === s ? "active" : ""} ${s !== "all" ? `status-tab--${s}` : ""}`}
+                  onClick={() => {
+                    setStatusFilter(s);
+                    setPagination((p) => ({ ...p, page: 1 }));
+                    fetchOrders({ status: s, page: 1 });
+                  }}
+                >
+                  {s === "all" ? "All Status" : STATUS_CONFIG[s]?.label || s}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── TABLE ── */}
+        {isLoading ? (
+          <div className="ao-state">
+            <div className="ao-state__spinner" />
+            <p>Loading orders...</p>
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="ao-state">
+            <div className="ao-state__icon">📭</div>
+            <p>No orders found</p>
+          </div>
+        ) : (
+          <div className="ao-table-wrap">
+            <table className="ao-table">
+              <thead>
+                <tr>
+                  <th>Order</th>
+                  <th>Customer</th>
+                  <th>Items</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Payment</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => {
+                  const sc = STATUS_CONFIG[order.orderStatus] || {};
+                  return (
+                    <tr
+                      key={order._id}
+                      className={`ao-row ao-row--${sc.cls || "default"}`}
+                      onClick={() => openModal(order)}
+                    >
+                      {/* Order */}
+                      <td className="td-order">
+                        <div className="order-num">#{order.orderNumber}</div>
+                        {order.checkoutMode === "buy-now" && (
+                          <span className="badge badge--buynow">Buy Now</span>
+                        )}
+                      </td>
+
+                      {/* Customer */}
+                      <td className="td-customer">
+                        <div className="cust-name">{getCustomerName(order)}</div>
+                        <div className="cust-phone">{getCustomerPhone(order)}</div>
+                      </td>
+
+                      {/* Items */}
+                      <td className="td-items">
+                        <div className="items-count">
+                          {order.items?.length || 0} item{order.items?.length !== 1 ? "s" : ""}
+                        </div>
+                        <div className="items-preview">
+                          {order.items?.slice(0, 2).map((item, idx) => (
+                            <span key={idx} className="item-chip">{item.productName}</span>
+                          ))}
+                          {order.items?.length > 2 && (
+                            <span className="item-chip item-chip--more">
+                              +{order.items.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Amount */}
+                      <td className="td-amount">
+                        <div className="amount-val">{formatCurrency(order.total)}</div>
+                        {order.totalSavings > 0 && (
+                          <div className="amount-saved">
+                            Saved {formatCurrency(order.totalSavings)}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Date */}
+                      <td className="td-date">
+                        {formatDate(order.date || order.createdAt)}
+                      </td>
+
+                      {/* Type */}
+                      <td className="td-type">
+                        <span className={`type-badge type-badge--${order.orderType}`}>
+                          {order.orderType === "online" ? "🌐 Online" : "🏪 Offline"}
+                        </span>
+                      </td>
+
+                      {/* Status */}
+                      <td className="td-status">
+                        <span className={`status-badge status-badge--${sc.cls}`}>
+                          <span className={`dot dot--${sc.dot}`} />
+                          {sc.label || order.orderStatus}
+                        </span>
+                      </td>
+
+                      {/* Payment */}
+                      <td className="td-payment">
+                        <div className="pay-method">
+                          {PAYMENT_LABELS[order.payment?.method] || order.payment?.method || "N/A"}
+                        </div>
+                        <span className={`pay-status pay-status--${order.payment?.status}`}>
+                          {order.payment?.status || "pending"}
+                        </span>
+                      </td>
+
+                      {/* Action */}
+                      <td className="td-action" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          className="view-btn"
+                          onClick={() => openModal(order)}
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* ── PAGINATION ── */}
+        {totalPages > 1 && (
+          <div className="ao-pagination">
             <button
               className="page-btn"
-              onClick={() => setFilters(prev => ({ ...prev, page: prev.page - 1 }))}
-              disabled={filters.page === 1 || isLoading}
+              onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
+              disabled={pagination.page === 1 || isLoading}
             >
-              ← Previous
+              ← Prev
             </button>
             <span className="page-info">
-              Page {filters.page} of {Math.ceil(stats.totalOrders / filters.limit)}
-              ({stats.totalOrders} total orders)
+              Page {pagination.page} of {totalPages}
+              <span className="page-total"> ({pagination.total} orders)</span>
             </span>
             <button
               className="page-btn"
-              onClick={() => setFilters(prev => ({ ...prev, page: prev.page + 1 }))}
-              disabled={filters.page >= Math.ceil(stats.totalOrders / filters.limit) || isLoading}
+              onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
+              disabled={pagination.page >= totalPages || isLoading}
             >
               Next →
             </button>
           </div>
         )}
-      </div>
 
-      {/* Order Details Modal */}
-      {showOrderDetails && selectedOrder && (
-        <div className="order-details-modal">
-          <div className="modal-overlay" onClick={() => setShowOrderDetails(false)}></div>
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2>Order Details - #{selectedOrder.orderId}</h2>
-              <button className="close-btn" onClick={() => setShowOrderDetails(false)}>
-                ✕
-              </button>
-            </div>
-
-            <div className="modal-body">
-              {/* Order Information */}
-              <div className="section">
-                <h3>Order Information</h3>
-                <div className="info-grid">
-                  <div className="info-item">
-                    <label>Order ID:</label>
-                    <span>#{selectedOrder.orderId}</span>
-                  </div>
-                  <div className="info-item">
-                    <label>Order Date:</label>
-                    <span>{formatDate(selectedOrder.createdAt)}</span>
-                  </div>
-                  <div className="info-item">
-                    <label>Checkout Mode:</label>
-                    <span>{selectedOrder.checkoutMode === "buy-now" ? "Buy Now" : "Cart"}</span>
-                  </div>
-                  <div className="info-item">
-                    <label>Current Status:</label>
-                    <span className="current-status" style={{ color: statusColors[selectedOrder.orderStatus] }}>
-                      {selectedOrder.orderStatus.toUpperCase()}
-                    </span>
-                  </div>
+        {/* ════════════════════════════════════════════════════════
+            MODAL
+        ════════════════════════════════════════════════════════ */}
+        {showModal && selectedOrder && (
+          <div className="modal-overlay" onClick={closeModal}>
+            <div
+              className="modal modal--lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className={`modal-header modal-header--${selectedOrder.orderType}`}>
+                <div>
+                  <h3 className="modal-title">
+                    #{selectedOrder.orderNumber}
+                  </h3>
+                  <p className="modal-sub">
+                    {selectedOrder.orderType === "online" ? "🌐 Online Order" : "🏪 Offline Order"}
+                    {" · "}
+                    {formatDateTime(selectedOrder.date || selectedOrder.createdAt)}
+                  </p>
                 </div>
+                <button className="modal-close" onClick={closeModal}>×</button>
               </div>
 
-              {/* Update Status Section */}
-              <div className="section">
-                <h3>Update Order Status</h3>
-                <div className="status-update-form">
-                  <div className="form-group">
-                    <label>New Status:</label>
-                    <select
-                      value={statusUpdate.status}
-                      onChange={(e) => setStatusUpdate(prev => ({ ...prev, status: e.target.value }))}
-                      disabled={isLoading}
-                    >
-                      <option value="">Select Status</option>
-                      <option value="pending">⏳ Pending</option>
-                      <option value="processing">🔄 Processing</option>
-                      <option value="shipped">🚚 Shipped</option>
-                      <option value="delivered">✅ Delivered</option>
-                      <option value="cancelled">❌ Cancelled</option>
-                    </select>
-                  </div>
-                  
-                  <div className="form-group">
-                    <label>Notes (Optional):</label>
-                    <textarea
-                      placeholder="Add any notes or instructions..."
-                      value={statusUpdate.notes}
-                      onChange={(e) => setStatusUpdate(prev => ({ ...prev, notes: e.target.value }))}
-                      disabled={isLoading}
-                      rows="3"
-                    />
-                  </div>
+              <div className="modal-body">
 
-                  <div className="form-actions">
-                    <button
-                      className="update-status-btn"
-                      onClick={handleUpdateStatus}
-                      disabled={isLoading || !statusUpdate.status}
-                    >
-                      {isLoading ? "Updating..." : "Update Status"}
-                    </button>
-                    <button
-                      className="cancel-btn"
-                      onClick={() => setShowOrderDetails(false)}
-                      disabled={isLoading}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Customer Information */}
-              <div className="section">
-                <h3>Customer Information</h3>
-                <div className="customer-details">
-                  <div className="detail-row">
-                    <strong>Name:</strong> {selectedOrder.deliveryAddress?.fullName || "N/A"}
-                  </div>
-                  <div className="detail-row">
-                    <strong>Mobile:</strong> {selectedOrder.deliveryAddress?.mobile || "N/A"}
-                  </div>
-                  <div className="detail-row">
-                    <strong>Email:</strong> {selectedOrder.deliveryAddress?.email || "N/A"}
-                  </div>
-                  <div className="detail-row">
-                    <strong>Address:</strong> {selectedOrder.deliveryAddress?.addressLine1}, 
-                    {selectedOrder.deliveryAddress?.city}, {selectedOrder.deliveryAddress?.state} - 
-                    {selectedOrder.deliveryAddress?.pincode}
-                  </div>
-                  <div className="detail-row">
-                    <strong>User ID:</strong> {selectedOrder.userId}
-                  </div>
-                </div>
-              </div>
-
-              {/* Order Items */}
-              <div className="section">
-                <h3>Order Items ({selectedOrder.items?.length || 0})</h3>
-                <div className="order-items-list">
-                  {selectedOrder.items?.map((item, index) => (
-                    <div key={index} className="order-item">
-                      <div className="item-info">
-                        <div className="item-name">{item.productName}</div>
-                        <div className="item-variants">
-                          {item.modelName !== "Default" && <span>{item.modelName}</span>}
-                          <span>{item.colorName}</span>
-                          {item.size && <span>Size: {item.size}</span>}
+                {/* ── Status Update (ONLINE ONLY) ── */}
+                {selectedOrder.orderType === "online" && (
+                  <div className="modal-section modal-section--highlighted">
+                    <div className="section-title">Update Order Status</div>
+                    <div className="status-form">
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>New Status</label>
+                          <select
+                            value={statusUpdate.status}
+                            onChange={(e) =>
+                              setStatusUpdate((p) => ({ ...p, status: e.target.value }))
+                            }
+                            disabled={statusLoading}
+                          >
+                            <option value="">Select status...</option>
+                            {["pending", "processing", "shipped", "delivered", "cancelled"].map((s) => (
+                              <option key={s} value={s}>
+                                {STATUS_CONFIG[s]?.label || s}
+                              </option>
+                            ))}
+                          </select>
                         </div>
-                        <div className="item-sku">
-                          SKU: {item.modelId || item.productId}
+                        <div className="form-group">
+                          <label>Notes (Optional)</label>
+                          <input
+                            type="text"
+                            placeholder="Add a note..."
+                            value={statusUpdate.notes}
+                            onChange={(e) =>
+                              setStatusUpdate((p) => ({ ...p, notes: e.target.value }))
+                            }
+                            disabled={statusLoading}
+                          />
                         </div>
                       </div>
-                      <div className="item-pricing">
-                        <div className="price-row">
-                          <span>Quantity:</span>
-                          <span>{item.quantity}</span>
+                      <div className="status-form__actions">
+                        <div className="current-status-wrap">
+                          <span className="current-status-label">Current:</span>
+                          <span className={`status-badge status-badge--${STATUS_CONFIG[selectedOrder.orderStatus]?.cls}`}>
+                            <span className={`dot dot--${STATUS_CONFIG[selectedOrder.orderStatus]?.dot}`} />
+                            {STATUS_CONFIG[selectedOrder.orderStatus]?.label || selectedOrder.orderStatus}
+                          </span>
                         </div>
-                        <div className="price-row">
-                          <span>Unit Price:</span>
-                          <span>₹{item.offerPrice?.toLocaleString()}</span>
+                        <button
+                          className="btn btn--primary"
+                          onClick={handleUpdateStatus}
+                          disabled={statusLoading || !statusUpdate.status}
+                        >
+                          {statusLoading ? (
+                            <><span className="btn-spinner" /> Updating...</>
+                          ) : "Update Status"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Order Info ── */}
+                <div className="modal-section">
+                  <div className="section-title">Order Information</div>
+                  <div className="info-grid">
+                    <div className="info-item">
+                      <span>Order Number</span>
+                      <strong>#{selectedOrder.orderNumber}</strong>
+                    </div>
+                    <div className="info-item">
+                      <span>Date</span>
+                      <strong>{formatDate(selectedOrder.date || selectedOrder.createdAt)}</strong>
+                    </div>
+                    <div className="info-item">
+                      <span>Order Type</span>
+                      <strong style={{ textTransform: "capitalize" }}>{selectedOrder.orderType}</strong>
+                    </div>
+                    {selectedOrder.orderType === "online" && (
+                      <div className="info-item">
+                        <span>Checkout Mode</span>
+                        <strong style={{ textTransform: "capitalize" }}>
+                          {selectedOrder.checkoutMode || "Cart"}
+                        </strong>
+                      </div>
+                    )}
+                    {selectedOrder.orderType === "offline" && selectedOrder.businessType && (
+                      <div className="info-item">
+                        <span>Business Type</span>
+                        <strong style={{ textTransform: "uppercase" }}>
+                          {selectedOrder.businessType}
+                        </strong>
+                      </div>
+                    )}
+                    <div className="info-item">
+                      <span>Status</span>
+                      <span className={`status-badge status-badge--${STATUS_CONFIG[selectedOrder.orderStatus]?.cls}`}>
+                        <span className={`dot dot--${STATUS_CONFIG[selectedOrder.orderStatus]?.dot}`} />
+                        {STATUS_CONFIG[selectedOrder.orderStatus]?.label || selectedOrder.orderStatus}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Customer Info ── */}
+                <div className="modal-section">
+                  <div className="section-title">Customer Information</div>
+                  <div className="info-grid">
+                    {selectedOrder.orderType === "online" ? (
+                      <>
+                        <div className="info-item">
+                          <span>Name</span>
+                          <strong>{selectedOrder.deliveryAddress?.fullName || "N/A"}</strong>
                         </div>
-                        {item.offerPercentage > 0 && (
-                          <div className="price-row discount">
-                            <span>Discount ({item.offerPercentage}%):</span>
-                            <span>-₹{item.savedAmount?.toLocaleString()}</span>
+                        <div className="info-item">
+                          <span>Mobile</span>
+                          <strong>{selectedOrder.deliveryAddress?.mobile || "N/A"}</strong>
+                        </div>
+                        {selectedOrder.deliveryAddress?.email && (
+                          <div className="info-item">
+                            <span>Email</span>
+                            <strong>{selectedOrder.deliveryAddress.email}</strong>
                           </div>
                         )}
-                        <div className="price-row total">
-                          <span>Total:</span>
-                          <span>₹{item.totalPrice?.toLocaleString()}</span>
+                        <div className="info-item info-item--full">
+                          <span>Delivery Address</span>
+                          <strong>
+                            {[
+                              selectedOrder.deliveryAddress?.addressLine1,
+                              selectedOrder.deliveryAddress?.addressLine2,
+                              selectedOrder.deliveryAddress?.city,
+                              selectedOrder.deliveryAddress?.state,
+                              selectedOrder.deliveryAddress?.pincode,
+                            ]
+                              .filter(Boolean)
+                              .join(", ")}
+                          </strong>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="info-item">
+                          <span>Name</span>
+                          <strong>{selectedOrder.customer?.name || "N/A"}</strong>
+                        </div>
+                        <div className="info-item">
+                          <span>Mobile</span>
+                          <strong>{selectedOrder.customer?.mobile || "N/A"}</strong>
+                        </div>
+                        {selectedOrder.customer?.email && (
+                          <div className="info-item">
+                            <span>Email</span>
+                            <strong>{selectedOrder.customer.email}</strong>
+                          </div>
+                        )}
+                        {selectedOrder.customer?.gstNumber && (
+                          <div className="info-item">
+                            <span>GST Number</span>
+                            <strong>{selectedOrder.customer.gstNumber}</strong>
+                          </div>
+                        )}
+                        {selectedOrder.customer?.address && (
+                          <div className="info-item info-item--full">
+                            <span>Address</span>
+                            <strong>{selectedOrder.customer.address}</strong>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* ── Order Items ── */}
+                <div className="modal-section">
+                  <div className="section-title">
+                    Order Items
+                    <span className="section-count">{selectedOrder.items?.length || 0}</span>
+                  </div>
+                  <div className="order-items">
+                    {selectedOrder.items?.map((item, idx) => (
+                      <div key={idx} className="order-item">
+                        <div className="order-item__info">
+                          <div className="order-item__name">{item.productName}</div>
+                          <div className="order-item__meta">
+                            {item.batchNumber && (
+                              <span className="meta-chip">Batch: {item.batchNumber}</span>
+                            )}
+                            {item.colorName && (
+                              <span className="meta-chip">{item.colorName}</span>
+                            )}
+                            {item.modelName && item.modelName !== "Default" && (
+                              <span className="meta-chip">{item.modelName}</span>
+                            )}
+                            {item.size && (
+                              <span className="meta-chip">Size: {item.size}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="order-item__pricing">
+                          <div className="pricing-row">
+                            <span>Qty</span>
+                            <strong>{item.quantity}</strong>
+                          </div>
+                          <div className="pricing-row">
+                            <span>Unit Price</span>
+                            <strong>{formatCurrency(item.price)}</strong>
+                          </div>
+                          {item.discount > 0 && (
+                            <div className="pricing-row pricing-row--discount">
+                              <span>Discount ({item.discount}%)</span>
+                              <strong>−{formatCurrency(item.discountAmount)}</strong>
+                            </div>
+                          )}
+                          <div className="pricing-row pricing-row--total">
+                            <span>Total</span>
+                            <strong>{formatCurrency(item.totalAmount)}</strong>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Order Summary */}
-              <div className="section">
-                <h3>Order Summary</h3>
-                <div className="order-summary">
-                  <div className="summary-row">
-                    <span>Subtotal:</span>
-                    <span>₹{selectedOrder.pricing?.subtotal?.toLocaleString() || 0}</span>
-                  </div>
-                  {selectedOrder.pricing?.totalSavings > 0 && (
-                    <div className="summary-row discount">
-                      <span>Total Savings:</span>
-                      <span>-₹{selectedOrder.pricing.totalSavings.toLocaleString()}</span>
-                    </div>
-                  )}
-                  <div className="summary-row">
-                    <span>Shipping:</span>
-                    <span>
-                      {selectedOrder.pricing?.shipping === 0 
-                        ? "FREE" 
-                        : `₹${selectedOrder.pricing?.shipping || 0}`}
-                    </span>
-                  </div>
-                  <div className="summary-row">
-                    <span>Tax (GST {selectedOrder.pricing?.taxPercentage || 18}%):</span>
-                    <span>₹{selectedOrder.pricing?.tax?.toLocaleString() || 0}</span>
-                  </div>
-                  <div className="summary-row grand-total">
-                    <span>Total Amount:</span>
-                    <span>₹{selectedOrder.pricing?.total?.toLocaleString() || 0}</span>
+                    ))}
                   </div>
                 </div>
-              </div>
 
-              {/* Payment Information */}
-              <div className="section">
-                <h3>Payment Information</h3>
-                <div className="payment-details">
-                  <div className="detail-row">
-                    <strong>Method:</strong> 
-                    {selectedOrder.payment?.method === "cod" ? "Cash on Delivery" :
-                     selectedOrder.payment?.method === "card" ? "Credit/Debit Card" : "UPI"}
-                  </div>
-                  <div className="detail-row">
-                    <strong>Status:</strong> 
-                    <span className={`payment-status ${selectedOrder.payment?.status}`}>
-                      {selectedOrder.payment?.status?.toUpperCase() || "PENDING"}
-                    </span>
-                  </div>
-                  {selectedOrder.payment?.paidAmount && (
-                    <div className="detail-row">
-                      <strong>Paid Amount:</strong> ₹{selectedOrder.payment.paidAmount.toLocaleString()}
+                {/* ── Order Summary ── */}
+                <div className="modal-section">
+                  <div className="section-title">Order Summary</div>
+                  <div className="order-summary">
+                    <div className="summary-row">
+                      <span>Subtotal</span>
+                      <span>{formatCurrency(selectedOrder.subtotal)}</span>
                     </div>
-                  )}
-                  {selectedOrder.payment?.paymentDate && (
-                    <div className="detail-row">
-                      <strong>Payment Date:</strong> {formatDate(selectedOrder.payment.paymentDate)}
+                    {selectedOrder.discount > 0 && (
+                      <div className="summary-row summary-row--discount">
+                        <span>Discount</span>
+                        <span>−{formatCurrency(selectedOrder.discount)}</span>
+                      </div>
+                    )}
+                    {selectedOrder.totalSavings > 0 && (
+                      <div className="summary-row summary-row--discount">
+                        <span>Total Savings</span>
+                        <span>−{formatCurrency(selectedOrder.totalSavings)}</span>
+                      </div>
+                    )}
+                    {selectedOrder.promoDiscount > 0 && (
+                      <div className="summary-row summary-row--discount">
+                        <span>Promo Discount</span>
+                        <span>−{formatCurrency(selectedOrder.promoDiscount)}</span>
+                      </div>
+                    )}
+                    {selectedOrder.shipping > 0 ? (
+                      <div className="summary-row">
+                        <span>Shipping</span>
+                        <span>{formatCurrency(selectedOrder.shipping)}</span>
+                      </div>
+                    ) : selectedOrder.orderType === "online" && (
+                      <div className="summary-row summary-row--free">
+                        <span>Shipping</span>
+                        <span>FREE</span>
+                      </div>
+                    )}
+                    <div className="summary-row">
+                      <span>Tax (GST)</span>
+                      <span>{formatCurrency(selectedOrder.tax)}</span>
                     </div>
-                  )}
+                    {selectedOrder.cgst > 0 && (
+                      <div className="summary-row summary-row--sub">
+                        <span>CGST</span>
+                        <span>{formatCurrency(selectedOrder.cgst)}</span>
+                      </div>
+                    )}
+                    {selectedOrder.sgst > 0 && (
+                      <div className="summary-row summary-row--sub">
+                        <span>SGST</span>
+                        <span>{formatCurrency(selectedOrder.sgst)}</span>
+                      </div>
+                    )}
+                    <div className="summary-row summary-row--total">
+                      <span>Total Amount</span>
+                      <span>{formatCurrency(selectedOrder.total)}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="modal-footer">
-              <button
-                className="close-modal-btn"
-                onClick={() => setShowOrderDetails(false)}
-              >
-                Close
-              </button>
+                {/* ── Payment Info ── */}
+                <div className="modal-section">
+                  <div className="section-title">Payment Information</div>
+                  <div className="info-grid">
+                    <div className="info-item">
+                      <span>Method</span>
+                      <strong>{PAYMENT_LABELS[selectedOrder.payment?.method] || selectedOrder.payment?.method || "N/A"}</strong>
+                    </div>
+                    <div className="info-item">
+                      <span>Status</span>
+                      <span className={`pay-status pay-status--${selectedOrder.payment?.status}`}>
+                        {selectedOrder.payment?.status?.toUpperCase() || "PENDING"}
+                      </span>
+                    </div>
+                    {selectedOrder.payment?.paidAmount && (
+                      <div className="info-item">
+                        <span>Paid Amount</span>
+                        <strong>{formatCurrency(selectedOrder.payment.paidAmount)}</strong>
+                      </div>
+                    )}
+                    {selectedOrder.payment?.paymentDate && (
+                      <div className="info-item">
+                        <span>Payment Date</span>
+                        <strong>{formatDate(selectedOrder.payment.paymentDate)}</strong>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Remarks / Notes */}
+                {(selectedOrder.remarks || selectedOrder.notes) && (
+                  <div className="modal-section">
+                    <div className="section-title">Remarks</div>
+                    <p className="remarks-text">
+                      {selectedOrder.remarks || selectedOrder.notes}
+                    </p>
+                  </div>
+                )}
+
+              </div>{/* modal-body */}
+
+              {/* Footer */}
+              <div className="modal-footer">
+                <button className="btn btn--outline" onClick={closeModal}>
+                  Close
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          theme="light"
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          pauseOnHover
+        />
+      </div>
+    </AdminLayout>
   );
 };
 

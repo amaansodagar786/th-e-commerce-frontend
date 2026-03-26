@@ -95,7 +95,7 @@ const ImagesSection = () => {
 
       {/* 🔥 TEXT + LOGOS */}
       <div style={{ textAlign: "center", padding: "0 20px 80px" }}>
-        
+
         {/* 🔥 ANIMATED HEADING */}
         <motion.h2
           initial={{ opacity: 0, y: 40 }}

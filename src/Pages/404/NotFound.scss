@@ -1,0 +1,604 @@
+// NotFound.scss
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Inter:wght@300;400;500;600;700&display=swap");
+
+// ─── Tokens ────────────────────────────────────────────────────────────────────
+$brand: #4e221c;
+$brand-hover: #3a1814;
+$brand-light: rgba(78, 34, 28, 0.08);
+$brand-border: rgba(78, 34, 28, 0.15);
+$brand-glow: rgba(78, 34, 28, 0.12);
+
+$gold: #c98b30;
+$gold-light: rgba(201, 139, 48, 0.15);
+$gold-dark: #92600a;
+
+$bg-page: #fefcf2;
+$bg-card: #ffffff;
+$border-light: #ede8df;
+$border-mid: #ddd5c8;
+
+$text-primary: #2a1f12;
+$text-secondary: #6b5535;
+$text-muted: #a08060;
+$text-dim: #c4a882;
+
+$font-display: "DM Sans", sans-serif;
+$font-body: "Inter", sans-serif;
+
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-lg: 16px;
+$radius-xl: 24px;
+
+$shadow-sm: 0 2px 8px rgba(42, 31, 18, 0.06);
+$shadow-md: 0 4px 16px rgba(42, 31, 18, 0.08);
+$shadow-lg: 0 8px 32px rgba(42, 31, 18, 0.12);
+$shadow-hover: 0 12px 40px rgba(78, 34, 28, 0.15);
+
+$transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+$transition-bounce: 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 404 Page Styles
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.not-found {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $bg-page;
+  font-family: $font-body;
+  position: relative;
+  overflow: hidden;
+  padding: 40px 24px;
+
+  // ─── Oil Drop Background Animation ────────────────────────────────────────────
+  &__bg-oil {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .oil-drop {
+    position: absolute;
+    background: radial-gradient(
+      circle at 30% 30%,
+      rgba(201, 139, 48, 0.15) 0%,
+      rgba(78, 34, 28, 0.08) 50%,
+      transparent 80%
+    );
+    border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+    filter: blur(20px);
+    animation: floatOil 15s infinite ease-in-out;
+
+    &--1 {
+      width: 300px;
+      height: 300px;
+      top: -100px;
+      left: -100px;
+      animation-delay: 0s;
+    }
+
+    &--2 {
+      width: 400px;
+      height: 400px;
+      bottom: -150px;
+      right: -150px;
+      animation-delay: 2s;
+      animation-duration: 18s;
+    }
+
+    &--3 {
+      width: 200px;
+      height: 200px;
+      top: 50%;
+      left: 80%;
+      animation-delay: 4s;
+      animation-duration: 12s;
+    }
+
+    &--4 {
+      width: 250px;
+      height: 250px;
+      bottom: 20%;
+      left: 10%;
+      animation-delay: 1s;
+      animation-duration: 14s;
+    }
+
+    @keyframes floatOil {
+      0%,
+      100% {
+        transform: translate(0, 0) rotate(0deg);
+      }
+      33% {
+        transform: translate(20px, -30px) rotate(5deg);
+      }
+      66% {
+        transform: translate(-15px, 25px) rotate(-3deg);
+      }
+    }
+  }
+
+  // ─── Main Container ───────────────────────────────────────────────────────────
+  &__container {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    width: 100%;
+    background: $bg-card;
+    border-radius: $radius-xl;
+    border: 1px solid $border-light;
+    box-shadow: $shadow-lg;
+    padding: 48px 40px;
+    animation: slideUp 0.6s $transition-bounce forwards;
+    backdrop-filter: blur(0px);
+    transition: transform $transition, box-shadow $transition;
+
+    &:hover {
+      box-shadow: $shadow-hover;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  }
+
+  // ─── Traditional Patterns ─────────────────────────────────────────────────────
+  &__pattern-top,
+  &__pattern-bottom {
+    display: flex;
+    justify-content: center;
+    margin: 8px 0;
+  }
+
+  &__pattern-top {
+    margin-bottom: 24px;
+    svg {
+      animation: fadeIn 0.8s ease 0.2s both;
+    }
+  }
+
+  &__pattern-bottom {
+    margin-top: 32px;
+    svg {
+      animation: fadeIn 0.8s ease 0.4s both;
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  // ─── Content ──────────────────────────────────────────────────────────────────
+  &__content {
+    text-align: center;
+  }
+
+  // ─── 404 Code with Kadai Animation ───────────────────────────────────────────
+  &__code-wrapper {
+    margin-bottom: 32px;
+    position: relative;
+  }
+
+  &__oil-kadai {
+    position: relative;
+    display: inline-block;
+
+    .kadai-svg {
+      width: 180px;
+      height: auto;
+      filter: drop-shadow(0 8px 20px rgba(78, 34, 28, 0.15));
+      animation: kadaiFloat 3s infinite ease-in-out;
+
+      @keyframes kadaiFloat {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-8px);
+        }
+      }
+    }
+  }
+
+  &__numbers {
+    position: absolute;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    gap: 8px;
+    font-family: $font-display;
+    font-weight: 800;
+    font-size: 48px;
+    color: $brand;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    white-space: nowrap;
+
+    .digit {
+      display: inline-block;
+      animation: digitPop 0.6s $transition-bounce forwards;
+      opacity: 0;
+      transform: scale(0.5);
+
+      &--4 {
+        animation-delay: 0.1s;
+      }
+      &--0 {
+        animation-delay: 0.3s;
+      }
+      &--4 {
+        animation-delay: 0.5s;
+      }
+
+      @keyframes digitPop {
+        0% {
+          opacity: 0;
+          transform: scale(0.5);
+        }
+        60% {
+          opacity: 1;
+          transform: scale(1.2);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+    }
+  }
+
+  // ─── Message ──────────────────────────────────────────────────────────────────
+  &__message {
+    margin-bottom: 40px;
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-size: 28px;
+    font-weight: 700;
+    color: $brand;
+    margin-bottom: 20px;
+    letter-spacing: -0.02em;
+    animation: fadeSlideUp 0.5s ease 0.3s both;
+
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(15px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  }
+
+  &__divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+
+    .divider-line {
+      width: 40px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, $gold, transparent);
+    }
+
+    .divider-icon {
+      font-size: 20px;
+      animation: pulse 2s infinite;
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.6;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 1;
+        }
+      }
+    }
+  }
+
+  &__description {
+    font-family: $font-body;
+    font-size: 15px;
+    line-height: 1.6;
+    color: $text-secondary;
+    margin: 0;
+    animation: fadeSlideUp 0.5s ease 0.4s both;
+
+    br {
+      display: block;
+      margin: 4px 0;
+    }
+  }
+
+  // ─── Suggestions Cards ────────────────────────────────────────────────────────
+  &__suggestions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    animation: fadeSlideUp 0.5s ease 0.5s both;
+  }
+
+  .suggestion-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: $bg-page;
+    border: 1.5px solid $border-light;
+    border-radius: $radius-md;
+    cursor: pointer;
+    transition: all $transition;
+    font-family: $font-body;
+    font-size: 14px;
+    font-weight: 600;
+    color: $text-primary;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, $gold-light, transparent);
+      opacity: 0;
+      transition: opacity $transition;
+    }
+
+    &:hover {
+      border-color: $gold;
+      transform: translateY(-2px);
+      box-shadow: $shadow-md;
+
+      &::before {
+        opacity: 1;
+      }
+
+      .suggestion-card__arrow {
+        transform: translateX(4px);
+      }
+    }
+
+    &__icon {
+      font-size: 18px;
+      color: $gold;
+      position: relative;
+      z-index: 1;
+    }
+
+    &__text {
+      position: relative;
+      z-index: 1;
+    }
+
+    &__arrow {
+      position: relative;
+      z-index: 1;
+      transition: transform $transition;
+      font-size: 16px;
+      color: $text-muted;
+    }
+  }
+
+  // ─── Back Button ──────────────────────────────────────────────────────────────
+  &__back-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 28px;
+    background: transparent;
+    border: 2px solid $brand;
+    border-radius: $radius-md;
+    cursor: pointer;
+    font-family: $font-display;
+    font-size: 14px;
+    font-weight: 600;
+    color: $brand;
+    transition: all $transition;
+    margin-bottom: 24px;
+
+    &:hover {
+      background: $brand;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: $shadow-md;
+
+      svg {
+        transform: translateX(-4px);
+      }
+    }
+
+    svg {
+      transition: transform $transition;
+      font-size: 18px;
+    }
+  }
+
+  // ─── Help Text ────────────────────────────────────────────────────────────────
+  &__help {
+    font-family: $font-body;
+    font-size: 13px;
+    color: $text-muted;
+    margin: 0;
+    animation: fadeSlideUp 0.5s ease 0.7s both;
+
+    a {
+      color: $brand;
+      text-decoration: none;
+      font-weight: 600;
+      position: relative;
+
+      &::after {
+        content: "";
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: $gold;
+        transform: scaleX(0);
+        transition: transform $transition;
+      }
+
+      &:hover::after {
+        transform: scaleX(1);
+      }
+    }
+  }
+
+  // ─── Responsive Design ────────────────────────────────────────────────────────
+  @media (max-width: 768px) {
+    padding: 32px 20px;
+
+    &__container {
+      padding: 32px 24px;
+    }
+
+    &__title {
+      font-size: 24px;
+    }
+
+    &__description {
+      font-size: 14px;
+    }
+
+    &__numbers {
+      font-size: 36px;
+      gap: 6px;
+    }
+
+    .kadai-svg {
+      width: 140px;
+    }
+
+    .suggestion-card {
+      padding: 10px 16px;
+      font-size: 13px;
+
+      &__icon {
+        font-size: 16px;
+      }
+    }
+  }
+
+  @media (max-width: 640px) {
+    padding: 24px 16px;
+
+    &__container {
+      padding: 24px 20px;
+    }
+
+    &__suggestions {
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .suggestion-card {
+      justify-content: center;
+      padding: 12px 20px;
+    }
+
+    &__numbers {
+      font-size: 28px;
+      gap: 4px;
+    }
+
+    .kadai-svg {
+      width: 120px;
+    }
+
+    &__title {
+      font-size: 22px;
+    }
+
+    &__back-btn {
+      width: 100%;
+      padding: 12px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    &__container {
+      padding: 20px 16px;
+    }
+
+    &__numbers {
+      font-size: 24px;
+      gap: 3px;
+    }
+
+    .kadai-svg {
+      width: 100px;
+    }
+
+    &__title {
+      font-size: 20px;
+    }
+
+    &__description {
+      font-size: 13px;
+    }
+
+    .suggestion-card {
+      font-size: 12px;
+      padding: 10px 16px;
+    }
+
+    &__help {
+      font-size: 12px;
+    }
+  }
+}
+
+// ─── Optional: Add smooth scrollbar styling ─────────────────────────────────────
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $border-light;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $gold;
+  border-radius: 10px;
+
+  &:hover {
+    background: $gold-dark;
+  }
+}

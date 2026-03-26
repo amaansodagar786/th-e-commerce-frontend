@@ -1,7 +1,24 @@
+// UserReviews.jsx - COMPLETE FIXED VERSION
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import './UserReviews.scss'; // We'll create this CSS file
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import {
+    MdStar,
+    MdStarBorder,
+    MdEdit,
+    MdDelete,
+    MdShoppingBag,
+    MdRefresh,
+    MdArrowBack,
+    MdVerified,
+    MdPending,
+    MdThumbUp,
+    MdClose,
+    MdRateReview,
+} from 'react-icons/md';
+import './UserReviews.scss';
 
 const UserReviews = () => {
     const navigate = useNavigate();
@@ -16,7 +33,7 @@ const UserReviews = () => {
         hoverRating: 0
     });
     const [submitting, setSubmitting] = useState(false);
-    
+
     // Pagination
     const [pagination, setPagination] = useState({
         page: 1,
@@ -27,7 +44,6 @@ const UserReviews = () => {
 
     const token = localStorage.getItem('token');
     const userId = localStorage.getItem('userId');
-    const userName = localStorage.getItem('userName') || 'User';
 
     // Fetch user reviews
     const fetchUserReviews = async () => {
@@ -66,6 +82,7 @@ const UserReviews = () => {
         } catch (error) {
             console.error('❌ Error fetching reviews:', error);
             setError('Failed to load your reviews. Please try again.');
+            toast.error('Failed to load your reviews');
             setReviews([]);
         } finally {
             setLoading(false);
@@ -82,13 +99,12 @@ const UserReviews = () => {
             day: 'numeric',
             month: 'short',
             year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
         });
     };
 
     // Open edit modal
     const handleOpenEditModal = (review) => {
+        console.log('Opening edit modal for review:', review);
         setSelectedReview(review);
         setReviewData({
             rating: review.rating,
@@ -96,6 +112,18 @@ const UserReviews = () => {
             hoverRating: review.rating
         });
         setShowEditModal(true);
+        // Prevent body scroll when modal is open
+        document.body.style.overflow = 'hidden';
+    };
+
+    // Close edit modal
+    const handleCloseEditModal = () => {
+        if (submitting) return;
+        setShowEditModal(false);
+        setSelectedReview(null);
+        setReviewData({ rating: 0, reviewText: '', hoverRating: 0 });
+        // Restore body scroll
+        document.body.style.overflow = 'auto';
     };
 
     // Handle star hover
@@ -111,7 +139,7 @@ const UserReviews = () => {
     // Update review
     const handleUpdateReview = async () => {
         if (!reviewData.rating || !selectedReview) {
-            alert('Please select a rating');
+            toast.warning('Please select a rating');
             return;
         }
 
@@ -131,12 +159,12 @@ const UserReviews = () => {
             );
 
             if (response.data.success) {
-                alert('✅ Review updated successfully!');
-                setShowEditModal(false);
-                
+                toast.success('✅ Review updated successfully!');
+                handleCloseEditModal();
+
                 // Update the reviews list
-                setReviews(prevReviews => 
-                    prevReviews.map(review => 
+                setReviews(prevReviews =>
+                    prevReviews.map(review =>
                         review.reviewId === selectedReview.reviewId
                             ? {
                                 ...review,
@@ -150,7 +178,7 @@ const UserReviews = () => {
             }
         } catch (error) {
             console.error('❌ Error updating review:', error);
-            alert(error.response?.data?.message || 'Failed to update review');
+            toast.error(error.response?.data?.message || 'Failed to update review');
         } finally {
             setSubmitting(false);
         }
@@ -158,9 +186,8 @@ const UserReviews = () => {
 
     // Delete review
     const handleDeleteReview = async (reviewId) => {
-        if (!window.confirm('Are you sure you want to delete this review?')) {
-            return;
-        }
+        const confirmDelete = window.confirm('Are you sure you want to delete this review?');
+        if (!confirmDelete) return;
 
         try {
             const response = await axios.delete(
@@ -172,13 +199,13 @@ const UserReviews = () => {
             );
 
             if (response.data.success) {
-                alert('✅ Review deleted successfully!');
-                
+                toast.success('✅ Review deleted successfully!');
+
                 // Remove from reviews list
-                setReviews(prevReviews => 
+                setReviews(prevReviews =>
                     prevReviews.filter(review => review.reviewId !== reviewId)
                 );
-                
+
                 // Update pagination total
                 setPagination(prev => ({
                     ...prev,
@@ -187,7 +214,7 @@ const UserReviews = () => {
             }
         } catch (error) {
             console.error('❌ Error deleting review:', error);
-            alert(error.response?.data?.message || 'Failed to delete review');
+            toast.error(error.response?.data?.message || 'Failed to delete review');
         }
     };
 
@@ -202,7 +229,7 @@ const UserReviews = () => {
         for (let i = 1; i <= 5; i++) {
             stars.push(
                 <span key={i} className={`star ${i <= rating ? 'filled' : 'empty'}`}>
-                    {i <= rating ? '★' : '☆'}
+                    {i <= rating ? <MdStar /> : <MdStarBorder />}
                 </span>
             );
         }
@@ -213,7 +240,7 @@ const UserReviews = () => {
     const renderEditStars = () => {
         const stars = [];
         const displayRating = reviewData.hoverRating || reviewData.rating;
-        
+
         for (let i = 1; i <= 5; i++) {
             stars.push(
                 <button
@@ -225,7 +252,7 @@ const UserReviews = () => {
                     onMouseLeave={() => handleStarHover(0)}
                     disabled={submitting}
                 >
-                    {i <= displayRating ? '★' : '☆'}
+                    {i <= displayRating ? <MdStar /> : <MdStarBorder />}
                 </button>
             );
         }
@@ -235,9 +262,12 @@ const UserReviews = () => {
     // Render review card
     const renderReviewCard = (review) => (
         <div key={review._id || review.reviewId} className="review-card">
-            <div className="review-header">
+            <div className="review-card__header">
                 <div className="product-info">
-                    <h3 className="product-name" onClick={() => handleViewProduct(review.productId)}>
+                    <h3
+                        className="product-name"
+                        onClick={() => handleViewProduct(review.productId)}
+                    >
                         {review.productName}
                     </h3>
                     <div className="product-variants">
@@ -250,43 +280,44 @@ const UserReviews = () => {
                         )}
                     </div>
                 </div>
-                <div className="review-meta">
-                    <div className="review-rating">
-                        {renderRatingStars(review.rating)}
-                        <span className="rating-value">{review.rating}/5</span>
-                    </div>
-                    <div className="review-dates">
-                        <span className="review-date">
-                            Reviewed on {formatDate(review.createdAt)}
+            </div>
+
+            <div className="review-card__body">
+                <div className="review-rating">
+                    {renderRatingStars(review.rating)}
+                    <span className="rating-value">{review.rating}/5</span>
+                </div>
+
+                <div className="review-date">
+                    Reviewed on {formatDate(review.createdAt)}
+                    {review.updatedAt && review.updatedAt !== review.createdAt && (
+                        <span className="updated-date">
+                            (Updated on {formatDate(review.updatedAt)})
                         </span>
-                        {review.updatedAt && review.updatedAt !== review.createdAt && (
-                            <span className="updated-date">
-                                (Updated on {formatDate(review.updatedAt)})
-                            </span>
-                        )}
-                    </div>
+                    )}
+                </div>
+
+                <div className="review-content">
+                    {review.reviewText ? (
+                        <p className="review-text">"{review.reviewText}"</p>
+                    ) : (
+                        <p className="no-text-review">No review text provided</p>
+                    )}
                 </div>
             </div>
 
-            <div className="review-content">
-                {review.reviewText ? (
-                    <p className="review-text">"{review.reviewText}"</p>
-                ) : (
-                    <p className="no-text-review">No review text provided</p>
-                )}
-            </div>
-
-            <div className="review-footer">
+            <div className="review-card__footer">
                 <div className="review-status">
                     <span className={`status-badge ${review.isVerifiedPurchase ? 'verified' : 'unverified'}`}>
-                        {review.isVerifiedPurchase ? '✅ Verified Purchase' : '❌ Unverified'}
+                        {review.isVerifiedPurchase ? <MdVerified /> : '❌'} Verified Purchase
                     </span>
                     <span className={`status-badge ${review.isApproved ? 'approved' : 'pending'}`}>
-                        {review.isApproved ? '✅ Approved' : '⏳ Pending Approval'}
+                        {review.isApproved ? <MdVerified /> : <MdPending />}
+                        {review.isApproved ? 'Approved' : 'Pending Approval'}
                     </span>
                     {review.helpfulCount > 0 && (
                         <span className="helpful-count">
-                            👍 {review.helpfulCount} people found this helpful
+                            <MdThumbUp /> {review.helpfulCount} people found this helpful
                         </span>
                     )}
                 </div>
@@ -296,130 +327,139 @@ const UserReviews = () => {
                         className="action-btn edit-btn"
                         onClick={() => handleOpenEditModal(review)}
                     >
-                        ✏️ Edit Review
+                        <MdEdit /> Edit Review
                     </button>
                     <button
                         className="action-btn delete-btn"
                         onClick={() => handleDeleteReview(review.reviewId)}
                     >
-                        🗑️ Delete Review
+                        <MdDelete /> Delete Review
                     </button>
                     <button
                         className="action-btn view-order-btn"
                         onClick={() => navigate(`/orders`)}
-                        title="View Order Details"
                     >
-                        📦 View Order
+                        <MdShoppingBag /> View Order
                     </button>
                 </div>
             </div>
         </div>
     );
 
-    // Render edit modal
-    const renderEditModal = () => (
-        <div className="edit-review-modal">
-            <div className="modal-overlay" onClick={() => !submitting && setShowEditModal(false)}></div>
-            <div className="modal-content edit-modal-content">
-                <div className="modal-header">
-                    <h2>Edit Your Review</h2>
-                    <button
-                        className="close-btn"
-                        onClick={() => !submitting && setShowEditModal(false)}
-                        disabled={submitting}
-                    >
-                        ✕
-                    </button>
-                </div>
+    // Render edit modal - FIXED VERSION
+    const renderEditModal = () => {
+        if (!showEditModal || !selectedReview) return null;
 
-                <div className="review-product-info">
-                    <h3>{selectedReview?.productName}</h3>
-                    <div className="product-variants">
-                        {selectedReview?.modelName !== "Default" && (
-                            <span className="variant-chip">{selectedReview?.modelName}</span>
-                        )}
-                        <span className="variant-chip">{selectedReview?.colorName}</span>
-                        {selectedReview?.size && (
-                            <span className="variant-chip">Size: {selectedReview?.size}</span>
-                        )}
-                    </div>
-                    <p className="order-info">Order #{selectedReview?.orderId}</p>
-                </div>
-
-                <div className="edit-review-form">
-                    <div className="rating-section">
-                        <label>Your Rating *</label>
-                        <div className="star-rating">
-                            {renderEditStars()}
-                            <span className="rating-text">
-                                {reviewData.rating > 0 ? `${reviewData.rating} star${reviewData.rating > 1 ? 's' : ''}` : 'Select rating'}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="review-text-section">
-                        <label>Your Review (Optional)</label>
-                        <textarea
-                            className="review-textarea"
-                            placeholder="Share your experience with this product..."
-                            value={reviewData.reviewText}
-                            onChange={(e) => setReviewData(prev => ({ ...prev, reviewText: e.target.value }))}
-                            rows={5}
-                            maxLength={1000}
+        return (
+            <div className="edit-review-modal" onClick={(e) => {
+                // Close modal when clicking the backdrop
+                if (e.target === e.currentTarget && !submitting) {
+                    handleCloseEditModal();
+                }
+            }}>
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h2>Edit Your Review</h2>
+                        <button
+                            className="close-btn"
+                            onClick={handleCloseEditModal}
                             disabled={submitting}
-                        />
-                        <div className="char-count">
-                            {reviewData.reviewText.length}/1000 characters
+                        >
+                            <MdClose />
+                        </button>
+                    </div>
+
+                    <div className="review-product-info">
+                        <h3>{selectedReview?.productName}</h3>
+                        <div className="product-variants">
+                            {selectedReview?.modelName !== "Default" && (
+                                <span className="variant-chip">{selectedReview?.modelName}</span>
+                            )}
+                            <span className="variant-chip">{selectedReview?.colorName}</span>
+                            {selectedReview?.size && (
+                                <span className="variant-chip">Size: {selectedReview?.size}</span>
+                            )}
+                        </div>
+                        <p className="order-info">Order #{selectedReview?.orderId}</p>
+                    </div>
+
+                    <div className="edit-review-form">
+                        <div className="rating-section">
+                            <label>Your Rating *</label>
+                            <div className="star-rating">
+                                {renderEditStars()}
+                                <span className="rating-text">
+                                    {reviewData.rating > 0 ? `${reviewData.rating} star${reviewData.rating > 1 ? 's' : ''}` : 'Select rating'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="review-text-section">
+                            <label>Your Review (Optional)</label>
+                            <textarea
+                                className="review-textarea"
+                                placeholder="Share your experience with this product..."
+                                value={reviewData.reviewText}
+                                onChange={(e) => setReviewData(prev => ({ ...prev, reviewText: e.target.value }))}
+                                rows={5}
+                                maxLength={1000}
+                                disabled={submitting}
+                            />
+                            <div className="char-count">
+                                {reviewData.reviewText.length}/1000 characters
+                            </div>
+                        </div>
+
+                        <div className="edit-note">
+                            <p>✏️ Editing your review will update it for all users to see</p>
+                            <p>✅ This review is from a verified purchase</p>
                         </div>
                     </div>
 
-                    <div className="edit-note">
-                        <p>✏️ Editing your review will update it for all users to see</p>
-                        <p>✅ This review is from a verified purchase</p>
+                    <div className="modal-actions">
+                        <button
+                            className="btn-cancel"
+                            onClick={handleCloseEditModal}
+                            disabled={submitting}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            className="btn-submit"
+                            onClick={handleUpdateReview}
+                            disabled={submitting || reviewData.rating === 0}
+                        >
+                            {submitting ? (
+                                <>
+                                    <span className="spinner-small"></span> Updating...
+                                </>
+                            ) : (
+                                'Update Review'
+                            )}
+                        </button>
                     </div>
                 </div>
-
-                <div className="modal-actions">
-                    <button
-                        className="btn secondary"
-                        onClick={() => !submitting && setShowEditModal(false)}
-                        disabled={submitting}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        className="btn primary submit-btn"
-                        onClick={handleUpdateReview}
-                        disabled={submitting || reviewData.rating === 0}
-                    >
-                        {submitting ? (
-                            <>
-                                <span className="spinner-small"></span> Updating...
-                            </>
-                        ) : (
-                            'Update Review'
-                        )}
-                    </button>
-                </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     // Render empty state
     const renderEmptyState = () => (
         <div className="empty-reviews">
-            <div className="empty-icon">⭐</div>
+            <div className="empty-icon">
+                <MdRateReview />
+            </div>
             <h2>No reviews yet</h2>
             <p>You haven't written any reviews yet. Reviews you write will appear here.</p>
             <div className="empty-actions">
                 <button
-                    className="btn primary"
+                    className="btn-primary"
                     onClick={() => navigate('/orders')}
                 >
                     View My Orders
                 </button>
                 <button
-                    className="btn secondary"
+                    className="btn-secondary"
                     onClick={() => navigate('/products')}
                 >
                     Browse Products
@@ -468,6 +508,16 @@ const UserReviews = () => {
 
     return (
         <div className="user-reviews-container">
+            <ToastContainer
+                position="top-center"
+                autoClose={3000}
+                theme="light"
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                pauseOnHover
+            />
+
             {/* Header */}
             <div className="reviews-header">
                 <h1>My Reviews</h1>
@@ -484,7 +534,7 @@ const UserReviews = () => {
                     </div>
                     <div className="summary-card">
                         <span className="summary-value">
-                            {reviews.length > 0 
+                            {reviews.length > 0
                                 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
                                 : '0.0'
                             }
@@ -497,15 +547,15 @@ const UserReviews = () => {
             {/* Navigation */}
             <div className="reviews-nav">
                 <Link to="/orders" className="nav-link">
-                    ← Back to My Orders
+                    <MdArrowBack /> Back to My Orders
                 </Link>
                 <div className="nav-actions">
                     <button
-                        className="nav-btn refresh-btn"
+                        className="refresh-btn"
                         onClick={fetchUserReviews}
                         disabled={loading}
                     >
-                        🔄 Refresh
+                        <MdRefresh /> Refresh
                     </button>
                 </div>
             </div>
@@ -544,8 +594,8 @@ const UserReviews = () => {
                 )}
             </div>
 
-            {/* Edit Modal */}
-            {showEditModal && selectedReview && renderEditModal()}
+            {/* Edit Modal - Fixed */}
+            {renderEditModal()}
         </div>
     );
 };

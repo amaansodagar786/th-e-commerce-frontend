@@ -1,0 +1,766 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Inter:wght@300;400;500;600&display=swap");
+
+// ─── Tokens ────────────────────────────────────────────────────────────────────
+
+$brand: #4e221c;
+$brand-hover: #3a1814;
+$brand-light: rgba(78, 34, 28, 0.08);
+$brand-border: rgba(78, 34, 28, 0.15);
+$brand-glow: rgba(78, 34, 28, 0.12);
+
+$bg-page: #fefcf2;
+$bg-card: #ffffff;
+$bg-input: #faf8f4;
+$border-light: #ede8df;
+$border-mid: #ddd5c8;
+
+$text-primary: #2a1f12;
+$text-secondary: #6b5535;
+$text-muted: #a08060;
+$text-dim: #c4a882;
+
+$red: #c0392b;
+$red-bg: rgba(192, 57, 43, 0.07);
+
+$font-display: "DM Sans", sans-serif;
+$font-body: "Inter", sans-serif;
+
+$radius-md: 10px;
+$radius-lg: 14px;
+$radius-xl: 20px;
+
+$shadow-md: 0 4px 24px rgba(42, 31, 18, 0.10);
+$shadow-lg: 0 12px 48px rgba(42, 31, 18, 0.14);
+
+$transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+$transition-slow: 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+
+
+$gold: #c98b30;           // ← ADD THIS LINE
+$gold-light: rgba(201, 139, 48, 0.15); 
+$red-light: rgba(192, 57, 43, 0.1);  // ← ADD THIS LINE
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ALL SCOPED UNDER .user-auth
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.user-auth {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: $bg-page;
+    font-family: $font-body;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+
+    // Warm ambient glow
+    &::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background:
+            radial-gradient(ellipse 65% 45% at 50% 0%, rgba(78, 34, 28, 0.07) 0%, transparent 65%),
+            radial-gradient(ellipse 35% 30% at 5% 95%, rgba(201, 139, 48, 0.05) 0%, transparent 60%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    // ── Card ───────────────────────────────────────────────────────────────────
+
+    .ua-card {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 440px;
+        background: $bg-card;
+        border: 1px solid $border-light;
+        border-radius: $radius-xl;
+        box-shadow: $shadow-lg;
+        overflow: hidden;
+        animation: ua-reveal 0.5s $transition forwards;
+
+        // Top accent line
+        &::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2.5px;
+            background: linear-gradient(90deg, transparent, $brand 30%, rgba(78, 34, 28, 0.5) 50%, $brand 70%, transparent);
+            z-index: 2;
+        }
+
+        @keyframes ua-reveal {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.97);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+    }
+
+    // ── Tabs ───────────────────────────────────────────────────────────────────
+
+    .ua-tabs {
+        display: flex;
+        position: relative;
+        padding: 6px;
+        background: $bg-page;
+        border-bottom: 1px solid $border-light;
+        gap: 4px;
+    }
+
+    .ua-tab {
+        flex: 1;
+        padding: 10px 0;
+        background: transparent;
+        border: none;
+        border-radius: $radius-md;
+        font-family: $font-display;
+        font-size: 13.5px;
+        font-weight: 500;
+        color: $text-muted;
+        cursor: pointer;
+        position: relative;
+        z-index: 1;
+        transition: color $transition;
+        letter-spacing: 0.02em;
+
+        &.active {
+            color: $brand;
+            font-weight: 700;
+        }
+
+        &:hover:not(.active) {
+            color: $text-secondary;
+        }
+    }
+
+    .ua-tab-indicator {
+        position: absolute;
+        top: 6px;
+        bottom: 6px;
+        width: calc(50% - 8px);
+        background: $bg-card;
+        border: 1px solid $border-mid;
+        border-radius: $radius-md;
+        box-shadow: 0 1px 4px rgba(42, 31, 18, 0.07);
+        transition: left $transition-slow;
+        z-index: 0;
+
+        &.left {
+            left: 6px;
+        }
+
+        &.right {
+            left: calc(50% + 2px);
+        }
+    }
+
+    // ── Sliding Panels ──────────────────────────────────────────────────────────
+
+    .ua-panels {
+        display: flex;
+        width: 200%;
+        transition: transform $transition-slow;
+
+        &.show-login {
+            transform: translateX(0);
+        }
+
+        &.show-register {
+            transform: translateX(-50%);
+        }
+    }
+
+    .ua-panel {
+        width: 50%;
+        flex-shrink: 0;
+    }
+
+    // ── Form Wrapper ───────────────────────────────────────────────────────────
+
+    .ua-form-wrapper {
+        padding: 28px 28px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+    }
+
+    // ── Form Header ────────────────────────────────────────────────────────────
+
+    .ua-form-header {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .ua-flame {
+        font-size: 34px;
+        line-height: 1;
+        margin-bottom: 4px;
+        filter: drop-shadow(0 2px 8px rgba(201, 139, 48, 0.5));
+        animation: ua-pulse 2.5s ease-in-out infinite;
+
+        @keyframes ua-pulse {
+
+            0%,
+            100% {
+                filter: drop-shadow(0 2px 8px rgba(201, 139, 48, 0.4));
+                transform: scale(1);
+            }
+
+            50% {
+                filter: drop-shadow(0 2px 16px rgba(78, 34, 28, 0.5));
+                transform: scale(1.06);
+            }
+        }
+    }
+
+    .ua-title {
+        font-family: $font-display;
+        font-size: 22px;
+        font-weight: 700;
+        color: $brand;
+        letter-spacing: -0.02em;
+    }
+
+    .ua-subtitle {
+        font-family: $font-body;
+        font-size: 13px;
+        color: $text-muted;
+    }
+
+    // ── Form ───────────────────────────────────────────────────────────────────
+
+    .ua-form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    // ── Field ──────────────────────────────────────────────────────────────────
+
+    .ua-field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+
+        label {
+            font-family: $font-body;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: $text-secondary;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        &--error {
+            .ua-input-wrap {
+                input {
+                    border-color: $red;
+                    background: $red-bg;
+                }
+            }
+        }
+    }
+
+    // ── Input Wrap ─────────────────────────────────────────────────────────────
+
+    .ua-input-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+
+        input {
+            width: 100%;
+            padding: 11px 13px 11px 40px;
+            background: $bg-input;
+            border: 1.5px solid $border-mid;
+            border-radius: $radius-md;
+            font-family: $font-body;
+            font-size: 14px;
+            color: $text-primary;
+            outline: none;
+            transition: border-color $transition, box-shadow $transition, background $transition;
+
+            &::placeholder {
+                color: $text-dim;
+            }
+
+            &:focus {
+                border-color: $brand;
+                box-shadow: 0 0 0 3px $brand-glow;
+                background: #fff;
+            }
+
+            // Autofill
+            &:-webkit-autofill {
+                -webkit-box-shadow: 0 0 0 100px $bg-input inset;
+                -webkit-text-fill-color: $text-primary;
+                caret-color: $text-primary;
+            }
+        }
+    }
+
+    // Left icon
+    .ua-input-icon {
+        position: absolute;
+        left: 13px;
+        font-size: 17px;
+        color: $text-muted;
+        pointer-events: none;
+        transition: color $transition;
+
+        .ua-input-wrap:focus-within & {
+            color: $brand;
+        }
+    }
+
+    // Eye toggle
+    .ua-eye {
+        position: absolute;
+        right: 12px;
+        background: none;
+        border: none;
+        color: $text-muted;
+        font-size: 17px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        padding: 4px;
+        border-radius: 4px;
+        transition: color $transition;
+
+        &:hover {
+            color: $brand;
+        }
+    }
+
+    // ── Error text ─────────────────────────────────────────────────────────────
+
+    .ua-error {
+        font-family: $font-body;
+        font-size: 11.5px;
+        color: $red;
+        font-weight: 500;
+    }
+
+    // ── Submit Button ──────────────────────────────────────────────────────────
+
+    .ua-btn {
+        width: 100%;
+        padding: 13px;
+        margin-top: 4px;
+        background: $brand;
+        border: none;
+        border-radius: $radius-md;
+        font-family: $font-display;
+        font-size: 14.5px;
+        font-weight: 700;
+        color: #fff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        letter-spacing: 0.02em;
+        transition: background $transition, transform $transition, box-shadow $transition;
+
+        &:hover:not(:disabled) {
+            background: $brand-hover;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(78, 34, 28, 0.28);
+        }
+
+        &:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        &:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+    }
+
+    // ── Spinner ────────────────────────────────────────────────────────────────
+
+    .ua-spinner {
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: ua-spin 0.7s linear infinite;
+        flex-shrink: 0;
+
+        @keyframes ua-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    }
+
+    // ── Switch Text ────────────────────────────────────────────────────────────
+
+    .ua-switch-text {
+        text-align: center;
+        font-family: $font-body;
+        font-size: 13px;
+        color: $text-muted;
+    }
+
+    .ua-switch-link {
+        background: none;
+        border: none;
+        font-family: $font-body;
+        font-size: 13px;
+        font-weight: 700;
+        color: $brand;
+        cursor: pointer;
+        padding: 0;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        transition: color $transition;
+
+        &:hover {
+            color: $brand-hover;
+        }
+    }
+
+    // ── Responsive ─────────────────────────────────────────────────────────────
+
+    @media (max-width: 480px) {
+        padding: 16px;
+        align-items: flex-start;
+        padding-top: 40px;
+
+        .ua-card {
+            border-radius: $radius-lg;
+        }
+
+        .ua-form-wrapper {
+            padding: 22px 18px 20px;
+            gap: 18px;
+        }
+
+        .ua-title {
+            font-size: 20px;
+        }
+
+        .ua-flame {
+            font-size: 30px;
+        }
+
+        .ua-tab {
+            font-size: 13px;
+        }
+
+        .ua-input-wrap input {
+            font-size: 16px; // prevents iOS zoom
+        }
+
+        .ua-btn {
+            font-size: 14px;
+            padding: 12px;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .ua-form-wrapper {
+            padding: 18px 14px 16px;
+        }
+    }
+}
+
+
+// ==================== FORGOT PASSWORD LINK ====================
+
+.ua-forgot-link {
+    text-align: right;
+    margin-top: -8px;
+    margin-bottom: 4px;
+}
+
+.ua-forgot-btn {
+    background: none;
+    border: none;
+    font-family: $font-body;
+    font-size: 12px;
+    font-weight: 500;
+    color: $gold;
+    cursor: pointer;
+    padding: 0;
+    transition: color $transition;
+
+    &:hover {
+        color: $brand;
+        text-decoration: underline;
+    }
+}
+
+// ==================== MODAL STYLES ====================
+
+.ua-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: ua-fadeIn 0.2s ease-out;
+}
+
+.ua-modal {
+    max-width: 450px;
+    width: 100%;
+    background: $bg-card;
+    border-radius: $radius-xl;
+    box-shadow: $shadow-lg;
+    overflow: hidden;
+    animation: ua-slideUp 0.3s ease-out;
+
+    .ua-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 24px;
+        border-bottom: 1px solid $border-light;
+        background: linear-gradient(135deg, $brand-light, $gold-light);
+
+        h2 {
+            font-family: $font-display;
+            font-size: 20px;
+            font-weight: 700;
+            color: $brand;
+            margin: 0;
+        }
+
+        .ua-modal-back {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: $text-muted;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: color $transition;
+
+            &:hover {
+                color: $brand;
+            }
+        }
+
+        .ua-modal-close {
+            width: 32px;
+            height: 32px;
+            background: transparent;
+            border: 1px solid $border-mid;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all $transition;
+            color: $text-muted;
+
+            &:hover {
+                background: $red-light;
+                border-color: $red;
+                color: $red;
+            }
+        }
+    }
+
+    .ua-modal-body {
+        padding: 24px;
+
+        .ua-modal-desc {
+            font-size: 13px;
+            color: $text-secondary;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .ua-field {
+            margin-bottom: 20px;
+
+            label {
+                font-size: 12px;
+                font-weight: 600;
+                color: $text-secondary;
+                margin-bottom: 6px;
+                display: block;
+            }
+        }
+
+        .ua-input-wrap {
+            position: relative;
+
+            &--error {
+                input {
+                    border-color: $red;
+                    background: $red-bg;
+                }
+            }
+        }
+
+        .ua-otp-input {
+            text-align: center;
+            letter-spacing: 4px;
+            font-size: 20px;
+            font-weight: 600;
+
+            &::placeholder {
+                letter-spacing: normal;
+                font-size: 14px;
+                font-weight: normal;
+            }
+        }
+
+        .ua-modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .ua-btn-outline {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: 1.5px solid $border-mid;
+            border-radius: $radius-md;
+            font-family: $font-body;
+            font-size: 13px;
+            font-weight: 600;
+            color: $text-muted;
+            cursor: pointer;
+            transition: all $transition;
+
+            &:hover:not(:disabled) {
+                border-color: $brand;
+                color: $brand;
+            }
+
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+        }
+
+        .ua-btn-modal {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .ua-resend-link {
+            display: block;
+            text-align: center;
+            margin-top: 16px;
+            background: none;
+            border: none;
+            font-size: 12px;
+            color: $gold;
+            cursor: pointer;
+            transition: color $transition;
+
+            &:hover:not(:disabled) {
+                color: $brand;
+                text-decoration: underline;
+            }
+
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+        }
+
+        .ua-password-requirements {
+            margin-top: 8px;
+            margin-bottom: 16px;
+
+            small {
+                font-size: 11px;
+                color: $text-muted;
+            }
+        }
+    }
+}
+
+// Modal animations
+@keyframes ua-fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes ua-slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Responsive modal
+@media (max-width: 480px) {
+    .ua-modal {
+        .ua-modal-header {
+            padding: 16px 20px;
+
+            h2 {
+                font-size: 18px;
+            }
+        }
+
+        .ua-modal-body {
+            padding: 20px;
+        }
+
+        .ua-modal-actions {
+            flex-direction: column;
+        }
+    }
+}
+
+// ─── Toastify (safe global CSS vars only) ─────────────────────────────────────
+
+:root {
+    --toastify-color-light: #ffffff;
+    --toastify-text-color-light: #2a1f12;
+    --toastify-color-success: #2d7a4f;
+    --toastify-color-error: #c0392b;
+    --toastify-font-family: "Inter", sans-serif;
+    --toastify-toast-bd-radius: 10px;
+}

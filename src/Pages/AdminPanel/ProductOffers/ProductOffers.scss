@@ -1,587 +1,1075 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Inter:wght@300;400;500;600&display=swap");
+
+// ─── Tokens ────────────────────────────────────────────────────────────────────
+
+$brand: #4e221c;
+$brand-hover: #3a1814;
+$brand-light: rgba(78, 34, 28, 0.08);
+$brand-border: rgba(78, 34, 28, 0.15);
+$brand-glow: rgba(78, 34, 28, 0.12);
+
+$bg-page: #fefcf2;
+$bg-card: #ffffff;
+$bg-input: #faf8f4;
+$border-light: #ede8df;
+$border-mid: #ddd5c8;
+
+$text-primary: #2a1f12;
+$text-secondary: #6b5535;
+$text-muted: #a08060;
+$text-dim: #c4a882;
+
+$green: #2d7a4f;
+$green-bg: #edf7f1;
+$green-bd: #b6dfc8;
+$red: #c0392b;
+$red-bg: #fdf0ee;
+$red-bd: #f5c0b8;
+$amber: #92600a;
+$amber-bg: #fef7e6;
+$amber-bd: #f5d98a;
+$blue: #1a5fa8;
+$blue-bg: #eaf2fc;
+$blue-bd: #a8cdf5;
+
+$font-display: "DM Sans", sans-serif;
+$font-body: "Inter", sans-serif;
+
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 14px;
+$radius-xl: 18px;
+
+$shadow-sm: 0 1px 4px rgba(42, 31, 18, 0.06);
+$shadow-md: 0 4px 16px rgba(42, 31, 18, 0.08);
+$shadow-lg: 0 8px 32px rgba(42, 31, 18, 0.14);
+
+$transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ALL SCOPED UNDER .product-offers — po- prefix on every class
+// ═══════════════════════════════════════════════════════════════════════════════
+
 .product-offers {
-  padding: 20px;
-  background: #f5f7fa;
+  padding: 28px 28px 48px;
+  background: $bg-page;
   min-height: 100vh;
+  font-family: $font-body;
+  color: $text-primary;
 
-  .header {
-    margin-bottom: 30px;
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-    h2 {
-      margin: 0 0 10px 0;
-      color: #2c3e50;
-      font-size: 28px;
+  // ── Scoped Buttons ──────────────────────────────────────────────────────────
+
+  .po-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: $radius-md;
+    font-family: $font-display;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all $transition;
+    white-space: nowrap;
+
+    &--primary {
+      background: $brand;
+      color: #fff;
+
+      &:hover:not(:disabled) {
+        background: $brand-hover;
+        box-shadow: 0 4px 14px rgba(78, 34, 28, 0.28);
+        transform: translateY(-1px);
+      }
     }
 
-    .subtitle {
-      margin: 0;
-      color: #6c757d;
-      font-size: 16px;
+    &--outline {
+      background: $bg-card;
+      color: $brand;
+      border: 1.5px solid $brand-border;
+
+      &:hover:not(:disabled) {
+        background: $brand-light;
+        border-color: $brand;
+      }
+    }
+
+    &--danger {
+      background: $red;
+      color: #fff;
+
+      &:hover:not(:disabled) {
+        background: darken($red, 8%);
+        box-shadow: 0 4px 14px rgba(192, 57, 43, 0.28);
+        transform: translateY(-1px);
+      }
+    }
+
+    &:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
     }
   }
 
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
+  .po-spinner {
+    width: 13px;
+    height: 13px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: po-spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
 
-    .stat-card {
-      background: white;
-      padding: 25px;
-      border-radius: 10px;
-      text-align: center;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-      transition: transform 0.3s;
+  .po-spin-icon {
+    display: inline-block;
+    animation: po-spin 0.8s linear infinite;
+  }
+
+  @keyframes po-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  // ── Page Header ─────────────────────────────────────────────────────────────
+
+  .po-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 16px;
+    flex-wrap: wrap;
+
+    &__left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    &__title {
+      font-family: $font-display;
+      font-size: 26px;
+      font-weight: 700;
+      color: $brand;
+      letter-spacing: -0.02em;
+    }
+
+    &__count {
+      background: $brand-light;
+      color: $brand;
+      border: 1px solid $brand-border;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-family: $font-body;
+      font-size: 12.5px;
+      font-weight: 600;
+    }
+  }
+
+  // ── Stats ────────────────────────────────────────────────────────────────────
+
+  .po-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .po-stat {
+    background: $bg-card;
+    border: 1px solid $border-light;
+    border-radius: $radius-lg;
+    padding: 18px 16px;
+    text-align: center;
+    box-shadow: $shadow-sm;
+    border-top: 3px solid $border-mid;
+    transition: transform $transition, box-shadow $transition;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: $shadow-md;
+    }
+
+    &--total {
+      border-top-color: $brand;
+    }
+
+    &--colors {
+      border-top-color: $blue;
+    }
+
+    &--with {
+      border-top-color: $amber;
+    }
+
+    &--active {
+      border-top-color: $green;
+    }
+
+    &__val {
+      font-family: $font-display;
+      font-size: 28px;
+      font-weight: 700;
+      color: $text-primary;
+      line-height: 1.1;
+      margin-bottom: 5px;
+    }
+
+    &__label {
+      font-family: $font-body;
+      font-size: 11px;
+      font-weight: 600;
+      color: $text-muted;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+  }
+
+  // ── State ────────────────────────────────────────────────────────────────────
+
+  .po-state {
+    background: $bg-card;
+    border: 1px solid $border-light;
+    border-radius: $radius-lg;
+    padding: 60px 24px;
+    text-align: center;
+    color: $text-muted;
+    font-family: $font-body;
+    font-size: 15px;
+
+    &__icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+
+    &__spinner {
+      width: 34px;
+      height: 34px;
+      border: 3px solid $brand-light;
+      border-top-color: $brand;
+      border-radius: 50%;
+      animation: po-spin 0.7s linear infinite;
+      margin: 0 auto 16px;
+    }
+  }
+
+  // ── Products List ────────────────────────────────────────────────────────────
+
+  .po-products {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  // ── Product Card ─────────────────────────────────────────────────────────────
+
+  .po-product-card {
+    background: $bg-card;
+    border: 1px solid $border-light;
+    border-radius: $radius-lg;
+    overflow: hidden;
+    box-shadow: $shadow-sm;
+    transition: box-shadow $transition;
+
+    &--expanded {
+      border-color: $brand-border;
+      box-shadow: 0 0 0 1px $brand-border, $shadow-md;
+    }
+  }
+
+  .po-product-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: background $transition;
+    gap: 16px;
+
+    &:hover {
+      background: #fdf9f3;
+    }
+
+    &__left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    &__right {
+      flex-shrink: 0;
+    }
+  }
+
+  .po-product-thumb {
+    width: 52px;
+    height: 52px;
+    border-radius: $radius-sm;
+    overflow: hidden;
+    border: 1px solid $border-light;
+    flex-shrink: 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    &__empty {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: $bg-input;
+      font-size: 22px;
+    }
+  }
+
+  .po-product-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .po-product-name {
+    font-family: $font-display;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .po-product-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .po-meta-chip {
+    font-family: $font-body;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 20px;
+
+    &--cat {
+      background: $brand-light;
+      color: $brand;
+      border: 1px solid $brand-border;
+    }
+
+    &--type {
+      &.po-meta-chip--simple {
+        background: $blue-bg;
+        color: $blue;
+        border: 1px solid $blue-bd;
+      }
+
+      &.po-meta-chip--variable {
+        background: $amber-bg;
+        color: $amber;
+        border: 1px solid $amber-bd;
+      }
+    }
+
+    &--offers {
+      background: $green-bg;
+      color: $green;
+      border: 1px solid $green-bd;
+    }
+  }
+
+  .po-expand-icon {
+    font-size: 11px;
+    color: $text-muted;
+    transition: color $transition;
+
+    .po-product-header:hover & {
+      color: $brand;
+    }
+  }
+
+  // ── Product Body (expanded) ──────────────────────────────────────────────────
+
+  .po-product-body {
+    padding: 0 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    border-top: 1px solid $border-light;
+    animation: po-fadeDown 0.2s ease;
+
+    @keyframes po-fadeDown {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  }
+
+  // ── Section ──────────────────────────────────────────────────────────────────
+
+  .po-section {
+    padding-top: 16px;
+
+    &__title {
+      font-family: $font-display;
+      font-size: 12px;
+      font-weight: 700;
+      color: $text-muted;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    &__count {
+      background: $brand-light;
+      color: $brand;
+      border: 1px solid $brand-border;
+      padding: 1px 7px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    &__sku {
+      font-size: 11.5px;
+      color: $text-muted;
+      font-weight: 500;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+  }
+
+  .po-empty {
+    font-family: $font-body;
+    font-size: 13px;
+    color: $text-dim;
+    font-style: italic;
+    padding: 12px 0;
+  }
+
+  // ── Colors Grid ──────────────────────────────────────────────────────────────
+
+  .po-colors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+  }
+
+  // ── Color Card ───────────────────────────────────────────────────────────────
+
+  .po-color-card {
+    background: $bg-page;
+    border: 1px solid $border-light;
+    border-radius: $radius-md;
+    padding: 14px;
+    transition: border-color $transition, box-shadow $transition;
+
+    &--has-offer {
+      border-color: $brand-border;
+      background: #fff;
+      box-shadow: 0 0 0 1px $brand-light;
+    }
+
+    &__top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 0;
+    }
+
+    &__info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    &__name {
+      font-family: $font-display;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: $text-primary;
+      margin-bottom: 5px;
+    }
+
+    &__price {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    &__actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    &__offer-details {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid $border-light;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+  }
+
+  // ── Price display ────────────────────────────────────────────────────────────
+
+  .po-original {
+    font-family: $font-body;
+    font-size: 12px;
+    color: $text-muted;
+    text-decoration: line-through;
+  }
+
+  .po-offer-price {
+    font-family: $font-display;
+    font-size: 14px;
+    font-weight: 700;
+    color: $green;
+  }
+
+  .po-discount-badge {
+    background: $green-bg;
+    color: $green;
+    border: 1px solid $green-bd;
+    padding: 1px 7px;
+    border-radius: 20px;
+    font-family: $font-body;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .po-regular-price {
+    font-family: $font-display;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: $text-secondary;
+  }
+
+  // ── Color action buttons ─────────────────────────────────────────────────────
+
+  .po-color-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: $radius-sm;
+    font-family: $font-display;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all $transition;
+    white-space: nowrap;
+
+    &--add {
+      background: $brand-light;
+      color: $brand;
+      border: 1.5px solid $brand-border;
 
       &:hover {
-        transform: translateY(-5px);
+        background: $brand;
+        color: #fff;
       }
+    }
 
-      .stat-value {
-        font-size: 36px;
-        font-weight: 700;
-        color: #2c3e50;
-        margin-bottom: 10px;
+    &--edit {
+      background: $amber-bg;
+      color: $amber;
+      border: 1.5px solid $amber-bd;
+
+      &:hover {
+        background: $amber;
+        color: #fff;
       }
+    }
 
-      .stat-label {
-        font-size: 14px;
-        color: #6c757d;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+    &--remove {
+      background: $red-bg;
+      color: $red;
+      border: 1.5px solid $red-bd;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: $radius-sm;
+      font-size: 11px;
+
+      &:hover {
+        background: $red;
+        color: #fff;
       }
     }
   }
 
-  .products-list {
-    .loading, .no-products {
-      text-align: center;
-      padding: 50px;
-      background: white;
-      border-radius: 10px;
-      color: #6c757d;
-      font-size: 16px;
+  // ── Offer detail rows ────────────────────────────────────────────────────────
+
+  .po-offer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-family: $font-body;
+    font-size: 12.5px;
+
+    span:first-child {
+      color: $text-muted;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
     }
 
-    .products-container {
-      .product-card {
-        background: white;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        transition: box-shadow 0.3s;
-
-        &:hover {
-          box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .product-header {
-          padding: 20px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          cursor: pointer;
-          border-bottom: 1px solid #eee;
-          background: #f8f9fa;
-          transition: background 0.3s;
-
-          &:hover {
-            background: #e9ecef;
-          }
-
-          .product-header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-
-            .product-image {
-              width: 60px;
-              height: 60px;
-              border-radius: 8px;
-              overflow: hidden;
-              flex-shrink: 0;
-
-              img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-              }
-
-              .no-image {
-                width: 100%;
-                height: 100%;
-                background: #dee2e6;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: #6c757d;
-                font-size: 12px;
-              }
-            }
-
-            .product-info {
-              .product-name {
-                margin: 0 0 5px 0;
-                color: #2c3e50;
-                font-size: 18px;
-                font-weight: 600;
-              }
-
-              .product-meta {
-                display: flex;
-                gap: 10px;
-                align-items: center;
-
-                .product-type {
-                  padding: 4px 10px;
-                  border-radius: 4px;
-                  font-size: 11px;
-                  font-weight: 600;
-                  text-transform: uppercase;
-
-                  &.simple {
-                    background: #e3f2fd;
-                    color: #1976d2;
-                  }
-
-                  &.variable {
-                    background: #f3e5f5;
-                    color: #7b1fa2;
-                  }
-                }
-
-                .product-category {
-                  font-size: 12px;
-                  color: #6c757d;
-                }
-
-                .product-offers-count {
-                  font-size: 12px;
-                  color: #28a745;
-                  font-weight: 500;
-                  background: #d4edda;
-                  padding: 4px 10px;
-                  border-radius: 4px;
-                }
-              }
-            }
-          }
-
-          .product-header-right {
-            .expand-btn {
-              background: none;
-              border: none;
-              font-size: 20px;
-              color: #6c757d;
-              cursor: pointer;
-              padding: 5px 10px;
-              border-radius: 4px;
-
-              &:hover {
-                background: #dee2e6;
-              }
-            }
-          }
-        }
-
-        .product-colors {
-          padding: 20px;
-
-          .simple-product-colors,
-          .variable-product-models {
-            h4 {
-              margin: 0 0 15px 0;
-              color: #495057;
-              font-size: 16px;
-              padding-bottom: 10px;
-              border-bottom: 1px solid #eee;
-            }
-          }
-
-          .variable-product-models {
-            .model-section {
-              margin-bottom: 30px;
-
-              h4 {
-                .model-sku {
-                  color: #6c757d;
-                  font-size: 14px;
-                  font-weight: normal;
-                  margin-left: 10px;
-                }
-              }
-
-              .model-colors {
-                margin-top: 15px;
-              }
-            }
-          }
-
-          .no-colors {
-            text-align: center;
-            color: #6c757d;
-            font-style: italic;
-            padding: 20px;
-          }
-
-          .colors-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 15px;
-
-            .color-card {
-              border: 1px solid #dee2e6;
-              border-radius: 8px;
-              padding: 15px;
-              transition: border-color 0.3s;
-
-              &:hover {
-                border-color: #adb5bd;
-              }
-
-              .color-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                margin-bottom: 10px;
-
-                .color-info {
-                  .color-name {
-                    display: block;
-                    font-weight: 600;
-                    color: #495057;
-                    margin-bottom: 5px;
-                    font-size: 15px;
-                  }
-
-                  .color-price {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    font-size: 14px;
-
-                    .original-price {
-                      text-decoration: line-through;
-                      color: #6c757d;
-                    }
-
-                    .offer-price {
-                      color: #28a745;
-                      font-weight: 600;
-                    }
-
-                    .regular-price {
-                      color: #495057;
-                      font-weight: 500;
-                    }
-
-                    .discount-badge {
-                      background: #ff6b6b;
-                      color: white;
-                      padding: 2px 8px;
-                      border-radius: 12px;
-                      font-size: 11px;
-                      font-weight: 600;
-                    }
-                  }
-                }
-
-                .color-actions {
-                  display: flex;
-                  gap: 5px;
-
-                  button {
-                    padding: 6px 12px;
-                    border: none;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    font-size: 12px;
-                    font-weight: 500;
-                    transition: all 0.3s;
-
-                    &.add-offer-btn {
-                      background: #28a745;
-                      color: white;
-
-                      &:hover {
-                        background: #218838;
-                      }
-                    }
-
-                    &.edit-offer-btn {
-                      background: #3498db;
-                      color: white;
-
-                      &:hover {
-                        background: #2980b9;
-                      }
-                    }
-
-                    &.remove-offer-btn {
-                      background: #ff6b6b;
-                      color: white;
-                      padding: 6px 8px;
-
-                      &:hover {
-                        background: #ff5252;
-                      }
-                    }
-                  }
-                }
-              }
-
-              .offer-details {
-                background: #f8f9fa;
-                padding: 12px;
-                border-radius: 6px;
-                margin-top: 10px;
-                border-left: 3px solid #28a745;
-
-                .offer-row {
-                  display: flex;
-                  justify-content: space-between;
-                  margin-bottom: 5px;
-                  font-size: 13px;
-
-                  &:last-child {
-                    margin-bottom: 0;
-                  }
-
-                  .offer-label {
-                    color: #6c757d;
-                    font-weight: 500;
-                  }
-
-                  .offer-status {
-                    padding: 2px 8px;
-                    border-radius: 3px;
-                    font-size: 11px;
-                    font-weight: 600;
-
-                    &.active {
-                      background: #d4edda;
-                      color: #155724;
-                    }
-
-                    &.inactive {
-                      background: #f8d7da;
-                      color: #721c24;
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+    strong {
+      color: $text-secondary;
+      font-weight: 500;
+      text-align: right;
     }
   }
 
-  // MODAL STYLES (same as before, just included for completeness)
-  .modal-overlay {
+  // ── Status badge ─────────────────────────────────────────────────────────────
+
+  .po-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-family: $font-body;
+    font-size: 11.5px;
+    font-weight: 600;
+
+    &--active {
+      background: $green-bg;
+      color: $green;
+      border: 1px solid $green-bd;
+    }
+
+    &--inactive {
+      background: #f3f4f6;
+      color: #6b7280;
+      border: 1px solid #d1d5db;
+    }
+  }
+
+  .po-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+
+    &--green {
+      background: $green;
+    }
+
+    &--gray {
+      background: #9ca3af;
+    }
+  }
+
+  // ── Modal ────────────────────────────────────────────────────────────────────
+
+  .po-modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    inset: 0;
+    background: rgba(42, 31, 18, 0.45);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
     padding: 20px;
+    animation: po-fadeIn 0.25s ease;
+    backdrop-filter: blur(2px);
 
-    .modal {
-      background: white;
-      border-radius: 10px;
-      width: 100%;
-      max-width: 500px;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-
-      .modal-header {
-        padding: 20px;
-        border-bottom: 1px solid #eee;
-        position: relative;
-
-        h3 {
-          margin: 0 0 5px 0;
-          color: #2c3e50;
-          font-size: 20px;
-        }
-
-        .modal-subtitle {
-          margin: 0;
-          color: #6c757d;
-          font-size: 14px;
-        }
-
-        .close-btn {
-          position: absolute;
-          right: 20px;
-          top: 20px;
-          background: none;
-          border: none;
-          font-size: 24px;
-          cursor: pointer;
-          color: #6c757d;
-          padding: 5px;
-          line-height: 1;
-
-          &:hover {
-            color: #343a40;
-          }
-        }
+    @keyframes po-fadeIn {
+      from {
+        opacity: 0;
       }
 
-      .modal-body {
-        padding: 20px;
-
-        .form-group {
-          margin-bottom: 20px;
-
-          label {
-            display: block;
-            margin-bottom: 8px;
-            color: #495057;
-            font-weight: 500;
-
-            &.checkbox-label {
-              display: flex;
-              align-items: center;
-              gap: 10px;
-              cursor: pointer;
-
-              input[type="checkbox"] {
-                width: 18px;
-                height: 18px;
-                cursor: pointer;
-              }
-            }
-          }
-
-          input[type="text"],
-          input[type="number"],
-          input[type="date"] {
-            width: 100%;
-            padding: 10px 15px;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-
-            &:focus {
-              outline: none;
-              border-color: #3498db;
-              box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-            }
-          }
-
-          .percentage-input {
-            position: relative;
-
-            input {
-              padding-right: 40px;
-            }
-
-            .percent-symbol {
-              position: absolute;
-              right: 15px;
-              top: 50%;
-              transform: translateY(-50%);
-              color: #6c757d;
-              font-weight: 600;
-            }
-          }
-
-          small {
-            display: block;
-            margin-top: 5px;
-            color: #6c757d;
-            font-size: 12px;
-          }
-        }
-      }
-
-      .modal-footer {
-        padding: 20px;
-        border-top: 1px solid #eee;
-        display: flex;
-        justify-content: flex-end;
-        gap: 15px;
-
-        button {
-          padding: 10px 25px;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-          font-weight: 500;
-          font-size: 14px;
-          transition: all 0.3s;
-
-          &.cancel-btn {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            color: #495057;
-
-            &:hover {
-              background: #e9ecef;
-            }
-          }
-
-          &.save-btn {
-            background: #28a745;
-            color: white;
-
-            &:hover {
-              background: #218838;
-            }
-          }
-        }
+      to {
+        opacity: 1;
       }
     }
   }
-}
 
-// Responsive styles
-@media (max-width: 768px) {
-  .product-offers {
-    padding: 15px;
+  .po-modal {
+    background: $bg-card;
+    border-radius: $radius-xl;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: $shadow-lg;
+    animation: po-slideUp 0.28s ease;
+    scrollbar-width: thin;
+    scrollbar-color: $border-mid transparent;
 
-    .stats {
+    @keyframes po-slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(28px) scale(0.97);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    &--sm {
+      max-width: 400px;
+    }
+  }
+
+  .po-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 24px 18px;
+    border-bottom: 1px solid $border-light;
+    position: sticky;
+    top: 0;
+    background: $bg-card;
+    z-index: 1;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      border-radius: $radius-xl $radius-xl 0 0;
+      background: linear-gradient(90deg, $brand, rgba(78, 34, 28, 0.3), transparent);
+    }
+
+    &--danger::before {
+      background: linear-gradient(90deg, $red, rgba(192, 57, 43, 0.3), transparent);
+    }
+  }
+
+  .po-modal-title {
+    font-family: $font-display;
+    font-size: 17px;
+    font-weight: 700;
+    color: $brand;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+
+  .po-modal-sub {
+    font-family: $font-body;
+    font-size: 12.5px;
+    color: $text-muted;
+  }
+
+  .po-modal-close {
+    background: $brand-light;
+    border: none;
+    color: $brand;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all $transition;
+    line-height: 1;
+
+    &:hover {
+      background: $brand;
+      color: #fff;
+      transform: rotate(90deg);
+    }
+  }
+
+  .po-modal-body {
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .po-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid $border-light;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    position: sticky;
+    bottom: 0;
+    background: $bg-card;
+  }
+
+  // ── Form Groups ──────────────────────────────────────────────────────────────
+
+  .po-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    label {
+      font-family: $font-body;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: $text-secondary;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .po-req {
+      color: $red;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"] {
+      padding: 11px 13px;
+      background: $bg-input;
+      border: 1.5px solid $border-mid;
+      border-radius: $radius-md;
+      font-family: $font-body;
+      font-size: 14px;
+      color: $text-primary;
+      outline: none;
+      width: 100%;
+      transition: border-color $transition, box-shadow $transition;
+
+      &::placeholder {
+        color: $text-dim;
+      }
+
+      &:focus {
+        border-color: $brand;
+        box-shadow: 0 0 0 3px $brand-glow;
+        background: #fff;
+      }
+    }
+
+    small {
+      font-size: 11.5px;
+      color: $text-muted;
+      line-height: 1.4;
+    }
+  }
+
+  // Percentage input with % symbol
+  .po-pct-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    input {
+      padding-right: 40px;
+    }
+
+    .po-pct-symbol {
+      position: absolute;
+      right: 14px;
+      font-family: $font-display;
+      font-size: 15px;
+      font-weight: 700;
+      color: $brand;
+      pointer-events: none;
+    }
+  }
+
+  // Checkbox label
+  .po-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-family: $font-body;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: $text-secondary;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: $brand;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .po-checkbox-hint {
+      font-size: 12px;
+      color: $text-muted;
+      font-weight: 400;
+    }
+  }
+
+  // ── Delete confirm ────────────────────────────────────────────────────────────
+
+  .po-delete-confirm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    text-align: center;
+    padding: 4px 0;
+
+    &__icon {
+      font-size: 38px;
+    }
+
+    p {
+      font-family: $font-body;
+      font-size: 14px;
+      color: $text-secondary;
+      line-height: 1.6;
+
+      strong {
+        color: $brand;
+        font-weight: 700;
+      }
+    }
+  }
+
+  // ── Scrollbar ────────────────────────────────────────────────────────────────
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: $border-mid;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: $brand;
+  }
+
+  // ── Responsive ───────────────────────────────────────────────────────────────
+
+  @media (max-width: 1024px) {
+    .po-stats {
       grid-template-columns: repeat(2, 1fr);
     }
 
-    .products-list .products-container .product-card {
-      .product-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
+    .po-colors-grid {
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+  }
 
-        .product-header-left {
-          width: 100%;
-        }
+  @media (max-width: 768px) {
+    padding: 16px 16px 40px;
 
-        .product-header-right {
-          width: 100%;
-          text-align: right;
-        }
+    .po-header__title {
+      font-size: 22px;
+    }
+
+    .po-stats {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+
+      .po-stat__val {
+        font-size: 22px;
+      }
+    }
+
+    .po-product-header {
+      padding: 14px 16px;
+    }
+
+    .po-product-body {
+      padding: 0 16px 16px;
+    }
+
+    .po-colors-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .po-modal {
+      max-width: 100%;
+      border-radius: $radius-lg;
+    }
+
+    .po-modal-footer {
+      flex-direction: column-reverse;
+
+      .po-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px 12px 36px;
+
+    .po-stats {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+
+      .po-stat {
+        padding: 14px 10px;
       }
 
-      .product-colors .colors-grid {
-        grid-template-columns: 1fr;
+      .po-stat__val {
+        font-size: 20px;
       }
+    }
+
+    .po-modal-overlay {
+      padding: 0;
+      align-items: flex-end;
+    }
+
+    .po-modal {
+      border-radius: $radius-lg $radius-lg 0 0;
+      max-height: 92vh;
     }
   }
 }
 
-@media (max-width: 480px) {
-  .product-offers {
-    .stats {
-      grid-template-columns: 1fr;
-    }
-  }
+// ─── Toastify CSS variables only — safe globally ──────────────────────────────
+
+:root {
+  --toastify-color-light: #ffffff;
+  --toastify-text-color-light: #2a1f12;
+  --toastify-color-success: #2d7a4f;
+  --toastify-color-error: #c0392b;
+  --toastify-font-family: "Inter", sans-serif;
+  --toastify-toast-bd-radius: 10px;
 }

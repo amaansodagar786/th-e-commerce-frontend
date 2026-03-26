@@ -1915,3 +1915,6 @@ function getColorHex(colorName) {
 }
 
 export default ProductPage;
+
+
+

@@ -1,14 +1,45 @@
 .admin-layout {
   display: flex;
+  min-height: 100vh;
+  background: #f4f6ff;
+  position: relative;
 
   .admin-content {
-    margin-left: 70px;
+    flex: 1;
     padding: 20px;
-    width: 100%;
-    transition: 0.3s;
+    margin-left: 63px; // Collapsed sidebar width
+    transition: margin-left 0.3s ease, width 0.3s ease;
+    width: calc(100% - 63px);
+    
+    // When sidebar is expanded
+    .admin-sidebar:not(.collapsed) ~ & {
+      margin-left: 220px; // Expanded sidebar width
+      width: calc(100% - 220px);
+    }
+    
+    // When sidebar is collapsed
+    .admin-sidebar.collapsed ~ & {
+      margin-left: 63px; // Collapsed sidebar width
+      width: calc(100% - 63px);
+    }
   }
+}
 
-  .sidebar.open ~ .admin-content {
-    margin-left: 230px;
+// Mobile responsive
+@media (max-width: 768px) {
+  .admin-layout {
+    .admin-content {
+      margin-left: 0 !important;
+      width: 100% !important;
+      padding: 20px 15px;
+    }
+    
+    // When mobile sidebar is open, slightly dim the content
+    .admin-sidebar.mobile-open ~ .admin-content {
+      opacity: 0.7;
+      filter: blur(2px);
+      pointer-events: none;
+      user-select: none;
+    }
   }
 }

@@ -1,0 +1,517 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Inter:wght@300;400;500;600&display=swap");
+
+// ─── Design Tokens ─────────────────────────────────────────────────────────────
+
+$bg-page:          #fefcf2;
+$bg-card:          #ffffff;
+$bg-card-border:   #e8dfd0;
+$bg-input:         #fefcf2;
+$bg-input-focus:   #ffffff;
+
+$brand:            #4e221c;
+$brand-hover:      #3a1814;
+$brand-light:      rgba(78, 34, 28, 0.08);
+$brand-glow:       rgba(78, 34, 28, 0.12);
+$brand-mid:        rgba(78, 34, 28, 0.55);
+$brand-muted:      rgba(78, 34, 28, 0.40);
+$brand-dim:        rgba(78, 34, 28, 0.25);
+$brand-border:     rgba(78, 34, 28, 0.18);
+
+$error:            #c0392b;
+$error-bg:         rgba(192, 57, 43, 0.06);
+
+$font-display:     "DM Sans", sans-serif;
+$font-body:        "Inter", sans-serif;
+
+$radius-card:      20px;
+$radius-input:     10px;
+$radius-btn:       10px;
+$radius-tab:       10px;
+
+$transition:       0.3s cubic-bezier(0.4, 0, 0.2, 1);
+$transition-slow:  0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+// ─── Mixins ────────────────────────────────────────────────────────────────────
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// ─── Base ──────────────────────────────────────────────────────────────────────
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+// ─── Page Wrapper ──────────────────────────────────────────────────────────────
+
+.admin-auth {
+  min-height: 100vh;
+  @include flex-center;
+  background: $bg-page;
+  font-family: $font-body;
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+
+  &::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 65% 45% at 50% 0%, rgba(78, 34, 28, 0.06) 0%, transparent 65%),
+      radial-gradient(ellipse 40% 30% at 5% 95%, rgba(78, 34, 28, 0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 95% 85%, rgba(78, 34, 28, 0.03) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+// ─── Background Particles ──────────────────────────────────────────────────────
+
+.bg-particles {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  animation: floatUp linear infinite;
+
+  @for $i from 1 through 12 {
+    &.particle-#{$i} {
+      width: #{random(4) + 2}px;
+      height: #{random(4) + 2}px;
+      left: #{random(100)}%;
+      bottom: -10px;
+      background: $brand;
+      opacity: #{0.04 + random(8) * 0.01};
+      animation-duration: #{10 + random(14)}s;
+      animation-delay: #{random(12)}s;
+      filter: blur(#{random(2)}px);
+    }
+  }
+}
+
+@keyframes floatUp {
+  0%   { transform: translateY(0) scale(1); opacity: 0; }
+  10%  { opacity: 0.4; }
+  90%  { opacity: 0.1; }
+  100% { transform: translateY(-110vh) scale(0.4) rotate(360deg); opacity: 0; }
+}
+
+// ─── Card ──────────────────────────────────────────────────────────────────────
+
+.auth-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+  background: $bg-card;
+  border: 1px solid $bg-card-border;
+  border-radius: $radius-card;
+  box-shadow:
+    0 0 0 1px rgba(78, 34, 28, 0.05),
+    0 4px 16px rgba(78, 34, 28, 0.08),
+    0 20px 60px rgba(78, 34, 28, 0.08);
+  overflow: hidden;
+  animation: cardReveal 0.55s $transition forwards;
+
+  // Top brand accent line
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2.5px;
+    background: linear-gradient(90deg, transparent 0%, $brand 30%, rgba(78, 34, 28, 0.7) 50%, $brand 70%, transparent 100%);
+    z-index: 2;
+  }
+}
+
+@keyframes cardReveal {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+// ─── Tab Bar ───────────────────────────────────────────────────────────────────
+
+.auth-tabs {
+  display: flex;
+  position: relative;
+  padding: 6px;
+  background: $bg-page;
+  border-bottom: 1px solid $bg-card-border;
+  gap: 4px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px 0;
+  background: transparent;
+  border: none;
+  border-radius: $radius-tab;
+  font-family: $font-display;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: $brand-muted;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  transition: color $transition;
+  letter-spacing: 0.02em;
+
+  &.active {
+    color: $brand;
+    font-weight: 600;
+  }
+
+  &:hover:not(.active) {
+    color: $brand-mid;
+  }
+}
+
+.tab-indicator {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  width: calc(50% - 8px);
+  background: $bg-card;
+  border: 1px solid $bg-card-border;
+  border-radius: $radius-tab;
+  box-shadow: 0 1px 4px rgba(78, 34, 28, 0.08);
+  transition: left $transition-slow;
+  z-index: 0;
+
+  &.left  { left: 6px; }
+  &.right { left: calc(50% + 2px); }
+}
+
+// ─── Sliding Panels ────────────────────────────────────────────────────────────
+
+.auth-panels {
+  display: flex;
+  width: 200%;
+  transition: transform $transition-slow;
+
+  &.show-login    { transform: translateX(0); }
+  &.show-register { transform: translateX(-50%); }
+}
+
+.panel {
+  width: 50%;
+  flex-shrink: 0;
+}
+
+// ─── Form Wrapper ──────────────────────────────────────────────────────────────
+
+.auth-form-wrapper {
+  padding: 32px 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+// ─── Header ────────────────────────────────────────────────────────────────────
+
+.auth-form-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.flame-icon {
+  font-size: 36px;
+  line-height: 1;
+  margin-bottom: 4px;
+  filter: drop-shadow(0 2px 8px rgba(78, 34, 28, 0.3));
+  animation: flamePulse 2.5s ease-in-out infinite;
+}
+
+@keyframes flamePulse {
+  0%, 100% { filter: drop-shadow(0 2px 8px rgba(78, 34, 28, 0.25)); transform: scale(1); }
+  50%       { filter: drop-shadow(0 2px 16px rgba(78, 34, 28, 0.45)); transform: scale(1.06); }
+}
+
+.auth-title {
+  font-family: $font-display;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: $brand;
+}
+
+.auth-subtitle {
+  font-family: $font-body;
+  font-size: 13px;
+  font-weight: 400;
+  color: $brand-muted;
+  letter-spacing: 0.01em;
+}
+
+// ─── Form ──────────────────────────────────────────────────────────────────────
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// ─── Form Groups ───────────────────────────────────────────────────────────────
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-family: $font-body;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: $brand-mid;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  input {
+    width: 100%;
+    padding: 12px 14px;
+    background: $bg-input;
+    border: 1px solid $brand-border;
+    border-radius: $radius-input;
+    font-family: $font-body;
+    font-size: 14px;
+    font-weight: 400;
+    color: $brand;
+    outline: none;
+    transition: border-color $transition, background $transition, box-shadow $transition;
+    -webkit-appearance: none;
+
+    &::placeholder {
+      color: $brand-dim;
+    }
+
+    &:focus {
+      background: $bg-input-focus;
+      border-color: $brand;
+      box-shadow: 0 0 0 3px $brand-glow;
+    }
+
+    &:-webkit-autofill {
+      -webkit-box-shadow: 0 0 0 100px $bg-input inset;
+      -webkit-text-fill-color: $brand;
+      caret-color: $brand;
+    }
+  }
+
+  &.has-error input {
+    border-color: $error;
+    background: $error-bg;
+
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.10);
+    }
+  }
+}
+
+.field-error {
+  font-family: $font-body;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: $error;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  &::before {
+    content: "⚠";
+    font-size: 10px;
+  }
+}
+
+// ─── Button ────────────────────────────────────────────────────────────────────
+
+.auth-btn {
+  width: 100%;
+  padding: 13px;
+  margin-top: 4px;
+  background: $brand;
+  border: none;
+  border-radius: $radius-btn;
+  font-family: $font-display;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  position: relative;
+  overflow: hidden;
+  transition: background $transition, transform $transition, box-shadow $transition;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.10) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity $transition;
+  }
+
+  &:hover:not(:disabled) {
+    background: $brand-hover;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(78, 34, 28, 0.30);
+
+    &::before { opacity: 1; }
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(78, 34, 28, 0.20);
+  }
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+}
+
+// ─── Button Loading ────────────────────────────────────────────────────────────
+
+.btn-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ─── Switch Text ───────────────────────────────────────────────────────────────
+
+.auth-switch-text {
+  text-align: center;
+  font-family: $font-body;
+  font-size: 13px;
+  color: $brand-muted;
+}
+
+.switch-link {
+  background: none;
+  border: none;
+  font-family: $font-body;
+  font-size: 13px;
+  font-weight: 600;
+  color: $brand;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color $transition;
+
+  &:hover {
+    color: $brand-hover;
+  }
+}
+
+// ─── Toastify Overrides ────────────────────────────────────────────────────────
+
+:root {
+  --toastify-color-light: #ffffff;
+  --toastify-text-color-light: #4e221c;
+  --toastify-color-success: #4e221c;
+  --toastify-color-error: #c0392b;
+  --toastify-font-family: "Inter", sans-serif;
+  --toastify-toast-bd-radius: 10px;
+}
+
+.Toastify__toast {
+  border: 1px solid $bg-card-border;
+  box-shadow: 0 4px 16px rgba(78, 34, 28, 0.10);
+  font-size: 13.5px;
+}
+
+.Toastify__progress-bar--success {
+  background: $brand;
+}
+
+// ─── Responsive ────────────────────────────────────────────────────────────────
+
+@media (max-width: 768px) {
+  .auth-card { max-width: 400px; }
+
+  .auth-form-wrapper {
+    padding: 28px 24px 24px;
+    gap: 20px;
+  }
+
+  .auth-title { font-size: 22px; }
+  .flame-icon { font-size: 32px; }
+}
+
+@media (max-width: 480px) {
+  .admin-auth {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+
+  .auth-card {
+    max-width: 100%;
+    border-radius: 16px;
+  }
+
+  .auth-form-wrapper {
+    padding: 24px 20px 20px;
+    gap: 18px;
+  }
+
+  .auth-title { font-size: 20px; }
+  .flame-icon { font-size: 30px; }
+
+  .tab-btn {
+    font-size: 13px;
+    padding: 9px 0;
+  }
+
+  .form-group input {
+    font-size: 16px; // prevents iOS zoom
+    padding: 11px 13px;
+  }
+
+  .auth-btn {
+    font-size: 14px;
+    padding: 12px;
+  }
+
+  .auth-switch-text,
+  .switch-link { font-size: 12.5px; }
+}
+
+@media (max-width: 360px) {
+  .auth-form-wrapper { padding: 20px 16px 18px; }
+}

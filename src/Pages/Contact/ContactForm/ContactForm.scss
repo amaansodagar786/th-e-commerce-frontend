@@ -1,0 +1,473 @@
+// ContactForm.scss
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Inter:wght@300;400;500;600;700&display=swap");
+
+// ─── Tokens ────────────────────────────────────────────────────────────────────
+$brand: #4e221c;
+$brand-hover: #3a1814;
+$brand-light: rgba(78, 34, 28, 0.08);
+$brand-border: rgba(78, 34, 28, 0.15);
+$gold: #c98b30;
+$gold-light: rgba(201, 139, 48, 0.15);
+$bg-page: #fefcf2;
+$bg-card: #ffffff;
+$border-light: #ede8df;
+$border-mid: #ddd5c8;
+$text-primary: #2a1f12;
+$text-secondary: #6b5535;
+$text-muted: #a08060;
+$red: #c0392b;
+$green: #2d7a4f;
+$font-display: "DM Sans", sans-serif;
+$font-body: "Inter", sans-serif;
+$radius-md: 10px;
+$radius-lg: 14px;
+$radius-xl: 20px;
+$shadow-md: 0 4px 16px rgba(42, 31, 18, 0.08);
+$shadow-lg: 0 8px 32px rgba(42, 31, 18, 0.12);
+$transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Contact Main Styles
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.contact-main {
+    background: $bg-page;
+    padding: 60px 24px;
+    font-family: $font-body; 
+
+
+     @media (max-width: 768px) {
+             padding: 60px 24px 20px;
+        }
+
+    &__container {
+        max-width: 1280px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+
+        @media (max-width: 1024px) {
+            gap: 32px;
+        }
+
+        @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+            gap: 48px;
+        }
+    }
+}
+
+// ─── Form Wrapper ──────────────────────────────────────────────────────────────
+.contact-form-wrapper {
+    background: $bg-card;
+    border-radius: $radius-xl;
+    border: 1px solid $border-light;
+    padding: 40px;
+    box-shadow: $shadow-md;
+    transition: transform $transition, box-shadow $transition;
+
+    &:hover {
+        box-shadow: $shadow-lg;
+        transform: translateY(-2px);
+    }
+
+    @media (max-width: 640px) {
+        padding: 28px 20px;
+    }
+}
+
+.contact-form-header {
+    text-align: center;
+    margin-bottom: 32px;
+
+    &__title {
+        font-family: $font-display;
+        font-size: 28px;
+        font-weight: 700;
+        color: $brand;
+        margin-bottom: 8px;
+        letter-spacing: -0.02em;
+
+        @media (max-width: 640px) {
+            font-size: 24px;
+        }
+    }
+
+    &__subtitle {
+        font-family: $font-body;
+        font-size: 14px;
+        color: $text-muted;
+        line-height: 1.5;
+    }
+}
+
+// ─── Form Styles ───────────────────────────────────────────────────────────────
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    &__group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    &__label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: $font-body;
+        font-size: 13px;
+        font-weight: 600;
+        color: $text-secondary;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+
+        &-icon {
+            font-size: 16px;
+            color: $gold;
+        }
+    }
+
+    &__input-wrapper {
+        position: relative;
+    }
+
+    &__input,
+    &__textarea {
+        width: 100%;
+        padding: 12px 16px;
+        background: $bg-page;
+        border: 1.5px solid $border-mid;
+        border-radius: $radius-md;
+        font-family: $font-body;
+        font-size: 14px;
+        color: $text-primary;
+        transition: all $transition;
+        outline: none;
+
+        &:focus {
+            border-color: $brand;
+            box-shadow: 0 0 0 3px $brand-light;
+            background: $bg-card;
+        }
+
+        &.error {
+            border-color: $red;
+            background: rgba(192, 57, 43, 0.05);
+        }
+    }
+
+    &__textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    &__error {
+        font-size: 12px;
+        color: $red;
+        font-weight: 500;
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        &::before {
+            content: "⚠";
+            font-size: 11px;
+        }
+    }
+
+    &__submit {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 14px 28px;
+        background: $brand;
+        color: white;
+        border: none;
+        border-radius: $radius-md;
+        font-family: $font-display;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all $transition;
+
+        &:hover:not(:disabled) {
+            background: $brand-hover;
+            box-shadow: 0 6px 20px rgba(78, 34, 28, 0.3);
+        }
+
+        &:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        &:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+    }
+
+    &__spinner {
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    }
+}
+
+// ─── Info Wrapper ──────────────────────────────────────────────────────────────
+.contact-info-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.contact-info-card {
+    background: $bg-card;
+    border-radius: $radius-xl;
+    border: 1px solid $border-light;
+    padding: 40px;
+    box-shadow: $shadow-md;
+    transition: transform $transition, box-shadow $transition;
+
+    &:hover {
+        box-shadow: $shadow-lg;
+        transform: translateY(-2px);
+    }
+
+    @media (max-width: 640px) {
+        padding: 28px 20px;
+    }
+}
+
+.contact-info-header {
+    text-align: center;
+    margin-bottom: 32px;
+
+    &__title {
+        font-family: $font-display;
+        font-size: 28px;
+        font-weight: 700;
+        color: $brand;
+        margin-bottom: 8px;
+        letter-spacing: -0.02em;
+
+        @media (max-width: 640px) {
+            font-size: 24px;
+        }
+    }
+
+    &__subtitle {
+        font-family: $font-body;
+        font-size: 14px;
+        color: $text-muted;
+    }
+}
+
+// ─── Info Items ────────────────────────────────────────────────────────────────
+.contact-info-details {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    margin-bottom: 32px;
+}
+
+.contact-info-item {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    cursor: pointer;
+
+    &__icon {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: $brand-light;
+        border-radius: $radius-md;
+        color: $brand;
+        font-size: 22px;
+        flex-shrink: 0;
+        transition: all $transition;
+
+        &:hover {
+            background: $gold-light;
+        }
+    }
+
+    &__content {
+        flex: 1;
+
+        h4 {
+            font-family: $font-display;
+            font-size: 16px;
+            font-weight: 700;
+            color: $text-primary;
+            margin-bottom: 6px;
+        }
+
+        p {
+            font-family: $font-body;
+            font-size: 14px;
+            color: $text-secondary;
+            line-height: 1.6;
+
+            a {
+                color: $brand;
+                text-decoration: none;
+                transition: color $transition;
+
+                &:hover {
+                    color: $gold;
+                }
+            }
+        }
+    }
+}
+
+// ─── Social Links ──────────────────────────────────────────────────────────────
+.contact-social {
+    text-align: center;
+    margin-bottom: 32px;
+    padding-top: 24px;
+    border-top: 1px solid $border-light;
+
+    &__title {
+        font-family: $font-display;
+        font-size: 18px;
+        font-weight: 600;
+        color: $text-primary;
+        margin-bottom: 20px;
+    }
+
+    &__links {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    &__link {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: $bg-page;
+        border: 1.5px solid $border-mid;
+        border-radius: 50%;
+        color: $text-secondary;
+        font-size: 22px;
+        transition: all $transition;
+        text-decoration: none;
+
+        &:hover {
+            border-color: $gold;
+        }
+
+        &--instagram:hover {
+            color: #e4405f;
+            border-color: #e4405f;
+            background: rgba(228, 64, 95, 0.05);
+        }
+
+        &--facebook:hover {
+            color: #1877f2;
+            border-color: #1877f2;
+            background: rgba(24, 119, 242, 0.05);
+        }
+
+        &--whatsapp:hover {
+            color: #25d366;
+            border-color: #25d366;
+            background: rgba(37, 211, 102, 0.05);
+        }
+
+        &--youtube:hover {
+            color: #ff0000;
+            border-color: #ff0000;
+            background: rgba(255, 0, 0, 0.05);
+        }
+    }
+}
+
+// ─── Trust Badge - Icon on Left Side ──────────────────────────────────────────
+.contact-trust-badge {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: linear-gradient(135deg, $brand-light, $gold-light);
+    border-radius: $radius-lg;
+    border: 1px solid $brand-border;
+
+
+
+
+    &__icon {
+        font-size: 36px;
+        flex-shrink: 0;
+        animation: gentlePulse 2s infinite;
+
+        @media (max-width: 768px) {
+            font-size: 30px !important;
+        }
+
+        @keyframes gentlePulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+    }
+
+    p {
+        font-family: $font-display;
+        font-size: 14px;
+        font-weight: 500;
+        color: $brand;
+        line-height: 1.5;
+        font-style: italic;
+        margin: 0;
+        text-align: left;
+
+
+        @media (max-width: 768px) {
+            font-size: 13.4px !important;
+        }
+    }
+}
+
+// ─── Toast Customization ───────────────────────────────────────────────────────
+.contact-toast {
+    font-family: $font-body;
+
+    strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+
+    p {
+        font-size: 12px;
+        margin: 0;
+        opacity: 0.9;
+    }
+}
