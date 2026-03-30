@@ -31,6 +31,7 @@ import {
     MdVisibilityOff,
 } from "react-icons/md";
 import "./Profile.scss";
+import FooterTopPattern from "../../../Components/Footer/FooterTopPattern/FooterTopPattern";
 
 // ─── Password Input Component with Eye Toggle ───────────────────────────────────
 
@@ -1030,301 +1031,305 @@ const Profile = () => {
     );
 
     return (
-        <div className="profile-container">
-            <ToastContainer
-                position="top-center"
-                autoClose={3000}
-                theme="light"
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                pauseOnHover
-            />
+        <>
+            <div className="profile-container">
+                <ToastContainer
+                    position="top-center"
+                    autoClose={3000}
+                    theme="light"
+                    hideProgressBar={false}
+                    newestOnTop
+                    closeOnClick
+                    pauseOnHover
+                />
 
-            <div className="profile-header">
-                <h1>My Profile</h1>
-                <button onClick={handleLogout} className="logout-btn">
-                    <MdLogout /> Logout
-                </button>
-            </div>
+                <div className="profile-header">
+                    <h1>My Profile</h1>
+                    <button onClick={handleLogout} className="logout-btn">
+                        <MdLogout /> Logout
+                    </button>
+                </div>
 
-            <div className="profile-content">
-                {/* Sidebar Navigation */}
-                <div className="profile-sidebar">
-                    <div className="sidebar-user">
-                        <div className="user-avatar">{profile.name?.charAt(0).toUpperCase() || "U"}</div>
-                        <div className="user-info">
-                            <h3>{profile.name || "User"}</h3>
-                            <p>{profile.email}</p>
+                <div className="profile-content">
+                    {/* Sidebar Navigation */}
+                    <div className="profile-sidebar">
+                        <div className="sidebar-user">
+                            <div className="user-avatar">{profile.name?.charAt(0).toUpperCase() || "U"}</div>
+                            <div className="user-info">
+                                <h3>{profile.name || "User"}</h3>
+                                <p>{profile.email}</p>
+                            </div>
                         </div>
+
+                        <nav className="sidebar-nav">
+                            <button
+                                className={`nav-btn ${activeTab === "profile" ? "active" : ""}`}
+                                onClick={() => setActiveTab("profile")}
+                            >
+                                <MdPerson /> Personal Info
+                            </button>
+                            <button
+                                className={`nav-btn ${activeTab === "password" ? "active" : ""}`}
+                                onClick={() => setActiveTab("password")}
+                            >
+                                <MdLock /> Change Password
+                            </button>
+                            <button
+                                className={`nav-btn ${activeTab === "forgot-password" ? "active" : ""}`}
+                                onClick={() => setActiveTab("forgot-password")}
+                            >
+                                <MdKey /> Forgot Password
+                            </button>
+                            <button
+                                className={`nav-btn ${activeTab === "addresses" ? "active" : ""}`}
+                                onClick={() => setActiveTab("addresses")}
+                            >
+                                <MdLocationOn /> My Addresses
+                            </button>
+                        </nav>
                     </div>
 
-                    <nav className="sidebar-nav">
-                        <button
-                            className={`nav-btn ${activeTab === "profile" ? "active" : ""}`}
-                            onClick={() => setActiveTab("profile")}
-                        >
-                            <MdPerson /> Personal Info
-                        </button>
-                        <button
-                            className={`nav-btn ${activeTab === "password" ? "active" : ""}`}
-                            onClick={() => setActiveTab("password")}
-                        >
-                            <MdLock /> Change Password
-                        </button>
-                        <button
-                            className={`nav-btn ${activeTab === "forgot-password" ? "active" : ""}`}
-                            onClick={() => setActiveTab("forgot-password")}
-                        >
-                            <MdKey /> Forgot Password
-                        </button>
-                        <button
-                            className={`nav-btn ${activeTab === "addresses" ? "active" : ""}`}
-                            onClick={() => setActiveTab("addresses")}
-                        >
-                            <MdLocationOn /> My Addresses
-                        </button>
-                    </nav>
-                </div>
+                    {/* Main Content */}
+                    <div className="profile-main">
+                        {activeTab === "profile" && (
+                            <form className="profile-form" onSubmit={handleProfileUpdate}>
+                                <h2>Personal Information</h2>
 
-                {/* Main Content */}
-                <div className="profile-main">
-                    {activeTab === "profile" && (
-                        <form className="profile-form" onSubmit={handleProfileUpdate}>
-                            <h2>Personal Information</h2>
+                                <div className="form-grid">
+                                    <div className="form-group">
+                                        <label htmlFor="name">Full Name *</label>
+                                        <input
+                                            type="text"
+                                            id="name"
+                                            name="name"
+                                            value={profile.name}
+                                            onChange={handleProfileChange}
+                                            required
+                                            disabled={saving}
+                                            placeholder="Enter your full name"
+                                        />
+                                    </div>
 
-                            <div className="form-grid">
-                                <div className="form-group">
-                                    <label htmlFor="name">Full Name *</label>
-                                    <input
-                                        type="text"
-                                        id="name"
-                                        name="name"
-                                        value={profile.name}
-                                        onChange={handleProfileChange}
-                                        required
-                                        disabled={saving}
-                                        placeholder="Enter your full name"
-                                    />
-                                </div>
+                                    <div className="form-group">
+                                        <label htmlFor="email">Email Address *</label>
+                                        <input
+                                            type="email"
+                                            id="email"
+                                            name="email"
+                                            value={profile.email}
+                                            onChange={handleProfileChange}
+                                            required
+                                            disabled
+                                            placeholder="Enter your email"
+                                        />
+                                        <small className="form-help">Email cannot be changed</small>
+                                    </div>
 
-                                <div className="form-group">
-                                    <label htmlFor="email">Email Address *</label>
-                                    <input
-                                        type="email"
-                                        id="email"
-                                        name="email"
-                                        value={profile.email}
-                                        onChange={handleProfileChange}
-                                        required
-                                        disabled
-                                        placeholder="Enter your email"
-                                    />
-                                    <small className="form-help">Email cannot be changed</small>
-                                </div>
+                                    <div className="form-group">
+                                        <label htmlFor="mobile">Mobile Number</label>
+                                        <input
+                                            type="tel"
+                                            id="mobile"
+                                            name="mobile"
+                                            value={profile.mobile}
+                                            onChange={handleProfileChange}
+                                            disabled={saving}
+                                            placeholder="Enter 10-digit mobile number"
+                                            maxLength="10"
+                                        />
+                                        <small className="form-help">Optional - 10 digit Indian number</small>
+                                    </div>
 
-                                <div className="form-group">
-                                    <label htmlFor="mobile">Mobile Number</label>
-                                    <input
-                                        type="tel"
-                                        id="mobile"
-                                        name="mobile"
-                                        value={profile.mobile}
-                                        onChange={handleProfileChange}
-                                        disabled={saving}
-                                        placeholder="Enter 10-digit mobile number"
-                                        maxLength="10"
-                                    />
-                                    <small className="form-help">Optional - 10 digit Indian number</small>
-                                </div>
+                                    <div className="form-group">
+                                        <label htmlFor="age">Age</label>
+                                        <input
+                                            type="number"
+                                            id="age"
+                                            name="age"
+                                            value={profile.age}
+                                            onChange={handleProfileChange}
+                                            disabled={saving}
+                                            placeholder="Enter your age"
+                                            min="1"
+                                            max="120"
+                                        />
+                                    </div>
 
-                                <div className="form-group">
-                                    <label htmlFor="age">Age</label>
-                                    <input
-                                        type="number"
-                                        id="age"
-                                        name="age"
-                                        value={profile.age}
-                                        onChange={handleProfileChange}
-                                        disabled={saving}
-                                        placeholder="Enter your age"
-                                        min="1"
-                                        max="120"
-                                    />
-                                </div>
-
-                                <div className="form-group full-width">
-                                    <label htmlFor="gender">Gender</label>
-                                    <select
-                                        id="gender"
-                                        name="gender"
-                                        value={profile.gender}
-                                        onChange={handleProfileChange}
-                                        disabled={saving}
-                                    >
-                                        {genderOptions.map((option) => (
-                                            <option key={option.value} value={option.value}>
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="form-actions">
-                                <button type="submit" className="save-btn" disabled={saving}>
-                                    {saving ? "Saving..." : "Save Changes"}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="cancel-btn"
-                                    onClick={fetchProfile}
-                                    disabled={saving}
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    )}
-
-                    {activeTab === "password" && (
-                        <form className="password-form" onSubmit={handlePasswordChange}>
-                            <h2>Change Password</h2>
-                            <p className="form-description">
-                                For security, please enter your current password and then your new password.
-                            </p>
-
-                            <PasswordInput
-                                label="Current Password"
-                                name="oldPassword"
-                                value={passwords.oldPassword}
-                                onChange={handlePasswordChangeInput}
-                                placeholder="Enter current password"
-                                required={true}
-                                disabled={saving}
-                                showRequirements={false}
-                            />
-
-                            <PasswordInput
-                                label="New Password"
-                                name="newPassword"
-                                value={passwords.newPassword}
-                                onChange={handlePasswordChangeInput}
-                                placeholder="Enter new password (min 6 characters)"
-                                required={true}
-                                disabled={saving}
-                                showRequirements={true}
-                            />
-
-                            <PasswordInput
-                                label="Confirm New Password"
-                                name="confirmPassword"
-                                value={passwords.confirmPassword}
-                                onChange={handlePasswordChangeInput}
-                                placeholder="Re-enter new password"
-                                required={true}
-                                disabled={saving}
-                                showRequirements={false}
-                            />
-
-                            <div className="password-requirements">
-                                <h4>Password Requirements:</h4>
-                                <ul>
-                                    <li>Minimum 6 characters</li>
-                                    <li>Use a mix of letters and numbers</li>
-                                    <li>Avoid common words or patterns</li>
-                                </ul>
-                            </div>
-
-                            <div className="form-actions">
-                                <button type="submit" className="save-btn" disabled={saving}>
-                                    {saving ? "Changing Password..." : "Change Password"}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="cancel-btn"
-                                    onClick={() => {
-                                        setPasswords({
-                                            oldPassword: "",
-                                            newPassword: "",
-                                            confirmPassword: "",
-                                        });
-                                        setActiveTab("profile");
-                                    }}
-                                    disabled={saving}
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    )}
-
-                    {activeTab === "forgot-password" && renderForgotPasswordForm()}
-
-                    {activeTab === "addresses" && (
-                        <div className="addresses-tab">
-                            <div className="addresses-header">
-                                <h2>My Addresses</h2>
-                                <button
-                                    className="add-address-btn"
-                                    onClick={() => setShowAddressForm(true)}
-                                    disabled={saving}
-                                >
-                                    <MdAdd /> Add New Address
-                                </button>
-                            </div>
-
-                            {showAddressForm && (
-                                <AddressForm
-                                    address={editingAddress}
-                                    onSubmit={handleSubmitAddress}
-                                    onCancel={handleCancelAddressForm}
-                                    mode={editingAddress ? "edit" : "add"}
-                                />
-                            )}
-
-                            {addresses.length === 0 && !showAddressForm ? (
-                                <div className="no-addresses">
-                                    <div className="empty-state">
-                                        <span className="empty-icon">📍</span>
-                                        <h3>No addresses saved</h3>
-                                        <p>Add your first address to make checkout faster!</p>
-                                        <button
-                                            className="add-first-btn"
-                                            onClick={() => setShowAddressForm(true)}
+                                    <div className="form-group full-width">
+                                        <label htmlFor="gender">Gender</label>
+                                        <select
+                                            id="gender"
+                                            name="gender"
+                                            value={profile.gender}
+                                            onChange={handleProfileChange}
+                                            disabled={saving}
                                         >
-                                            Add Your First Address
-                                        </button>
+                                            {genderOptions.map((option) => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
-                            ) : (
-                                <div className="addresses-list">
-                                    {addresses.map((address) => (
-                                        <AddressCard
-                                            key={address.addressId}
-                                            address={address}
-                                            onEdit={handleEditAddress}
-                                            onDelete={handleDeleteAddress}
-                                            onSetDefault={handleSetDefaultAddress}
-                                        />
-                                    ))}
-                                </div>
-                            )}
 
-                            {addresses.length > 0 && (
-                                <div className="addresses-stats">
-                                    <p>Total addresses: {addresses.length}</p>
-                                    <p>
-                                        Default address:{" "}
-                                        {addresses.find((a) => a.isDefault)?.city || "Not set"}
-                                    </p>
+                                <div className="form-actions">
+                                    <button type="submit" className="save-btn" disabled={saving}>
+                                        {saving ? "Saving..." : "Save Changes"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="cancel-btn"
+                                        onClick={fetchProfile}
+                                        disabled={saving}
+                                    >
+                                        Cancel
+                                    </button>
                                 </div>
-                            )}
-                        </div>
-                    )}
+                            </form>
+                        )}
+
+                        {activeTab === "password" && (
+                            <form className="password-form" onSubmit={handlePasswordChange}>
+                                <h2>Change Password</h2>
+                                <p className="form-description">
+                                    For security, please enter your current password and then your new password.
+                                </p>
+
+                                <PasswordInput
+                                    label="Current Password"
+                                    name="oldPassword"
+                                    value={passwords.oldPassword}
+                                    onChange={handlePasswordChangeInput}
+                                    placeholder="Enter current password"
+                                    required={true}
+                                    disabled={saving}
+                                    showRequirements={false}
+                                />
+
+                                <PasswordInput
+                                    label="New Password"
+                                    name="newPassword"
+                                    value={passwords.newPassword}
+                                    onChange={handlePasswordChangeInput}
+                                    placeholder="Enter new password (min 6 characters)"
+                                    required={true}
+                                    disabled={saving}
+                                    showRequirements={true}
+                                />
+
+                                <PasswordInput
+                                    label="Confirm New Password"
+                                    name="confirmPassword"
+                                    value={passwords.confirmPassword}
+                                    onChange={handlePasswordChangeInput}
+                                    placeholder="Re-enter new password"
+                                    required={true}
+                                    disabled={saving}
+                                    showRequirements={false}
+                                />
+
+                                <div className="password-requirements">
+                                    <h4>Password Requirements:</h4>
+                                    <ul>
+                                        <li>Minimum 6 characters</li>
+                                        <li>Use a mix of letters and numbers</li>
+                                        <li>Avoid common words or patterns</li>
+                                    </ul>
+                                </div>
+
+                                <div className="form-actions">
+                                    <button type="submit" className="save-btn" disabled={saving}>
+                                        {saving ? "Changing Password..." : "Change Password"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="cancel-btn"
+                                        onClick={() => {
+                                            setPasswords({
+                                                oldPassword: "",
+                                                newPassword: "",
+                                                confirmPassword: "",
+                                            });
+                                            setActiveTab("profile");
+                                        }}
+                                        disabled={saving}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+
+                        {activeTab === "forgot-password" && renderForgotPasswordForm()}
+
+                        {activeTab === "addresses" && (
+                            <div className="addresses-tab">
+                                <div className="addresses-header">
+                                    <h2>My Addresses</h2>
+                                    <button
+                                        className="add-address-btn"
+                                        onClick={() => setShowAddressForm(true)}
+                                        disabled={saving}
+                                    >
+                                        <MdAdd /> Add New Address
+                                    </button>
+                                </div>
+
+                                {showAddressForm && (
+                                    <AddressForm
+                                        address={editingAddress}
+                                        onSubmit={handleSubmitAddress}
+                                        onCancel={handleCancelAddressForm}
+                                        mode={editingAddress ? "edit" : "add"}
+                                    />
+                                )}
+
+                                {addresses.length === 0 && !showAddressForm ? (
+                                    <div className="no-addresses">
+                                        <div className="empty-state">
+                                            <span className="empty-icon">📍</span>
+                                            <h3>No addresses saved</h3>
+                                            <p>Add your first address to make checkout faster!</p>
+                                            <button
+                                                className="add-first-btn"
+                                                onClick={() => setShowAddressForm(true)}
+                                            >
+                                                Add Your First Address
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="addresses-list">
+                                        {addresses.map((address) => (
+                                            <AddressCard
+                                                key={address.addressId}
+                                                address={address}
+                                                onEdit={handleEditAddress}
+                                                onDelete={handleDeleteAddress}
+                                                onSetDefault={handleSetDefaultAddress}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+
+                                {addresses.length > 0 && (
+                                    <div className="addresses-stats">
+                                        <p>Total addresses: {addresses.length}</p>
+                                        <p>
+                                            Default address:{" "}
+                                            {addresses.find((a) => a.isDefault)?.city || "Not set"}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <FooterTopPattern bgColor="#fefcf2" />
+        </>
     );
 };
 

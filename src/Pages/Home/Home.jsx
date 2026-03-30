@@ -6,6 +6,7 @@ import ShowCase from './Showcase/ShowCase'
 import AvailableOn from './Availiable/AvailableOn'
 import Slider from './Slider/Slider'
 import CustomerStories from './CustomerStories/CustomerStories'
+import FooterTopPattern from '../../Components/Footer/FooterTopPattern/FooterTopPattern'
 
 const Home = () => {
 
@@ -19,6 +20,7 @@ const Home = () => {
       <Slider/>
       <ShowCase/>
       <CustomerStories/>
+      <FooterTopPattern/>
       
     </>
   )

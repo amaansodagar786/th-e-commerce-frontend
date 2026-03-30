@@ -129,7 +129,6 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
   // Reset Password
   const handleResetPassword = async (e) => {
     e.preventDefault();
-   
 
     // Validation
     if (!newPassword || !confirmPassword) {
@@ -157,8 +156,7 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
         handleClose();
       }
     } catch (err) {
-      console.error('❌ Reset error:', err);
-      console.error('Error response:', err.response?.data);
+      console.error('Reset error:', err);
       toast.error(err.response?.data?.message || 'Failed to reset password');
     } finally {
       setLoading(false);
@@ -350,7 +348,40 @@ function LoginForm({ onSwitch, onForgotPassword }) {
         onClose: () => navigate("/"),
       });
     } catch (err) {
-      toast.error(err.response?.data?.message || "Login failed. Please try again.");
+      // Handle different error types with proper messages
+      const errorMessage = err.response?.data?.message || "Login failed. Please try again.";
+      const errorType = err.response?.data?.errorType;
+
+      // Show specific toast messages based on error type
+      if (errorType === "ADMIN_ACCOUNT") {
+        toast.error("Admin accounts cannot login here. Please use admin panel.", {
+          autoClose: 4000,
+        });
+      } else if (errorType === "EMAIL_NOT_FOUND") {
+        toast.error("No account found with this email. Please create an account first.", {
+          autoClose: 4000,
+        });
+      } else if (errorType === "WRONG_PASSWORD") {
+        toast.error("Incorrect password. Please try again.", {
+          autoClose: 4000,
+        });
+      } else if (errorType === "NO_PASSWORD_SET") {
+        toast.error("This account is not configured for login. Please contact support.", {
+          autoClose: 4000,
+        });
+      } else if (errorType === "INVALID_CREDENTIALS") {
+        toast.error("Invalid email or password. Please try again.", {
+          autoClose: 4000,
+        });
+      } else if (errorType === "SERVER_ERROR") {
+        toast.error("Server error. Please try again later.", {
+          autoClose: 4000,
+        });
+      } else {
+        toast.error(errorMessage, {
+          autoClose: 4000,
+        });
+      }
     }
   };
 

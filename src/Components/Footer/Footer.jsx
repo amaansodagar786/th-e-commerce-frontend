@@ -4,9 +4,8 @@ import { motion } from "framer-motion";
 import logo from "../../assets/images/home/footer/logo3.png";
 import peanut from "../../assets/images/home/footer/left-side-image.png";
 import peanutMobile from "../../assets/images/home/footer/peanut-mobile.png";
-import topPattern from "../../assets/images/home/footer/top-pattern.png";
 import { FiPhone, FiMail, FiMapPin } from "react-icons/fi";
-import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from "react-icons/fa";
+import { FaFacebookF, FaAmazon, FaInstagram, FaWhatsapp } from "react-icons/fa";
 
 const Footer = () => {
   const containerVariants = {
@@ -108,9 +107,6 @@ const Footer = () => {
 
   return (
     <>
-      <div className="footer-top-pattern">
-        <img src={topPattern} alt="pattern" />
-      </div>
 
       <footer className="footer">
         <motion.div
@@ -307,7 +303,7 @@ const Footer = () => {
                 animate="animate" 
                 whileHover="hover"
               >
-                <FaTwitter />
+                <FaAmazon />
               </motion.a>
               <motion.a 
                 href={socialLinks.instagram}
@@ -327,7 +323,7 @@ const Footer = () => {
                 animate="animate" 
                 whileHover="hover"
               >
-                <FaLinkedinIn />
+                <FaWhatsapp />
               </motion.a>
             </div>
           </div>

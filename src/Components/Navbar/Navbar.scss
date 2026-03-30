@@ -248,6 +248,52 @@ $transition-smooth: all 0.3s ease;
         }
       }
     }
+
+    // Logout button styles - matches dropdown-link exactly
+    .logout-button {
+      background: none;
+      border: none;
+      width: 100%;
+      cursor: pointer;
+      font-family: $font-primary;
+      font-size: 13px;
+      color: #666;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+      text-align: left;
+
+      .dropdown-icon {
+        width: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+
+        svg {
+          width: 14px;
+          height: 14px;
+          stroke: #666;
+          transition: all 0.2s ease;
+        }
+      }
+
+      .dropdown-label {
+        flex: 1;
+        text-align: left;
+      }
+
+      &:hover {
+        background: rgba(107, 44, 31, 0.05);
+        color: #522015;
+        padding-left: 20px;
+
+        .dropdown-icon svg {
+          stroke: #522015;
+        }
+      }
+    }
   }
 }
 
@@ -569,6 +615,54 @@ $transition-smooth: all 0.3s ease;
         }
       }
     }
+
+    // Mobile logout button styles - matches mobile-profile-link exactly
+    .logout-button {
+      background: none;
+      border: none;
+      width: 100%;
+      cursor: pointer;
+      font-family: $font-primary;
+      font-size: 14px;
+      font-weight: 500;
+      color: #666;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      transition: all 0.2s ease;
+      border-radius: 50px;
+      text-align: center;
+
+      .mobile-dropdown-icon {
+        width: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        svg {
+          width: 16px;
+          height: 16px;
+          stroke: #666;
+          transition: all 0.2s ease;
+        }
+      }
+
+      .mobile-dropdown-label {
+        flex: 1;
+        text-align: left;
+      }
+
+      &:hover {
+        background: rgba(107, 44, 31, 0.05);
+        color: #522015;
+
+        .mobile-dropdown-icon svg {
+          stroke: #522015;
+        }
+      }
+    }
   }
 
   @media (max-width: 480px) {
@@ -582,7 +676,8 @@ $transition-smooth: all 0.3s ease;
     }
 
     .mobile-profile-dropdown {
-      .mobile-profile-link {
+      .mobile-profile-link,
+      .logout-button {
         font-size: 13px;
         padding: 8px 14px;
         gap: 10px;

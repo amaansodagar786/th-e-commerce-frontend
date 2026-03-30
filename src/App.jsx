@@ -32,6 +32,7 @@ import NotFound from "./Pages/404/NotFound";
 import Contact from "./Pages/Contact/Contact";
 import ScrollToTop from "./Components/GoToTop/ScrollToTop";
 import Cart from "./Pages/Cart/Cart";
+import Distributorship from "./Pages/Distributorship/Distributorship";
 
 function LayoutWrapper({ children }) {
   const location = useLocation();
@@ -62,6 +63,11 @@ function App() {
         <Route path="/contact" element={
           <LayoutWrapper>
             <Contact />
+          </LayoutWrapper>
+        } />
+        <Route path="/distributorship" element={
+          <LayoutWrapper>
+            <Distributorship />
           </LayoutWrapper>
         } />
         <Route path="/login" element={<UserAuth />} />

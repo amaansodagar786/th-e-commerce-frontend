@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
 import "./Navbar.scss";
 import logoImage from "../../assets/images/logo/logo.png";
 
@@ -10,6 +11,7 @@ const Navbar = () => {
   const [cartCount, setCartCount] = useState(0);
   const [userName, setUserName] = useState("");
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const profileRef = useRef(null);
   let hoverTimeout = useRef(null);
 
@@ -21,17 +23,25 @@ const Navbar = () => {
   const navLinks = [
     { to: "/", label: "HOME" },
     { to: "/contact", label: "CONTACT" },
-    { to: "/products", label: "DISTRIBUTORSHIP" }
+    { to: "/distributorship", label: "DISTRIBUTORSHIP" }
   ];
 
   const profileLinks = [
     { to: "/profile", label: "My Profile", icon: "user" },
     { to: "/orders", label: "My Orders", icon: "package" },
-    { to: "/reviews", label: "My Reviews", icon: "star" },
-    { to: "/logout", label: "Logout", icon: "log-out" }
+    { to: "/reviews", label: "My Reviews", icon: "star" }
   ];
 
-  // ✅ Fetch cart count from API
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("user");
+    toast.info("Logged out successfully!");
+    setTimeout(() => navigate("/login"), 1000);
+  };
+
+  // Fetch cart count from API
   const fetchCartCount = useCallback(async () => {
     if (!token || !userId) {
       setCartCount(0);
@@ -48,7 +58,7 @@ const Navbar = () => {
     }
   }, [token, userId]);
 
-  // ✅ Fetch user name from API
+  // Fetch user name from API
   const fetchUserName = useCallback(async () => {
     if (!token || !userId) return;
     try {
@@ -103,7 +113,7 @@ const Navbar = () => {
     if (!e.target.checked) setIsProfileOpen(false);
   };
 
-  // ✅ Show first name only, fallback to "User" if not logged in
+  // Show first name only, fallback to "User" if not logged in
   const displayName = userName ? userName.split(" ")[0] : "User";
 
   // Icon components
@@ -208,7 +218,6 @@ const Navbar = () => {
 
               <div className={`profile-dropdown ${isProfileOpen ? 'open' : ''}`}>
                 <div className="dropdown-header">
-                  {/* ✅ Real first name here */}
                   <span className="user-greeting">Hi, {displayName}</span>
                 </div>
                 <div className="dropdown-links">
@@ -223,6 +232,16 @@ const Navbar = () => {
                       <span className="dropdown-label">{label}</span>
                     </Link>
                   ))}
+                  <button
+                    className="dropdown-link logout-button"
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      handleLogout();
+                    }}
+                  >
+                    <span className="dropdown-icon"><LogoutIcon /></span>
+                    <span className="dropdown-label">Logout</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -276,7 +295,6 @@ const Navbar = () => {
           <div className="mobile-profile-section">
             <div className="mobile-profile-header" onClick={handleProfileClick}>
               <ProfileIcon />
-              {/* ✅ Real first name on mobile too */}
               <span>Hi, {displayName}</span>
               <ArrowIcon isOpen={isProfileOpen} />
             </div>
@@ -295,6 +313,17 @@ const Navbar = () => {
                   <span className="mobile-dropdown-label">{label}</span>
                 </Link>
               ))}
+              <button
+                className="mobile-profile-link logout-button"
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsProfileOpen(false);
+                  handleLogout();
+                }}
+              >
+                <span className="mobile-dropdown-icon"><LogoutIcon /></span>
+                <span className="mobile-dropdown-label">Logout</span>
+              </button>
             </div>
           </div>
         </div>

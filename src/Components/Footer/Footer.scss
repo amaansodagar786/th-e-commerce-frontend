@@ -127,18 +127,56 @@
       align-items: flex-start;
       gap: 10px;
       margin-bottom: 10px;
-      cursor: default;
+      cursor: pointer;
+      text-decoration: none;
+      color: #fff;
+      transition: all 0.3s ease;
+
+      &:hover {
+        color: #d4a373;
+
+        .icon {
+          color: #d4a373;
+        }
+      }
+
+      .phone-numbers {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+
+        .phone-link {
+          color: #fff;
+          text-decoration: none;
+          font-family: "Inter", sans-serif;
+          transition: all 0.3s ease;
+          display: inline-block;
+
+          &:hover {
+            color: #d4a373;
+            transform: translateX(3px);
+          }
+        }
+
+        .separator {
+          color: rgba(255, 255, 255, 0.6);
+          font-family: "Inter", sans-serif;
+        }
+      }
     }
 
     .icon {
       font-size: 18px;
       margin-top: 3px;
       flex-shrink: 0;
+      transition: all 0.3s ease;
     }
 
     p {
       margin: 0;
       font-family: "Inter", sans-serif;
+      transition: all 0.3s ease;
     }
   }
 
@@ -188,6 +226,26 @@
           align-items: flex-start;
           gap: 10px;
           margin-bottom: 12px;
+          text-decoration: none;
+          color: #fff;
+          transition: all 0.3s ease;
+          cursor: pointer;
+
+          &:hover {
+            color: #d4a373;
+
+            .icon {
+              color: #d4a373;
+            }
+
+            p {
+              color: #d4a373;
+            }
+
+            .contact-link {
+              color: #d4a373;
+            }
+          }
 
           .icon {
             font-size: 14px;
@@ -195,6 +253,7 @@
             flex-shrink: 0;
             color: #fff;
             margin-left: 4px;
+            transition: all 0.3s ease;
           }
 
           p {
@@ -203,6 +262,7 @@
             margin: 0;
             font-family: "Inter", sans-serif;
             color: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
           }
 
           .contact-numbers {
@@ -210,10 +270,20 @@
             flex-direction: column;
             gap: 4px;
 
-            p {
+            .contact-link {
               font-size: 11px;
               line-height: 1.4;
               margin: 0;
+              color: rgba(255, 255, 255, 0.9);
+              text-decoration: none;
+              transition: all 0.3s ease;
+              font-family: "Inter", sans-serif;
+              display: inline-block;
+
+              &:hover {
+                color: #d4a373;
+                transform: translateX(3px);
+              }
 
               @media (max-width: 480px) {
                 font-size: 12px;
@@ -236,7 +306,7 @@
             }
 
             .contact-numbers {
-              p {
+              .contact-link {
                 font-size: 12px;
               }
             }
@@ -399,337 +469,4 @@
       }
     }
   }
-}
-
-.footer-top-pattern {
-  width: 100%;
-  line-height: 0;
-  margin-bottom: -5px;
-
-  img {
-    width: 100%;
-    display: block;
-  }
-}
-
-// Add these styles to your existing Footer.scss
-
-.footer {
-  // ... existing styles
-
-  .footer-right {
-    // ... existing styles
-
-    .contact-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 10px;
-      cursor: pointer;
-      text-decoration: none;
-      color: #fff;
-      transition: all 0.3s ease;
-
-      &:hover {
-        color: #d4a373;
-
-        .icon {
-          color: #d4a373;
-        }
-
-        p {
-          color: #d4a373;
-        }
-      }
-    }
-
-    .icon {
-      font-size: 18px;
-      margin-top: 3px;
-      flex-shrink: 0;
-      transition: all 0.3s ease;
-    }
-
-    p {
-      margin: 0;
-      font-family: "Inter", sans-serif;
-      transition: all 0.3s ease;
-    }
-  }
-
-  // Mobile View
-  .footer-mobile {
-    // ... existing styles
-
-    .footer-mobile-left {
-      // ... existing styles
-
-      .mobile-contact {
-        .contact-item {
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-          margin-bottom: 12px;
-          text-decoration: none;
-          color: #fff;
-          transition: all 0.3s ease;
-          cursor: pointer;
-
-          &:hover {
-            color: #d4a373;
-
-            .icon {
-              color: #d4a373;
-            }
-
-            p {
-              color: #d4a373;
-            }
-
-            .contact-link {
-              color: #d4a373;
-            }
-          }
-
-          .icon {
-            font-size: 14px;
-            margin-top: 2px;
-            flex-shrink: 0;
-            color: #fff;
-            margin-left: 4px;
-            transition: all 0.3s ease;
-          }
-
-          p {
-            font-size: 11px;
-            line-height: 1.4;
-            margin: 0;
-            font-family: "Inter", sans-serif;
-            color: rgba(255, 255, 255, 0.9);
-            transition: all 0.3s ease;
-          }
-
-          .contact-numbers {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-
-            .contact-link {
-              font-size: 11px;
-              line-height: 1.4;
-              margin: 0;
-              color: rgba(255, 255, 255, 0.9);
-              text-decoration: none;
-              transition: all 0.3s ease;
-              font-family: "Inter", sans-serif;
-
-              &:hover {
-                color: #d4a373;
-              }
-
-              @media (max-width: 480px) {
-                font-size: 12px;
-              }
-            }
-          }
-        }
-
-        @media (max-width: 480px) {
-          .contact-item {
-            gap: 8px;
-            margin-bottom: 12px;
-
-            .icon {
-              font-size: 16px;
-            }
-
-            p {
-              font-size: 12px;
-            }
-
-            .contact-numbers {
-              .contact-link {
-                font-size: 12px;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // ... rest of existing styles
-}
-
-
-// Add these styles to your existing Footer.scss
-
-.footer {
-  // ... existing styles
-
-  .footer-right {
-    // ... existing styles
-
-    .contact-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 10px;
-      cursor: pointer;
-      text-decoration: none;
-      color: #fff;
-      transition: all 0.3s ease;
-
-      &:hover {
-        color: #d4a373;
-
-        .icon {
-          color: #d4a373;
-        }
-      }
-
-      .phone-numbers {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-
-        .phone-link {
-          color: #fff;
-          text-decoration: none;
-          font-family: "Inter", sans-serif;
-          transition: all 0.3s ease;
-          display: inline-block;
-
-          &:hover {
-            color: #d4a373;
-            transform: translateX(3px);
-          }
-        }
-
-        .separator {
-          color: rgba(255, 255, 255, 0.6);
-          font-family: "Inter", sans-serif;
-        }
-      }
-    }
-
-    .icon {
-      font-size: 18px;
-      margin-top: 3px;
-      flex-shrink: 0;
-      transition: all 0.3s ease;
-    }
-
-    p {
-      margin: 0;
-      font-family: "Inter", sans-serif;
-      transition: all 0.3s ease;
-    }
-  }
-
-  // Mobile View
-  .footer-mobile {
-    // ... existing styles
-
-    .footer-mobile-left {
-      // ... existing styles
-
-      .mobile-contact {
-        .contact-item {
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-          margin-bottom: 12px;
-          text-decoration: none;
-          color: #fff;
-          transition: all 0.3s ease;
-          cursor: pointer;
-
-          &:hover {
-            color: #d4a373;
-
-            .icon {
-              color: #d4a373;
-            }
-
-            p {
-              color: #d4a373;
-            }
-
-            .contact-link {
-              color: #d4a373;
-            }
-          }
-
-          .icon {
-            font-size: 14px;
-            margin-top: 2px;
-            flex-shrink: 0;
-            color: #fff;
-            margin-left: 4px;
-            transition: all 0.3s ease;
-          }
-
-          p {
-            font-size: 11px;
-            line-height: 1.4;
-            margin: 0;
-            font-family: "Inter", sans-serif;
-            color: rgba(255, 255, 255, 0.9);
-            transition: all 0.3s ease;
-          }
-
-          .contact-numbers {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-
-            .contact-link {
-              font-size: 11px;
-              line-height: 1.4;
-              margin: 0;
-              color: rgba(255, 255, 255, 0.9);
-              text-decoration: none;
-              transition: all 0.3s ease;
-              font-family: "Inter", sans-serif;
-              display: inline-block;
-
-              &:hover {
-                color: #d4a373;
-                transform: translateX(3px);
-              }
-
-              @media (max-width: 480px) {
-                font-size: 12px;
-              }
-            }
-          }
-        }
-
-        @media (max-width: 480px) {
-          .contact-item {
-            gap: 8px;
-            margin-bottom: 12px;
-
-            .icon {
-              font-size: 16px;
-            }
-
-            p {
-              font-size: 12px;
-            }
-
-            .contact-numbers {
-              .contact-link {
-                font-size: 12px;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // ... rest of existing styles
 }

@@ -38,7 +38,8 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   min-height: 100vh;
   background: $bg-page;
   font-family: $font-body;
-  padding: 40px 24px;
+  padding: 120px 24px 40px;
+  // margin-top: 50px; 
 
   @media (max-width: 768px) {
     padding: 24px 16px;

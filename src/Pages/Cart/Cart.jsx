@@ -5,6 +5,7 @@ import { FaShoppingBag, FaTruck, FaLock, FaBoxOpen, FaUndo } from "react-icons/f
 import { MdClose } from "react-icons/md";
 import { toast } from "react-toastify";
 import "./Cart.scss";
+import FooterTopPattern from "../../Components/Footer/FooterTopPattern/FooterTopPattern";
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -289,7 +290,6 @@ const Cart = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // ✅ FIXED: Only update local state, no full reload, no dispatch
       setCartItems(prev => {
         const updatedItems = prev.map(item =>
           item._id === itemId
@@ -388,6 +388,7 @@ const Cart = () => {
   }
 
   return (
+    <>
     <div className="cartPage">
       <div className="cartContainer">
         <div className="left">
@@ -420,8 +421,6 @@ const Cart = () => {
                       onClick={() => removeItem(item._id)}
                     />
                   </div>
-
-                
 
                   <div className="priceWrapper">
                     <div className="price">
@@ -466,31 +465,32 @@ const Cart = () => {
 
         {cartItems.length > 0 && (
           <div className="right">
-            <div className="product__features">
-              <div className="feature-item">
-                <FaTruck />
-                <div className="feature-content">
+            {/* UPDATED FEATURES SECTION - ICON ON TOP, HEADING IN SINGLE LINE */}
+            <div className="cart__features">
+              <div className="cart__feature-item">
+                <FaTruck className="feature-icon" />
+                <div className="cart__feature-content">
                   <p>DELIVERED ON TIME</p>
                   <span>Standard and express delivery available</span>
                 </div>
               </div>
-              <div className="feature-item">
-                <FaLock />
-                <div className="feature-content">
+              <div className="cart__feature-item">
+                <FaLock className="feature-icon" />
+                <div className="cart__feature-content">
                   <p>SECURE PAYMENT</p>
                   <span>Faster, safer & more secure online payment</span>
                 </div>
               </div>
-              <div className="feature-item">
-                <FaBoxOpen />
-                <div className="feature-content">
+              <div className="cart__feature-item">
+                <FaBoxOpen className="feature-icon" />
+                <div className="cart__feature-content">
                   <p>CRAFTED WITH CARE</p>
                   <span>Made with attention to detail to deliver premium quality</span>
                 </div>
               </div>
-              <div className="feature-item non-returnable">
-                <FaUndo />
-                <div className="feature-content">
+              <div className="cart__feature-item">
+                <FaUndo className="feature-icon" />
+                <div className="cart__feature-content">
                   <p>NON-RETURNABLE</p>
                   <span>For hygiene and quality assurance, this product cannot be returned</span>
                 </div>
@@ -550,6 +550,9 @@ const Cart = () => {
         )}
       </div>
     </div>
+
+   <FooterTopPattern bgColor="#e9e6df" />
+    </>
   );
 };
 
