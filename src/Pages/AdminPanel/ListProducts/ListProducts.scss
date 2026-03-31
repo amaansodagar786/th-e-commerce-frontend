@@ -1086,3 +1086,265 @@ $transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     gap: 8px;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+// ─── Tabs ──────────────────────────────────────────────────────────────────────
+
+.lp-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid $border-light;
+  padding-bottom: 0;
+}
+
+.lp-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  background: transparent;
+  font-family: $font-display;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: $text-muted;
+  cursor: pointer;
+  transition: all $transition;
+  border-radius: $radius-sm $radius-sm 0 0;
+
+  &:hover {
+    color: $brand;
+    background: $brand-light;
+  }
+
+  &--active {
+    color: $brand;
+    border-bottom-color: $brand;
+    background: $brand-light;
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: $brand-light;
+    color: $brand;
+    border: 1px solid $brand-border;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: $font-body;
+
+    &--inactive {
+      background: $red-bg;
+      color: $red;
+      border-color: $red-bd;
+    }
+  }
+}
+
+// ─── Activate Button ───────────────────────────────────────────────────────────
+
+.action-btn {
+  &--activate {
+    background: $green-bg;
+    color: $green;
+    border: 1.5px solid $green-bd;
+
+    &:hover:not(:disabled) {
+      background: $green;
+      color: #fff;
+    }
+  }
+}
+
+// ─── Activate Modal Header ─────────────────────────────────────────────────────
+
+.modal-header {
+  &--success::before {
+    background: linear-gradient(90deg, $green, rgba(45, 122, 79, 0.3), transparent);
+  }
+}
+
+// ─── Success Button ────────────────────────────────────────────────────────────
+
+.btn {
+  &--success {
+    background: $green;
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      background: darken($green, 8%);
+      box-shadow: 0 4px 14px rgba(45, 122, 79, 0.28);
+      transform: translateY(-1px);
+    }
+  }
+}
+
+// ─── Removed Images Note ───────────────────────────────────────────────────────
+
+.removed-images-note {
+  margin-top: 10px;
+  font-family: $font-body;
+  font-size: 12px;
+  color: $red;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  &::before {
+    content: "⚠";
+    font-size: 13px;
+  }
+}
+
+// ─── Responsive additions ──────────────────────────────────────────────────────
+
+@media (max-width: 768px) {
+  .lp-tabs {
+    gap: 4px;
+  }
+
+  .lp-tab {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .lp-tab {
+    padding: 8px 10px;
+    font-size: 12.5px;
+
+    &__badge {
+      display: none;
+    }
+  }
+}
+
+
+
+// ─── Activate Button (Brand Style) ─────────────────────────────────────────────
+
+.action-btn {
+  &--activate {
+    background: $brand-light;
+    color: $brand;
+    border: 1.5px solid $brand-border;
+    border-radius: $radius-sm;
+    font-family: $font-display;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: all $transition;
+
+    &:hover:not(:disabled) {
+      background: $brand;
+      color: #fff;
+      border-color: $brand;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(78, 34, 28, 0.2);
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// ─── Permanent Delete Button ───────────────────────────────────────────────────
+
+.action-btn {
+  &--permanent-delete {
+    background: $red-bg;
+    color: $red;
+    border: 1.5px solid $red-bd;
+    border-radius: $radius-sm;
+    font-family: $font-display;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: all $transition;
+
+    &:hover:not(:disabled) {
+      background: $red;
+      color: #fff;
+      border-color: $red;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(192, 57, 43, 0.2);
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// ─── Permanent Delete Modal Header ────────────────────────────────────────────
+
+.modal-header {
+  &--permanent::before {
+    background: linear-gradient(90deg, $red, rgba(192, 57, 43, 0.3), transparent);
+  }
+}
+
+// ─── Enhanced Delete Confirm for Permanent Delete ─────────────────────────────
+
+.delete-confirm {
+  p {
+    line-height: 1.6;
+    
+    span {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+  }
+}
+
+// ─── Responsive Adjustments for Buttons ───────────────────────────────────────
+
+@media (max-width: 768px) {
+  .td-actions {
+    .action-btn {
+      &--activate,
+      &--permanent-delete {
+        padding: 6px 10px;
+        font-size: 11px;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .td-actions {
+    flex-direction: column;
+    gap: 6px;
+    
+    .action-btn {
+      width: 100%;
+      text-align: center;
+    }
+  }
+}

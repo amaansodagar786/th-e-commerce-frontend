@@ -31,80 +31,149 @@
         }
     }
 
-    // ── Scroll Wrapper ────────────────────────────────────────
-    .stories-scroll-wrapper {
+    // ── Swiper Wrapper ─────────────────────────────────────────
+    // Key trick: constrain max-width so 4 cards are narrower = shorter height
+    .stories-swiper-wrapper {
         width: 100%;
-        overflow: hidden;
+        max-width: 1350px; // ← this is what controls card size on desktop
+        margin: 0 auto 50px;
+        padding: 0 24px;
+        box-sizing: border-box;
         position: relative;
-        margin-bottom: 50px;
+
+        @media (max-width: 1024px) {
+            max-width: 780px;
+        }
 
         @media (max-width: 768px) {
+            max-width: 100%;
+            padding: 0 16px;
             margin-bottom: 35px;
         }
     }
 
-    // ── Scroll Container ──────────────────────────────────────
-    .stories-scroll-container {
-        display: flex;
-        flex-wrap: nowrap;
-        gap: 30px;
-        padding: 10px 0;
-        overflow-x: auto;
+    // ── Swiper override ───────────────────────────────────────
+    .cs-swiper {
         width: 100%;
+        padding-bottom: 6px !important;
+        padding-top: 20px;
 
-        &::-webkit-scrollbar {
-            display: none;
+        .swiper-wrapper {
+            align-items: stretch;
         }
 
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-
-        @media (max-width: 768px) {
-            gap: 32px;
-        }
-    }
-
-    // ── Story Card ─────────────────────────────────────────────
-    .story-card {
-        flex: 0 0 auto;
-
-        .story-image {
-            width: 100%;
+        .swiper-slide {
             height: auto;
-            display: block;
-            border-radius: 8px;
         }
     }
 
-    // ── Quote + Description ───────────────────────────────────
+    // ── Story Card — 9:16 aspect ratio ───────────────────────
+    .story-card {
+        width: 100%;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 4px 18px rgba(78, 39, 31, 0.13);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+        &:hover {
+            transform: translateY(-1px) scale(1.01);
+            box-shadow: 0 10px 32px rgba(78, 39, 31, 0.22);
+        }
+
+        .card-video-wrap {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 9 / 16;
+            background: #1a0e0a;
+            overflow: hidden;
+        }
+
+        .card-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .card-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 28px 14px 12px;
+            background: linear-gradient(to top, rgba(30, 10, 5, 0.75) 0%, transparent 100%);
+            font-family: "DM Sans", sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: 0.03em;
+            pointer-events: none;
+        }
+    }
+
+    // ── Text / Quote Section ──────────────────────────────────
     .stories-content {
         max-width: 700px;
         margin: 0 auto;
         padding: 0 20px;
+        cursor: default;
 
         .quote-text {
-            font-size: 45px;
-            font-weight: 500;
-            color: #4e271f;
-            line-height: 1.3;
-            margin-bottom: 15px;
-            font-family: "DM Sans", sans-serif;
-            text-align: center;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 14px;
 
-            .extra-bold {
-                font-weight: 900;
-                color: #401f18;
+            .quote-icon {
+                font-size: 22px;
+                color: #c0622b;
+                line-height: 1;
+                flex-shrink: 0;
+                display: inline-flex;
+                margin-top: 6px;
+                display: none;
+
+                &--right {
+                    align-self: flex-end;
+                    margin-top: 0;
+                    margin-bottom: 6px;
+                }
+            }
+
+            .quote-words {
+                font-size: 42px;
+                font-weight: 500;
+                color: #4e271f;
+                line-height: 1.25;
                 font-family: "DM Sans", sans-serif;
-            }
+                text-align: center;
+                user-select: none;
 
-            @media (max-width: 768px) {
-                font-size: 24px;
-                margin-bottom: 12px;
-            }
+                .word-bold {
+                    font-weight: 900;
+                    color: #401f18;
+                }
 
-            @media (max-width: 480px) {
-                font-size: 20px;
+                @media (max-width: 768px) {
+                    font-size: 24px;
+                }
+
+                @media (max-width: 480px) {
+                    font-size: 20px;
+                }
             }
+        }
+
+        .quote-underline {
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(90deg, #c0622b, #4e271f);
+            border-radius: 99px;
+            margin: 0 auto 16px;
+            transform-origin: left;
         }
 
         .stories-description {
@@ -129,26 +198,24 @@
     }
 }
 
-// ── Scroll Buttons ─────────────────────────────────────────
+// ── Scroll Buttons ─────────────────────────────────────────────────
 .scroll-buttons {
     display: flex;
     justify-content: flex-end;
     align-items: center;
     gap: 12px;
     margin-top: 20px;
-    margin-right: 20px;
-    padding-right: 24px;
+    margin-right: 4px;
     padding-bottom: 5px;
 
-
-
     @media (max-width: 768px) {
-            margin-right: 0;
-        }
+        justify-content: center;
+        margin-right: 0;
+    }
 
     button {
-        width: 52px;
-        height: 52px;
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
         border: 2px solid #4e271f;
         background: transparent;
@@ -157,12 +224,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: background 0.25s, color 0.25s, transform 0.2s, border-color 0.25s;
-        position: relative;
-        overflow: hidden;
+        transition: background 0.25s, color 0.25s, transform 0.2s;
 
         svg {
-            font-size: 18px;
+            font-size: 16px;
             transition: transform 0.2s;
         }
 
@@ -180,12 +245,17 @@
             transform: scale(0.96);
         }
 
+        &.swiper-button-disabled {
+            opacity: 0.35;
+            pointer-events: none;
+        }
+
         @media (max-width: 768px) {
-            width: 44px;
-            height: 44px;
+            width: 42px;
+            height: 42px;
 
             svg {
-                font-size: 15px;
+                font-size: 14px;
             }
         }
     }

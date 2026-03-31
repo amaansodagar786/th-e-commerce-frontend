@@ -737,15 +737,15 @@
       }
     }
 
-    .non-returnable {
-      svg {
-        color: #ff6b6b;
-      }
+    // .non-returnable {
+    //   svg {
+    //     color: #ff6b6b;
+    //   }
 
-      &:hover {
-        border-color: #ff6b6b;
-      }
-    }
+    //   &:hover {
+    //     border-color: #ff6b6b;
+    //   }
+    // }
 
     @media (max-width: 768px) {
       .feature-item {

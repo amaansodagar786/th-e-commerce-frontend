@@ -97,17 +97,16 @@ const Footer = () => {
     },
   };
 
-  // Social media links
+  // Updated Social media links with correct order and URLs
   const socialLinks = {
-    facebook: "https://www.facebook.com/satvsar",
-    twitter: "https://twitter.com/satvsar",
+    whatsapp: "https://wa.me/919274778081",
     instagram: "https://www.instagram.com/satvsar",
-    linkedin: "https://www.linkedin.com/company/satvsar"
+    facebook: "https://www.facebook.com/profile.php?id=61583057774642",
+    amazon: "https://amzn.in/d/036yXkyD"
   };
 
   return (
     <>
-
       <footer className="footer">
         <motion.div
           className="shimmer-effect"
@@ -179,14 +178,6 @@ const Footer = () => {
                   >
                     +91 92747 78081
                   </motion.a>
-                  <span className="separator">/</span>
-                  <motion.a 
-                    href="tel:+917861078081"
-                    className="phone-link"
-                    whileHover={{ x: 3, color: "#d4a373" }}
-                  >
-                    +91 78610 78081
-                  </motion.a>
                 </div>
               </motion.div>
               
@@ -237,7 +228,6 @@ const Footer = () => {
                   <FiPhone className="icon" />
                   <div className="contact-numbers">
                     <a href="tel:+919274778081" className="contact-link">+91 92747 78081</a>
-                    <a href="tel:+917861078081" className="contact-link">+91 78610 78081</a>
                   </div>
                 </div>
                 <a href="mailto:info@satvsar.com" className="contact-item">
@@ -274,36 +264,26 @@ const Footer = () => {
         <motion.div className="footer-bottom" variants={itemVariants}>
           <div className="footer-bottom-content">
             <p className="copyright-text desktop-only">
-              Copyright © 2025 Satvsar, All Rights Reserved. Design and Developed by TECHORSES
+              Copyright © 2025 Satvsar, All Rights Reserved. Design and Developed by <a href="https://techorses.com" target="_blank" rel="noopener noreferrer" className="techorses-link">TECHORSES</a>
             </p>
             <div className="mobile-only">
               <p className="copyright-text-mobile">
                 Copyright © 2025 Satvsar, All Rights Reserved.
               </p>
               <p className="developed-text-mobile">
-                Design and Developed by TECHORSES
+                Design and Developed by <a href="https://techorses.com" target="_blank" rel="noopener noreferrer" className="techorses-link">TECHORSES</a>
               </p>
             </div>
             <div className="social-icons">
               <motion.a 
-                href={socialLinks.facebook}
+                href={socialLinks.whatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
                 variants={pulseVariants} 
                 animate="animate" 
                 whileHover="hover"
               >
-                <FaFacebookF />
-              </motion.a>
-              <motion.a 
-                href={socialLinks.twitter}
-                target="_blank"
-                rel="noopener noreferrer"
-                variants={pulseVariants} 
-                animate="animate" 
-                whileHover="hover"
-              >
-                <FaAmazon />
+                <FaWhatsapp />
               </motion.a>
               <motion.a 
                 href={socialLinks.instagram}
@@ -316,14 +296,24 @@ const Footer = () => {
                 <FaInstagram />
               </motion.a>
               <motion.a 
-                href={socialLinks.linkedin}
+                href={socialLinks.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
                 variants={pulseVariants} 
                 animate="animate" 
                 whileHover="hover"
               >
-                <FaWhatsapp />
+                <FaFacebookF />
+              </motion.a>
+              <motion.a 
+                href={socialLinks.amazon}
+                target="_blank"
+                rel="noopener noreferrer"
+                variants={pulseVariants} 
+                animate="animate" 
+                whileHover="hover"
+              >
+                <FaAmazon />
               </motion.a>
             </div>
           </div>

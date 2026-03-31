@@ -719,7 +719,7 @@ $transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     font-weight: 600;
     cursor: pointer;
     transition: all $transition;
-    margin-bottom: 7px;
+    // margin-bottom: 7px; 
     text-align: center;
 
     &:last-child {

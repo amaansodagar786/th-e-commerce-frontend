@@ -135,13 +135,20 @@ const DistributorForm = () => {
         onSubmit: handleSubmit,
     });
 
-    // Contact info for the right side
+    // Contact info for the right side - UPDATED: Only one phone number
     const contactInfo = {
         address: 'G.F - 39, Infinity Arcade, Near Pratapnagar Bridge, ONGC Road, Pratapnagar, Vadodara-390004. Gujarat (India)',
         email: 'info@satvsar.com',
-        phone1: '+91 92747 78081',
-        phone2: '+91 78610 78081',
+        phone: '+91 78610 78081', // Updated to single number
         mapUrl: 'https://maps.google.com/?q=Infinity+Arcade+Pratapnagar+Vadodara',
+    };
+
+    // Social links - Same as footer with correct order
+    const socialLinks = {
+        whatsapp: 'https://wa.me/919274778081',
+        instagram: 'https://www.instagram.com/satvsar',
+        facebook: 'https://www.facebook.com/profile.php?id=61583057774642',
+        amazon: 'https://amzn.in/d/036yXkyD'
     };
 
     return (
@@ -297,7 +304,7 @@ const DistributorForm = () => {
                             </p>
                         </div>
 
-                        {/* Contact Info with Links */}
+                        {/* Contact Info with Links - UPDATED: Single phone number */}
                         <div className="distributor-contact">
                             <h3 className="distributor-contact__title">Get in Touch</h3>
 
@@ -335,42 +342,19 @@ const DistributorForm = () => {
                                 </div>
                                 <div className="distributor-contact__content">
                                     <strong>Call Us</strong>
-                                    <a href={`tel:${contactInfo.phone1.replace(/\s/g, '')}`}>
-                                        {contactInfo.phone1}
-                                    </a>
-                                    <a href={`tel:${contactInfo.phone2.replace(/\s/g, '')}`}>
-                                        {contactInfo.phone2}
+                                    <a href={`tel:${contactInfo.phone.replace(/\s/g, '')}`}>
+                                        {contactInfo.phone}
                                     </a>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Social Links */}
+                        {/* Social Links - UPDATED: Same order as footer: WhatsApp, Instagram, Facebook, Amazon */}
                         <div className="distributor-social">
                             <h3 className="distributor-social__title">Follow Us</h3>
                             <div className="distributor-social__links">
                                 <motion.a
-                                    href="https://facebook.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="distributor-social__link"
-                                    whileHover={{ y: -4, scale: 1.1 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    <FaFacebookF />
-                                </motion.a>
-                                <motion.a
-                                    href="https://instagram.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="distributor-social__link"
-                                    whileHover={{ y: -4, scale: 1.1 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    <FaInstagram />
-                                </motion.a>
-                                <motion.a
-                                    href="https://wa.me/919274778081"
+                                    href={socialLinks.whatsapp}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="distributor-social__link"
@@ -380,7 +364,27 @@ const DistributorForm = () => {
                                     <FaWhatsapp />
                                 </motion.a>
                                 <motion.a
-                                    href="https://amazon.in/satvsar"
+                                    href={socialLinks.instagram}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="distributor-social__link"
+                                    whileHover={{ y: -4, scale: 1.1 }}
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                    <FaInstagram />
+                                </motion.a>
+                                <motion.a
+                                    href={socialLinks.facebook}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="distributor-social__link"
+                                    whileHover={{ y: -4, scale: 1.1 }}
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                    <FaFacebookF />
+                                </motion.a>
+                                <motion.a
+                                    href={socialLinks.amazon}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="distributor-social__link"

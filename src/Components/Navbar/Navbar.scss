@@ -54,6 +54,8 @@ $transition-smooth: all 0.3s ease;
   justify-content: space-between;
   height: 60px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: visible;
 }
 
 // ================= LOGO =================
@@ -64,17 +66,39 @@ $transition-smooth: all 0.3s ease;
   text-decoration: none;
   background: #ffffff;
   border-radius: 60px;
-  padding: 6px 25px;
+  padding: 10px 25px;
   height: 60px;
+  margin: 0;
+  border: none;
+  outline: none;
+  position: relative;
+  z-index: 2;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+      transform: scale(1.011);
+
+
+  // CRITICAL FIX - White border to cover any brown showing
+  border: 1px solid #ffffff;
 
   .logo-image {
     height: 40px;
     width: auto;
     object-fit: contain;
-    transform: none !important;
+    // transform: none !important; 
     transition: none !important;
     margin: 0;
+    display: block;
+    position: relative;
+    z-index: 1;
+    transform: scale(1.03);
+
+  }
+
+  // Hover effect (optional)
+  &:hover {
+    transform: scale(1.02);
+    transition: transform 0.3s ease;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
   }
 }
 
@@ -676,6 +700,7 @@ $transition-smooth: all 0.3s ease;
     }
 
     .mobile-profile-dropdown {
+
       .mobile-profile-link,
       .logout-button {
         font-size: 13px;

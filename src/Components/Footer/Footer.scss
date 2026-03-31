@@ -470,3 +470,61 @@
     }
   }
 }
+
+// TECHORSES LINK STYLES
+.techorses-link {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  font-weight: 600;
+
+  &:hover {
+    color: #d4a373;
+    text-decoration: underline;
+  }
+}
+
+// Update copyright text for desktop
+.copyright-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  margin-left: 230px;
+  font-family: "Inter", sans-serif;
+
+  a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: all 0.3s ease;
+
+    &:hover {
+      color: #d4a373;
+      text-decoration: underline;
+    }
+  }
+
+  @media (max-width: 992px) {
+    margin-left: 100px;
+  }
+}
+
+// Update mobile copyright text
+.copyright-text-mobile,
+.developed-text-mobile {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  line-height: 1.5;
+
+  a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: all 0.3s ease;
+
+    &:hover {
+      color: #d4a373;
+      text-decoration: underline;
+    }
+  }
+}

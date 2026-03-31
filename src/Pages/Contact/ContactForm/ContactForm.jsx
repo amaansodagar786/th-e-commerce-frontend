@@ -4,7 +4,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import axios from "axios"; // ← Add this import
+import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
@@ -15,18 +15,17 @@ import {
     MdSend,
     MdLocationOn,
     MdPhoneInTalk,
-    MdAccessTime,
     MdEmail as MdEmailIcon,
 } from "react-icons/md";
 import {
     FaInstagram,
     FaFacebookF,
     FaWhatsapp,
-    FaYoutube,
+    FaAmazon,
 } from "react-icons/fa";
 import "./ContactForm.scss";
 
-// ─── Validation Schema ────────────────────────────────────────────────────────
+// ─── Validation Schema - Message is now OPTIONAL ────────────────────────────────────────
 
 const contactSchema = Yup.object({
     name: Yup.string()
@@ -38,9 +37,7 @@ const contactSchema = Yup.object({
     phone: Yup.string()
         .matches(/^[0-9]{10}$/, "Phone number must be 10 digits")
         .required("Phone number is required"),
-    message: Yup.string()
-        .min(10, "Message must be at least 10 characters")
-        .required("Message is required"),
+    message: Yup.string(), // Optional field - no validation required
 });
 
 // ─── Animation Variants ───────────────────────────────────────────────────────
@@ -93,7 +90,7 @@ const ContactForm = () => {
                     name: values.name,
                     email: values.email,
                     phone: values.phone,
-                    message: values.message
+                    message: values.message || '' // Send empty string if no message
                 }
             );
 
@@ -185,6 +182,14 @@ const ContactForm = () => {
         onSubmit: handleSubmit,
     });
 
+    // Social links - Same as footer with correct order
+    const socialLinks = {
+        whatsapp: 'https://wa.me/919274778081',
+        instagram: 'https://www.instagram.com/satvsar',
+        facebook: 'https://www.facebook.com/profile.php?id=61583057774642',
+        amazon: 'https://amzn.in/d/036yXkyD'
+    };
+
     return (
         <motion.div
             ref={sectionRef}
@@ -209,7 +214,7 @@ const ContactForm = () => {
                         <div className="contact-form__group">
                             <label className="contact-form__label">
                                 <MdPerson className="contact-form__label-icon" />
-                                Full Name
+                                Full Name <span className="required">*</span>
                             </label>
                             <div className="contact-form__input-wrapper">
                                 <input
@@ -229,7 +234,7 @@ const ContactForm = () => {
                         <div className="contact-form__group">
                             <label className="contact-form__label">
                                 <MdEmailIcon className="contact-form__label-icon" />
-                                Email Address
+                                Email Address <span className="required">*</span>
                             </label>
                             <div className="contact-form__input-wrapper">
                                 <input
@@ -249,12 +254,12 @@ const ContactForm = () => {
                         <div className="contact-form__group">
                             <label className="contact-form__label">
                                 <MdPhone className="contact-form__label-icon" />
-                                Phone Number
+                                Phone Number <span className="required">*</span>
                             </label>
                             <div className="contact-form__input-wrapper">
                                 <input
                                     type="tel"
-                                    placeholder="9876543210"
+                                    placeholder="1234567890"
                                     className={`contact-form__input ${formik.touched.phone && formik.errors.phone ? "error" : ""
                                         }`}
                                     {...formik.getFieldProps("phone")}
@@ -265,24 +270,20 @@ const ContactForm = () => {
                             )}
                         </div>
 
-                        {/* Message Field */}
+                        {/* Message Field - OPTIONAL now */}
                         <div className="contact-form__group">
                             <label className="contact-form__label">
                                 <MdMessage className="contact-form__label-icon" />
-                                Your Message
+                                Your Message <span className="optional">(Optional)</span>
                             </label>
                             <div className="contact-form__input-wrapper">
                                 <textarea
                                     rows="4"
                                     placeholder="Tell us how we can help you..."
-                                    className={`contact-form__textarea ${formik.touched.message && formik.errors.message ? "error" : ""
-                                        }`}
+                                    className={`contact-form__textarea`}
                                     {...formik.getFieldProps("message")}
                                 />
                             </div>
-                            {formik.touched.message && formik.errors.message && (
-                                <span className="contact-form__error">{formik.errors.message}</span>
-                            )}
                         </div>
 
                         {/* Submit Button */}
@@ -314,12 +315,12 @@ const ContactForm = () => {
                         <div className="contact-info-header">
                             <h2 className="contact-info-header__title">Get in Touch</h2>
                             <p className="contact-info-header__subtitle">
-                                Visit us, call, or connect on social media
+                                Visit us or connect on social media
                             </p>
                         </div>
 
                         <div className="contact-info-details">
-                            {/* Address - UPDATED */}
+                            {/* Address */}
                             <motion.div
                                 className="contact-info-item"
                                 whileHover={{ x: 5, transition: { duration: 0.2 } }}
@@ -331,15 +332,13 @@ const ContactForm = () => {
                                     <h4>Our Location</h4>
                                     <p>
                                         G.F - 39, Infinity Arcade,
-                                        {/* <br />  */}
-                                        Near Pratapnagar<br /> Bridge, ONGC Road,
-                                        
-                                        Pratapnagar, Vadodara <br /> 390004, Gujarat (India)
+                                        Near Pratapnagar Bridge, ONGC Road,
+                                        Pratapnagar, Vadodara 390004, Gujarat (India)
                                     </p>
                                 </div>
                             </motion.div>
 
-                            {/* Phone - UPDATED */}
+                            {/* Phone - UPDATED: Only one number */}
                             <motion.div
                                 className="contact-info-item"
                                 whileHover={{ x: 5, transition: { duration: 0.2 } }}
@@ -351,13 +350,11 @@ const ContactForm = () => {
                                     <h4>Call Us</h4>
                                     <p>
                                         <a href="tel:+919274778081">+91 92747 78081</a>
-                                        <br />
-                                        <a href="tel:+917861078081">+91 78610 78081</a>
                                     </p>
                                 </div>
                             </motion.div>
 
-                            {/* Email - UPDATED */}
+                            {/* Email */}
                             <motion.div
                                 className="contact-info-item"
                                 whileHover={{ x: 5, transition: { duration: 0.2 } }}
@@ -372,52 +369,14 @@ const ContactForm = () => {
                                     </p>
                                 </div>
                             </motion.div>
-
-                            {/* Hours - Keep as is */}
-                            <motion.div
-                                className="contact-info-item"
-                                whileHover={{ x: 5, transition: { duration: 0.2 } }}
-                            >
-                                <div className="contact-info-item__icon">
-                                    <MdAccessTime />
-                                </div>
-                                <div className="contact-info-item__content">
-                                    <h4>Working Hours</h4>
-                                    <p>
-                                        Monday - Saturday: 9:00 AM - 7:00 PM
-                                        <br />
-                                        Sunday: Closed
-                                    </p>
-                                </div>
-                            </motion.div>
                         </div>
 
-                        {/* Social Links */}
+                        {/* Social Links - UPDATED: Same order as footer: WhatsApp, Instagram, Facebook, Amazon */}
                         <div className="contact-social">
                             <h3 className="contact-social__title">Connect With Us</h3>
                             <div className="contact-social__links">
                                 <motion.a
-                                    href="https://instagram.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="contact-social__link contact-social__link--instagram"
-                                    whileHover={{ y: -4, scale: 1.1 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    <FaInstagram />
-                                </motion.a>
-                                <motion.a
-                                    href="https://facebook.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="contact-social__link contact-social__link--facebook"
-                                    whileHover={{ y: -4, scale: 1.1 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    <FaFacebookF />
-                                </motion.a>
-                                <motion.a
-                                    href="https://wa.me/919274778081"
+                                    href={socialLinks.whatsapp}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="contact-social__link contact-social__link--whatsapp"
@@ -427,19 +386,39 @@ const ContactForm = () => {
                                     <FaWhatsapp />
                                 </motion.a>
                                 <motion.a
-                                    href="https://youtube.com"
+                                    href={socialLinks.instagram}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="contact-social__link contact-social__link--youtube"
+                                    className="contact-social__link contact-social__link--instagram"
                                     whileHover={{ y: -4, scale: 1.1 }}
                                     whileTap={{ scale: 0.95 }}
                                 >
-                                    <FaYoutube />
+                                    <FaInstagram />
+                                </motion.a>
+                                <motion.a
+                                    href={socialLinks.facebook}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="contact-social__link contact-social__link--facebook"
+                                    whileHover={{ y: -4, scale: 1.1 }}
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                    <FaFacebookF />
+                                </motion.a>
+                                <motion.a
+                                    href={socialLinks.amazon}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="contact-social__link contact-social__link--amazon"
+                                    whileHover={{ y: -4, scale: 1.1 }}
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                    <FaAmazon />
                                 </motion.a>
                             </div>
                         </div>
 
-                        {/* Trust Badge - Icon on Left Side */}
+                        {/* Trust Badge */}
                         <motion.div
                             className="contact-trust-badge"
                             whileHover={{ scale: 1.02 }}

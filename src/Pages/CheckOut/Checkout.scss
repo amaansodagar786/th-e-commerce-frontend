@@ -1,4 +1,4 @@
-// Checkout.scss
+// Checkout.scss - UPDATED with unique prefix to prevent conflicts
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Inter:wght@300;400;500;600;700&display=swap");
 
 // ─── Tokens ────────────────────────────────────────────────────────────────────
@@ -9,7 +9,7 @@ $brand-border: rgba(78, 34, 28, 0.15);
 $gold: #c98b30;
 $gold-light: rgba(201, 139, 48, 0.15);
 $bg-page: #fefcf2;
-$bg-card: #ffffff;
+$bg-card: #fefcf2;
 $border-light: #ede8df;
 $border-mid: #ddd5c8;
 $text-primary: #2a1f12;
@@ -33,10 +33,10 @@ $shadow-lg: 0 8px 32px rgba(42, 31, 18, 0.12);
 $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Main Container
+// Main Wrapper - UNIQUE PREFIX TO PREVENT CONFLICTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-.checkout-container {
+.checkout-page__wrapper {
   min-height: 100vh;
   background: $bg-page;
   font-family: $font-body;
@@ -53,9 +53,9 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
 // ─── Loading & Empty States ────────────────────────────────────────────────────
 
-.loading-container,
-.empty-cart,
-.login-required {
+.checkout-page__loading-container,
+.checkout-page__empty-cart,
+.checkout-page__login-required {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -67,18 +67,18 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid $border-light;
   padding: 60px 20px;
 
-  .spinner {
+  .checkout-page__spinner {
     width: 50px;
     height: 50px;
     border: 3px solid $border-mid;
     border-top-color: $brand;
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    animation: checkout-spin 0.8s linear infinite;
     margin-bottom: 16px;
   }
 
-  .empty-icon,
-  .login-icon {
+  .checkout-page__empty-icon,
+  .checkout-page__login-icon {
     font-size: 64px;
     margin-bottom: 16px;
   }
@@ -95,8 +95,8 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     margin-bottom: 24px;
   }
 
-  .continue-btn,
-  .auth-btn {
+  .checkout-page__continue-btn,
+  .checkout-page__auth-btn {
     padding: 12px 32px;
     background: $brand;
     color: white;
@@ -115,9 +115,9 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-// ─── Progress Steps - FIXED WITH PROPER LINES ───────────────────────────────────
+// ─── Progress Steps ───────────────────────────────────────────────────
 
-.checkout-progress {
+.checkout-page__progress {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -135,7 +135,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-.progress-step {
+.checkout-page__progress-step {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -148,7 +148,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     gap: 12px;
   }
 
-  .step-circle {
+  .checkout-page__step-circle {
     width: 48px;
     height: 48px;
     background: $bg-card;
@@ -172,7 +172,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
 
-  .step-info {
+  .checkout-page__step-info {
     margin-top: 8px;
     text-align: center;
 
@@ -181,7 +181,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       margin-left: 12px;
     }
 
-    .step-name {
+    .checkout-page__step-name {
       font-size: 13px;
       font-weight: 500;
       color: $text-muted;
@@ -189,7 +189,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
 
-  .step-line {
+  .checkout-page__step-line {
     position: absolute;
     left: 60%;
     top: 24px;
@@ -208,33 +208,33 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   &.active {
-    .step-circle {
+    .checkout-page__step-circle {
       border-color: $gold;
       background: $gold-light;
       color: $gold;
       z-index: 3;
     }
 
-    .step-info .step-name {
+    .checkout-page__step-info .checkout-page__step-name {
       color: $brand;
       font-weight: 600;
     }
   }
 
-  &:first-child .step-line {
+  &:first-child .checkout-page__step-line {
     left: 60%;
     width: 80%;
     z-index: 2;
   }
 
-  &:last-child .step-line {
+  &:last-child .checkout-page__step-line {
     display: none;
   }
 }
 
 // ─── Checkout Content ──────────────────────────────────────────────────────────
 
-.checkout-content {
+.checkout-page__content {
   background: $bg-card;
   border-radius: $radius-xl;
   border: 1px solid $border-light;
@@ -253,7 +253,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
 // ─── Two Column Layout ─────────────────────────────────────────────────────────
 
-.checkout-step {
+.checkout-page__step {
   &.two-column {
     display: grid;
     grid-template-columns: 1fr 360px;
@@ -266,11 +266,11 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-.step-left {
+.checkout-page__step-left {
   min-width: 0;
 }
 
-.step-right {
+.checkout-page__step-right {
   @media (max-width: 900px) {
     order: -1;
   }
@@ -278,7 +278,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
 // ─── Step Header ───────────────────────────────────────────────────────────────
 
-.step-header {
+.checkout-page__step-header {
   margin-bottom: 28px;
 
   h2 {
@@ -294,7 +294,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
 
-  .step-subtitle {
+  .checkout-page__step-subtitle {
     font-size: 14px;
     color: $text-muted;
     margin: 0;
@@ -303,13 +303,13 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
 // ─── Order Items ───────────────────────────────────────────────────────────────
 
-.order-items {
+.checkout-page__order-items {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.order-item {
+.checkout-page__order-item {
   display: flex;
   gap: 16px;
   padding: 16px;
@@ -327,7 +327,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     text-align: center;
   }
 
-  .item-image {
+  .checkout-page__item-image {
     width: 80px;
     height: 80px;
     flex-shrink: 0;
@@ -346,10 +346,10 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
 
-  .item-details {
+  .checkout-page__item-details {
     flex: 1;
 
-    .item-name {
+    .checkout-page__item-name {
       font-family: $font-display;
       font-size: 15px;
       font-weight: 600;
@@ -357,13 +357,13 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       margin: 0 0 8px 0;
     }
 
-    .item-variants {
+    .checkout-page__item-variants {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
       margin-bottom: 10px;
 
-      .variant-chip {
+      .checkout-page__variant-chip {
         display: inline-flex;
         align-items: center;
         gap: 6px;
@@ -373,48 +373,57 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         font-size: 11px;
         color: $text-secondary;
 
-        &.color-chip {
-          .color-dot {
+        &.checkout-page__color-chip {
+          .checkout-page__color-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
           }
         }
 
-        &.tax-chip {
-          background: $gold-light;
-          color: $gold;
+        &.checkout-page__tax-chip {
+          background: $blue-light;
+          color: $blue;
         }
       }
     }
 
-    .item-quantity-price {
+    .checkout-page__item-quantity-price {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 8px;
 
-      .quantity {
+      .checkout-page__quantity {
         font-size: 12px;
         color: $text-muted;
       }
 
-      .price-info {
+      .checkout-page__price-info {
         display: flex;
         align-items: center;
         gap: 6px;
 
-        .price {
+        .checkout-page__price {
           font-size: 16px;
           font-weight: 700;
           color: $brand;
         }
 
-        .original-price {
+        .checkout-page__original-price {
           font-size: 12px;
           color: $text-muted;
           text-decoration: line-through;
+        }
+
+        .checkout-page__discount-badge {
+          background: $green-light;
+          color: $green;
+          padding: 2px 6px;
+          border-radius: 12px;
+          font-size: 10px;
+          font-weight: 600;
         }
       }
     }
@@ -423,7 +432,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
 // ─── Order Summary ─────────────────────────────────────────────────────────────
 
-.order-summary {
+.checkout-page__order-summary {
   background: $bg-page;
   border-radius: $radius-lg;
   padding: 24px;
@@ -438,7 +447,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     margin: 0 0 20px 0;
   }
 
-  .summary-row {
+  .checkout-page__summary-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -451,16 +460,26 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       border-bottom: none;
     }
 
-    &.discount {
+    &.checkout-page__discount {
       color: $green;
 
-      .savings {
+      .checkout-page__savings {
         color: $green;
         font-weight: 600;
       }
     }
 
-    &.total {
+    &.checkout-page__subtotal {
+      font-weight: 600;
+      color: $text-primary;
+    }
+
+    &.checkout-page__tax {
+      color: $text-muted;
+      font-size: 13px;
+    }
+
+    &.checkout-page__total {
       margin-top: 12px;
       padding-top: 12px;
       border-top: 2px solid $border-mid;
@@ -468,39 +487,98 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       font-size: 18px;
       color: $text-primary;
 
-      .total-amount {
+      .checkout-page__total-amount {
         color: $brand;
-        font-size: 22px;
+        font-size: 24px;
+        font-weight: 800;
+        
+        @media (max-width: 480px) {
+          font-size: 20px;
+        }
       }
     }
 
-    .free {
+    .checkout-page__free-shipping-text {
       color: $green;
       font-weight: 600;
     }
   }
 
-  .free-shipping-note {
+  .checkout-page__summary-divider {
+    height: 1px;
+    background: $border-mid;
+    margin: 12px 0;
+  }
+
+  .checkout-page__tax-note {
     margin-top: 16px;
-    padding: 10px;
+    padding: 10px 12px;
+    background: $blue-light;
+    border-radius: $radius-md;
+    font-size: 12px;
+    color: $blue;
+    text-align: center;
+    border-left: 3px solid $blue;
+
+    @media (max-width: 480px) {
+      font-size: 11px;
+      padding: 8px 10px;
+    }
+  }
+
+  .checkout-page__free-shipping-badge {
+    margin-top: 12px;
+    padding: 10px 12px;
     background: $green-light;
     border-radius: $radius-md;
     font-size: 12px;
     color: $green;
     text-align: center;
+    font-weight: 500;
+    border-left: 3px solid $green;
+
+    @media (max-width: 480px) {
+      font-size: 11px;
+      padding: 8px 10px;
+    }
+  }
+}
+
+// ─── Extra Offer Badge ─────────────────────────────────────────────────
+
+.checkout-page__extra-offer-badge {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: $gold-light;
+  border-radius: $radius-md;
+  font-size: 11px;
+  color: $gold;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+
+  &::before {
+    content: "🎁";
+    font-size: 12px;
+  }
+
+  @media (max-width: 640px) {
+    margin: 8px auto 0;
   }
 }
 
 // ─── Selected Address Preview ───────────────────────────────────────────────────
 
-.selected-address-preview {
+.checkout-page__selected-address-preview {
   margin-bottom: 32px;
   background: $green-light;
   border-radius: $radius-lg;
   border-left: 4px solid $green;
   padding: 16px;
 
-  .preview-header {
+  .checkout-page__preview-header {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -514,8 +592,8 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
 
-  .address-preview {
-    .address-name {
+  .checkout-page__address-preview {
+    .checkout-page__address-name {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -527,7 +605,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         color: $text-primary;
       }
 
-      .default-badge {
+      .checkout-page__default-badge {
         background: $green;
         color: white;
         padding: 2px 6px;
@@ -537,13 +615,13 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       }
     }
 
-    .address-contact {
+    .checkout-page__address-contact {
       font-size: 12px;
       color: $text-muted;
       margin: 0 0 6px 0;
     }
 
-    .address-full {
+    .checkout-page__address-full {
       font-size: 12px;
       color: $text-secondary;
       line-height: 1.5;
@@ -552,7 +630,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         margin: 0 0 2px 0;
       }
 
-      .address-instructions {
+      .checkout-page__address-instructions {
         margin-top: 6px;
         padding: 6px 10px;
         background: $bg-card;
@@ -567,7 +645,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
 // ─── Address Options - GRID LAYOUT ─────────────────────────────────────────────
 
-.address-options-section {
+.checkout-page__address-options-section {
   h3 {
     font-family: $font-display;
     font-size: 18px;
@@ -577,7 +655,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-.address-grid {
+.checkout-page__address-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
@@ -588,7 +666,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-.address-card {
+.checkout-page__address-card {
   display: flex;
   gap: 12px;
   padding: 16px;
@@ -608,8 +686,8 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     background: $green-light;
   }
 
-  &__radio {
-    .radio-btn {
+  .checkout-page__address-card-radio {
+    .checkout-page__radio-btn {
       width: 20px;
       height: 20px;
       border: 2px solid $border-mid;
@@ -631,20 +709,20 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
 
-  &__content {
+  .checkout-page__address-card-content {
     flex: 1;
   }
 
-  &__header {
+  .checkout-page__address-card-header {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-bottom: 8px;
     flex-wrap: wrap;
 
-    .address-type {
+    .checkout-page__address-type {
       display: flex;
-      align-items: center;
+      align-items: center; 
       gap: 4px;
       padding: 2px 8px;
       background: $brand-light;
@@ -657,7 +735,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       }
     }
 
-    .default-badge {
+    .checkout-page__default-badge {
       background: $green;
       color: white;
       padding: 2px 6px;
@@ -667,20 +745,20 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
 
-  &__name {
+  .checkout-page__address-card-name {
     font-size: 14px;
     font-weight: 600;
     color: $text-primary;
     margin-bottom: 4px;
   }
 
-  &__contact {
+  .checkout-page__address-card-contact {
     font-size: 12px;
     color: $text-muted;
     margin: 0 0 6px 0;
   }
 
-  &__details {
+  .checkout-page__address-card-details {
     font-size: 12px;
     color: $text-secondary;
     line-height: 1.4;
@@ -691,7 +769,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
 
-  &__actions {
+  .checkout-page__address-card-actions {
     display: flex;
     gap: 8px;
 
@@ -707,7 +785,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
       transition: all $transition;
 
-      &.edit-btn {
+      &.checkout-page__edit-btn {
         color: $blue;
 
         &:hover {
@@ -716,7 +794,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
       }
 
-      &.delete-btn {
+      &.checkout-page__delete-btn {
         color: $red;
 
         &:hover {
@@ -728,12 +806,12 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-.add-address-section {
+.checkout-page__add-address-section {
   text-align: center;
   padding-top: 16px;
   border-top: 1px solid $border-light;
 
-  .add-address-btn {
+  .checkout-page__add-address-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -759,15 +837,15 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-.no-addresses {
+.checkout-page__no-addresses {
   text-align: center;
   padding: 40px 20px;
   background: $bg-page;
   border-radius: $radius-lg;
   border: 1px dashed $border-mid;
 
-  .empty-state {
-    .empty-icon {
+  .checkout-page__empty-state {
+    .checkout-page__empty-icon {
       font-size: 40px;
       color: $text-muted;
       margin-bottom: 10px;
@@ -778,7 +856,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       margin-bottom: 16px;
     }
 
-    .add-first-btn {
+    .checkout-page__add-first-btn {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -799,15 +877,15 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-// ─── Payment Methods - HORIZONTAL ROW ──────────────────────────────────────────
+// ─── Payment Methods ──────────────────────────────────────────
 
-.payment-methods {
+.checkout-page__payment-methods {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.payment-card {
+.checkout-page__payment-card {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -827,8 +905,8 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: not-allowed;
   }
 
-  &__radio {
-    .radio-btn {
+  .checkout-page__payment-card-radio {
+    .checkout-page__radio-btn {
       width: 20px;
       height: 20px;
       border: 2px solid $border-mid;
@@ -849,7 +927,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
 
-  &__icon {
+  .checkout-page__payment-card-icon {
     width: 40px;
     height: 40px;
     background: $brand-light;
@@ -861,16 +939,16 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     color: $brand;
   }
 
-  &__info {
+  .checkout-page__payment-card-info {
     flex: 1;
 
-    .payment-card__name {
+    .checkout-page__payment-card-name {
       font-size: 14px;
       font-weight: 600;
       color: $text-primary;
     }
 
-    .payment-card__desc {
+    .checkout-page__payment-card-desc {
       font-size: 11px;
       color: $text-muted;
       margin-top: 2px;
@@ -880,7 +958,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
 // ─── Order Confirmation ────────────────────────────────────────────────────────
 
-.order-confirmation {
+.checkout-page__order-confirmation {
   background: $bg-page;
   border-radius: $radius-lg;
   padding: 24px;
@@ -896,14 +974,14 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-.confirmation-details {
-  .delivery-summary {
+.checkout-page__confirmation-details {
+  .checkout-page__delivery-summary {
     display: flex;
     flex-direction: column;
     gap: 12px;
     margin-bottom: 20px;
 
-    .summary-item {
+    .checkout-page__summary-item {
       display: flex;
       gap: 10px;
       padding: 10px;
@@ -934,7 +1012,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
           line-height: 1.4;
         }
 
-        .error {
+        .checkout-page__error {
           color: $red;
         }
       }
@@ -942,8 +1020,8 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-.order-total-final {
-  .total-row {
+.checkout-page__order-total-final {
+  .checkout-page__total-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -953,13 +1031,13 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     font-weight: 700;
     color: $text-primary;
 
-    .total-price {
+    .checkout-page__total-price {
       font-size: 20px;
       color: $brand;
     }
   }
 
-  .payment-note {
+  .checkout-page__payment-note {
     margin-top: 12px;
     padding: 10px;
     background: $gold-light;
@@ -977,9 +1055,31 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-// ─── Navigation Buttons - BOTTOM RIGHT ─────────────────────────────────────────
+// ─── Payment Step Notes ────────────────────────────────────
 
-.checkout-navigation {
+.checkout-page__tax-note-small {
+  font-size: 10px;
+  color: $blue;
+  margin-top: 4px;
+}
+
+.checkout-page__shipping-note-small {
+  font-size: 10px;
+  color: $green;
+  margin-top: 2px;
+}
+
+.checkout-page__tax-included-note {
+  font-size: 11px;
+  color: $blue;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed $border-light;
+}
+
+// ─── Navigation Buttons ─────────────────────────────────────────
+
+.checkout-page__navigation {
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -992,7 +1092,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-.nav-btn {
+.checkout-page__nav-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1010,7 +1110,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: not-allowed;
   }
 
-  &.back-btn {
+  &.checkout-page__back-btn {
     background: transparent;
     border: 2px solid $border-mid;
     color: $text-secondary;
@@ -1021,7 +1121,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
 
-  &.next-btn {
+  &.checkout-page__next-btn {
     background: $brand;
     color: white;
 
@@ -1031,7 +1131,7 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
 
-  &.place-order-btn {
+  &.checkout-page__place-order-btn {
     background: $green;
     color: white;
 
@@ -1042,18 +1142,18 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-.spinner-small {
+.checkout-page__spinner-small {
   display: inline-block;
   width: 14px;
   height: 14px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;
-  animation: spin 0.6s linear infinite;
+  animation: checkout-spin 0.6s linear infinite;
   margin-right: 6px;
 }
 
-@keyframes spin {
+@keyframes checkout-spin {
   to {
     transform: rotate(360deg);
   }
@@ -1062,27 +1162,26 @@ $transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 // ─── Responsive Adjustments ───────────────────────────────────────────────────
 
 @media (max-width: 768px) {
-
-  .order-summary,
-  .order-confirmation {
+  .checkout-page__order-summary,
+  .checkout-page__order-confirmation {
     position: static;
   }
 }
 
 @media (max-width: 480px) {
-  .checkout-content {
+  .checkout-page__content {
     padding: 16px;
   }
 
-  .order-item {
+  .checkout-page__order-item {
     padding: 12px;
   }
 
-  .address-card {
+  .checkout-page__address-card {
     padding: 12px;
   }
 
-  .payment-card {
+  .checkout-page__payment-card {
     padding: 12px;
   }
 }
