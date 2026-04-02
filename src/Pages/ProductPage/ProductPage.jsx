@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -7,9 +7,15 @@ import "./ProductPage.scss";
 import { FaTruck, FaLock, FaBoxOpen, FaUndo } from "react-icons/fa";
 
 const ProductPage = () => {
-  const { productId } = useParams();
-  const token = localStorage.getItem("token");
+  const { slug } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
+  
+  // Get productId from state if coming from Products.js
+  const productIdFromState = location.state?.productId;
+
+  const token = localStorage.getItem("token");
+  const [actualProductId, setActualProductId] = useState(null);
 
   // Product Data States
   const [product, setProduct] = useState(null);
@@ -79,12 +85,21 @@ const ProductPage = () => {
     };
   }, [isMobile, images]);
 
-  // Fetch product data
+  // 🎯 MAIN DATA LOADING - Priority: state first, then slug
   useEffect(() => {
-    if (productId) {
-      fetchProduct();
+    if (productIdFromState) {
+      // Came from Products.js/Cart.js navigation - use ID directly
+      console.log("✅ Using productId from state:", productIdFromState);
+      fetchProductById(productIdFromState);
+    } else if (slug) {
+      // Direct URL access - search by slug
+      console.log("🔍 No state, searching by slug:", slug);
+      fetchProductBySlug(slug);
+    } else {
+      setError("No product identifier provided");
+      setLoading(false);
     }
-  }, [productId]);
+  }, [productIdFromState, slug]);
 
   // Fetch inventory status when product loads
   useEffect(() => {
@@ -104,31 +119,29 @@ const ProductPage = () => {
     }
   }, [inventoryStatus]);
 
-  // Fetch product and offers
-  const fetchProduct = async () => {
+  // 🎯 FETCH PRODUCT BY ID (when coming from state)
+  const fetchProductById = async (id) => {
     try {
       setLoading(true);
       setError(null);
 
-      // Fetch product details
       const productRes = await axios.get(
-        `${import.meta.env.VITE_API_URL}/products/${productId}`
+        `${import.meta.env.VITE_API_URL}/products/${id}`
       );
 
       const productData = productRes.data;
       setProduct(productData);
+      setActualProductId(id);
 
-      // Fetch offers for this product
+      // Fetch offers
       const offersRes = await axios.get(
-        `${import.meta.env.VITE_API_URL}/productoffers/product-color-offers/${productId}`
+        `${import.meta.env.VITE_API_URL}/productoffers/product-color-offers/${id}`
       );
-
       const offersData = offersRes.data;
       setOffers(offersData);
 
-      // Set images from colors array
+      // Set images
       const allImages = [];
-
       if (productData.colors && productData.colors.length > 0) {
         const firstColor = productData.colors[0];
         if (firstColor.images && firstColor.images.length > 0) {
@@ -137,39 +150,107 @@ const ProductPage = () => {
           setActiveImg(firstColor.images[0]);
         }
       }
-
-      // If no color images, use thumbnail
       if (allImages.length === 0 && productData.thumbnailImage) {
         allImages.push(productData.thumbnailImage);
         setMainImage(productData.thumbnailImage);
         setActiveImg(productData.thumbnailImage);
       }
-
       setImages(allImages);
 
       // Check for offer
       const offer = offersData.find(offer =>
-        offer.productId === productData.productId &&
+        offer.productId === id &&
         !offer.variableModelId &&
         offer.isCurrentlyValid
       );
       setCurrentOffer(offer || null);
 
       // Fetch related products
-      const relatedRes = await axios.get(
-        `${import.meta.env.VITE_API_URL}/products/all`
-      );
-
+      const relatedRes = await axios.get(`${import.meta.env.VITE_API_URL}/products/all`);
       const sameCategoryProducts = relatedRes.data
-        .filter(p => p.categoryId === productData.categoryId && p.productId !== productData.productId)
+        .filter(p => p.categoryId === productData.categoryId && p.productId !== id)
         .slice(0, 4);
-
       setRelatedProducts(sameCategoryProducts);
 
     } catch (err) {
-      console.error("Error fetching product:", err);
-      setError("Product not found or error loading product details.");
+      console.error("Error fetching product by ID:", err);
+      setError("Product not found");
       toast.error("Failed to load product details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🎯 FETCH PRODUCT BY SLUG (for direct URL access)
+  const fetchProductBySlug = async (slugParam) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      console.log("🔍 Searching by slug:", slugParam);
+
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/products/slug/${slugParam}`
+      );
+
+      if (response.data.success && response.data.product) {
+        const productData = response.data.product;
+        setProduct(productData);
+        setActualProductId(productData.productId);
+
+        // Fetch offers for this product
+        const offersRes = await axios.get(
+          `${import.meta.env.VITE_API_URL}/productoffers/product-color-offers/${productData.productId}`
+        );
+        const offersData = offersRes.data;
+        setOffers(offersData);
+
+        // Set images
+        const allImages = [];
+        if (productData.colors && productData.colors.length > 0) {
+          const firstColor = productData.colors[0];
+          if (firstColor.images && firstColor.images.length > 0) {
+            allImages.push(...firstColor.images);
+            setMainImage(firstColor.images[0]);
+            setActiveImg(firstColor.images[0]);
+          }
+        }
+        if (allImages.length === 0 && productData.thumbnailImage) {
+          allImages.push(productData.thumbnailImage);
+          setMainImage(productData.thumbnailImage);
+          setActiveImg(productData.thumbnailImage);
+        }
+        setImages(allImages);
+
+        // Check for offer
+        const offer = offersData.find(offer =>
+          offer.productId === productData.productId &&
+          !offer.variableModelId &&
+          offer.isCurrentlyValid
+        );
+        setCurrentOffer(offer || null);
+
+        // Fetch related products
+        const relatedRes = await axios.get(`${import.meta.env.VITE_API_URL}/products/all`);
+        const sameCategoryProducts = relatedRes.data
+          .filter(p => p.categoryId === productData.categoryId && p.productId !== productData.productId)
+          .slice(0, 4);
+        setRelatedProducts(sameCategoryProducts);
+
+      } else {
+        setError("Product not found");
+        toast.error("Product not found");
+      }
+
+    } catch (err) {
+      console.error("Error fetching product by slug:", err);
+      if (err.response?.status === 404) {
+        setError("Product not found");
+        toast.error("Product not found");
+      } else {
+        setError("Error loading product");
+        toast.error("Failed to load product details");
+      }
     } finally {
       setLoading(false);
     }
@@ -223,10 +304,12 @@ const ProductPage = () => {
 
   // Fetch reviews
   const fetchProductReviews = async (page = 1) => {
+    if (!actualProductId) return;
+    
     try {
       setReviewsLoading(true);
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/reviews/product/${productId}`,
+        `${import.meta.env.VITE_API_URL}/reviews/product/${actualProductId}`,
         {
           params: {
             page,
@@ -255,12 +338,12 @@ const ProductPage = () => {
   };
 
   useEffect(() => {
-    if (productId) {
+    if (actualProductId) {
       fetchProductReviews();
     }
-  }, [productId]);
+  }, [actualProductId]);
 
-  // Get base price - FIXED to get from colors array
+  // Get base price
   const getBasePrice = () => {
     if (product?.colors && product.colors.length > 0) {
       return product.colors[0].currentPrice || 0;
@@ -268,7 +351,7 @@ const ProductPage = () => {
     return product?.currentPrice || product?.price || 0;
   };
 
-  // Get original price - FIXED to get from colors array
+  // Get original price
   const getOriginalPrice = () => {
     if (product?.colors && product.colors.length > 0) {
       return product.colors[0].originalPrice || 0;
@@ -280,7 +363,6 @@ const ProductPage = () => {
   const getRegularDiscountPercent = () => {
     const originalPrice = getOriginalPrice();
     const basePrice = getBasePrice();
-
     if (originalPrice > 0 && originalPrice > basePrice) {
       return Math.round(((originalPrice - basePrice) / originalPrice) * 100);
     }
@@ -322,7 +404,7 @@ const ProductPage = () => {
     return 0;
   };
 
-  // Handle quantity change with toast
+  // Handle quantity change
   const handleQuantityChange = (change) => {
     const newQuantity = quantity + change;
 
@@ -367,7 +449,7 @@ const ProductPage = () => {
     return true;
   };
 
-  // Handle add to cart with toast - FIXED IMAGE
+  // Handle add to cart
   const handleAddToCart = async () => {
     if (!canPurchaseProduct()) {
       if (inventoryStatus.status === 'out-of-stock') {
@@ -392,7 +474,6 @@ const ProductPage = () => {
     const hasOffer = currentOffer && currentOffer.offerPercentage > 0;
     const taxSlab = product.taxSlab || 18;
 
-    // ✅ Get first color for selectedColor
     const firstColor = product?.colors && product.colors.length > 0 ? product.colors[0] : null;
 
     const cartData = {
@@ -421,7 +502,7 @@ const ProductPage = () => {
         offerPrice: offerPrice,
         savedAmount: (basePrice - offerPrice) * quantity
       } : null,
-      thumbnailImage: product.thumbnailImage  // ✅ Send thumbnail image
+      thumbnailImage: product.thumbnailImage
     };
 
     try {
@@ -438,8 +519,6 @@ const ProductPage = () => {
 
       toast.success(`Added ${quantity} item${quantity > 1 ? 's' : ''} to cart!`);
       window.dispatchEvent(new Event('cartUpdated'));
-
-      // ✅ NAVIGATE TO CART PAGE
       navigate('/cart');
 
     } catch (error) {
@@ -448,7 +527,7 @@ const ProductPage = () => {
     }
   };
 
-  // Handle buy now with toast
+  // Handle buy now
   const handleBuyNow = () => {
     if (!canPurchaseProduct()) {
       if (inventoryStatus.status === 'out-of-stock') {
@@ -581,7 +660,6 @@ const ProductPage = () => {
   const totalDiscountPercent = getTotalDiscountPercent();
   const canPurchase = canPurchaseProduct();
 
-  // Determine stock status text
   const getStockStatusText = () => {
     if (inventoryStatus.status === 'out-of-stock') return 'Out of Stock';
     if (inventoryStatus.status === 'low-stock') return 'Low Stock';
@@ -599,7 +677,6 @@ const ProductPage = () => {
           <div className="product__main-img">
             <img src={activeImg || mainImage} alt={product.productName} />
 
-            {/* OFFER BADGE ON MAIN IMAGE TOP LEFT */}
             {hasSpecialOffer && (
               <div className="product__offer-badge">
                 <span className="offer-percent">{currentOffer.offerPercentage}% OFF</span>
@@ -620,7 +697,6 @@ const ProductPage = () => {
             )}
           </div>
 
-          {/* THUMBNAIL IMAGES */}
           {images.length > 1 && (
             <div className="product__grid">
               {images.map((img, i) => (
@@ -640,9 +716,7 @@ const ProductPage = () => {
         <div className="product__right">
           <h2>{product.productName}</h2>
 
-          {/* PRICE SECTION */}
           <div className="product__price">
-            {/* FIRST LINE: SHOW REGULAR PRICE WITH STRIKETHROUGH WHEN EXTRA OFFER EXISTS */}
             {hasSpecialOffer ? (
               <div className="price-simple price-striked">
                 {regularDiscountPercent > 0 && (
@@ -665,7 +739,6 @@ const ProductPage = () => {
               </div>
             )}
 
-            {/* SECOND LINE: EXTRA OFFER INFO (only if special offer exists) */}
             {hasSpecialOffer && (
               <div className="offer-extra-info">
                 <div className="offer-detail-line">
@@ -683,7 +756,6 @@ const ProductPage = () => {
             )}
           </div>
 
-          {/* REVIEWS LINE */}
           {reviewsStats.totalReviews > 0 && (
             <div className="product__reviews" onClick={handleOpenReviewsModal}>
               <div className="reviews-summary">
@@ -697,12 +769,10 @@ const ProductPage = () => {
             </div>
           )}
 
-          {/* STOCK STATUS */}
           <div className={`product__stock-status ${stockStatusClass}`}>
             {getStockStatusText()}
           </div>
 
-          {/* QUANTITY SECTION */}
           <div className="product__qty-section">
             <p className="qty-label">Quantity:</p>
             <div className="product__qty">
@@ -730,7 +800,6 @@ const ProductPage = () => {
             </div>
           </div>
 
-          {/* ACTION BUTTONS */}
           <div className="product__buttons">
             <button
               className="same-btn cart-btn"
@@ -748,7 +817,6 @@ const ProductPage = () => {
             </button>
           </div>
 
-          {/* FEATURES SECTION - 2x2 Grid on Desktop */}
           <div className="product__features">
             <div className="feature-item">
               <FaTruck />
@@ -780,7 +848,6 @@ const ProductPage = () => {
             </div>
           </div>
 
-          {/* PRODUCT DETAILS ACCORDION */}
           <div className="product__details">
             <div className="header" onClick={() => setOpen(!open)}>
               <h3>Product Details</h3>
@@ -827,7 +894,6 @@ const ProductPage = () => {
         </div>
       </div>
 
-      {/* DESCRIPTION SECTION */}
       <div className="product__description">
         <h2>Description</h2>
         <div className="description-content">
@@ -841,9 +907,6 @@ const ProductPage = () => {
         </div>
       </div>
 
-
-
-      {/* REVIEWS MODAL */}
       {showReviewsModal && (
         <div className="reviews-modal">
           <div className="modal-overlay" onClick={() => setShowReviewsModal(false)}></div>
@@ -864,7 +927,6 @@ const ProductPage = () => {
             </div>
 
             <div className="reviews-modal-body">
-              {/* Stats Sidebar */}
               <div className="reviews-stats-sidebar">
                 <div className="overall-rating">
                   <div className="overall-rating-number">
@@ -902,7 +964,6 @@ const ProductPage = () => {
                 </div>
               </div>
 
-              {/* Reviews List */}
               <div className="reviews-list-section">
                 <div className="reviews-list-container">
                   {reviewsLoading && reviews.length === 0 ? (

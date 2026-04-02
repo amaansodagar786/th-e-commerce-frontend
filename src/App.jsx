@@ -75,7 +75,7 @@ function App() {
         {/* <Route path="/adminregister" element={<AdminRegister />} /> */}
         {/* <Route path="/adminlogin" element={<AdminLogin />} /> */}
         <Route path="/admin/login" element={<AdminAuth />} />
-        <Route path="/product/:productId" element={
+        <Route path="/product/:slug" element={
           <LayoutWrapper>
             <ProductPage />
           </LayoutWrapper>

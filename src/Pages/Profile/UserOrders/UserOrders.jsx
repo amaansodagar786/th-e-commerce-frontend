@@ -298,16 +298,7 @@ const UserOrders = () => {
                 reviewText: reviewData.reviewText.trim(),
             };
 
-            console.log('📤 FINAL PAYLOAD BEING SENT:');
-            console.log(JSON.stringify(payload, null, 2));
-            console.log('Payload fields check:');
-            console.log('  - userId:', payload.userId ? '✅' : '❌ MISSING');
-            console.log('  - orderNumber:', payload.orderNumber ? '✅' : '❌ MISSING'); // ← Check orderNumber
-            console.log('  - productId:', payload.productId ? '✅' : '❌ MISSING');
-            console.log('  - colorId:', payload.colorId ? '✅' : '❌ MISSING');
-            console.log('  - colorName:', payload.colorName ? '✅' : '❌ MISSING');
-            console.log('  - productName:', payload.productName ? '✅' : '❌ MISSING');
-            console.log('  - rating:', payload.rating ? '✅' : '❌ MISSING');
+            
 
             if (isUpdating && existingReview) {
                 console.log('🔄 UPDATING existing review:', existingReview.reviewId);
@@ -548,7 +539,7 @@ const UserOrders = () => {
                                                     <div className="uo-item__name">{item.productName}</div>
                                                     <div className="uo-item__chips">
                                                         {item.modelName !== 'Default' && <span className="uo-chip">{item.modelName}</span>}
-                                                        {item.colorName && <span className="uo-chip">{item.colorName}</span>}
+                                                        {/* {item.colorName && <span className="uo-chip">{item.colorName}</span>} */}
                                                         {item.size && <span className="uo-chip">Size: {item.size}</span>}
                                                     </div>
                                                     <div className="uo-item__price-row">
@@ -616,7 +607,7 @@ const UserOrders = () => {
                                             {(order.orderStatus === 'pending' || order.orderStatus === 'processing') && (
                                                 <button
                                                     className="uo-action-btn uo-action-btn--cancel"
-                                                    onClick={() => setCancelOrderId(order.orderId)}
+                                                    onClick={() => setCancelOrderId(order.orderNumber)}
                                                 >
                                                     Cancel
                                                 </button>
@@ -755,7 +746,7 @@ const UserOrders = () => {
                                                 <div className="uo-detail-item__name">{item.productName}</div>
                                                 <div className="uo-item__chips">
                                                     {item.modelName !== 'Default' && <span className="uo-chip">{item.modelName}</span>}
-                                                    {item.colorName && <span className="uo-chip">{item.colorName}</span>}
+                                                    {/* {item.colorName && <span className="uo-chip">{item.colorName}</span>} */}
                                                     {item.size && <span className="uo-chip">Size: {item.size}</span>}
                                                 </div>
                                                 <div className="uo-detail-item__pricing">

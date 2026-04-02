@@ -7,17 +7,28 @@ import { toast } from "react-toastify";
 import "./Cart.scss";
 import FooterTopPattern from "../../Components/Footer/FooterTopPattern/FooterTopPattern";
 
+// ✅ Helper function to create slug from product name
+const createSlug = (productName) => {
+  return productName
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')     // Remove special characters
+    .replace(/\s+/g, '-')          // Replace spaces with hyphens
+    .replace(/-+/g, '-')           // Replace multiple hyphens with single hyphen
+    .replace(/^-+|-+$/g, '');      // Remove leading/trailing hyphens
+};
+
 const Cart = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
   const [cartSummary, setCartSummary] = useState({
     totalItems: 0,
-    totalMrp: 0,           // ✅ Sum of original MRP × quantity
-    totalDiscount: 0,      // ✅ Total discount amount
-    subtotal: 0,           // ✅ After discount (includes GST)
-    shipping: 0,           // ✅ FREE
-    tax: 0,                // ✅ Actual tax amount (5% of subtotal)
-    total: 0               // ✅ Final total
+    totalMrp: 0,
+    totalDiscount: 0,
+    subtotal: 0,
+    shipping: 0,
+    tax: 0,
+    total: 0
   });
   const [loading, setLoading] = useState(true);
   const [updatingItemId, setUpdatingItemId] = useState(null);
@@ -47,11 +58,6 @@ const Cart = () => {
     window.addEventListener('cartUpdated', handleCartUpdate);
     return () => window.removeEventListener('cartUpdated', handleCartUpdate);
   }, [token, userId]);
-
-  // ✅ Helper function to calculate tax (5% on subtotal)
-  const calculateTax = (subtotal) => {
-    return (subtotal * TAX_RATE) / 100;
-  };
 
   const fetchCartAndProducts = async () => {
     try {
@@ -146,23 +152,20 @@ const Cart = () => {
           colorData = {
             colorId: selectedColor.colorId,
             colorName: selectedColor.colorName,
-            currentPrice: selectedColor.currentPrice,  // After regular discount
-            originalPrice: selectedColor.originalPrice, // MRP
+            currentPrice: selectedColor.currentPrice,
+            originalPrice: selectedColor.originalPrice,
             images: selectedColor.images || []
           };
         }
 
-        // ✅ Base price = currentPrice (after regular discount)
         const basePrice = colorData?.currentPrice || liveProduct.currentPrice || 0;
         const originalMRP = colorData?.originalPrice || liveProduct.originalPrice || 0;
 
-        // ✅ Regular discount percentage
         const regularDiscountPercent = originalMRP > basePrice
           ? Math.round(((originalMRP - basePrice) / originalMRP) * 100)
           : 0;
         const regularDiscountAmount = originalMRP - basePrice;
 
-        // ✅ Fetch EXTRA OFFER from database
         let currentOffer = null;
         if (selectedColor && productOffers.length > 0) {
           currentOffer = productOffers.find(offer =>
@@ -172,7 +175,6 @@ const Cart = () => {
           );
         }
 
-        // ✅ Calculate final price with extra offer
         let finalPrice = basePrice;
         let offerDetails = null;
         let hasExtraOffer = false;
@@ -195,7 +197,6 @@ const Cart = () => {
           };
         }
 
-        // ✅ Calculate total discount from MRP
         const totalDiscountPerItem = originalMRP - finalPrice;
         const totalDiscountPercent = Math.round((totalDiscountPerItem / originalMRP) * 100);
 
@@ -222,8 +223,6 @@ const Cart = () => {
           selectedColor: colorData,
           selectedModel: cartItem.selectedModel,
           selectedSize: cartItem.selectedSize,
-
-          // ✅ Price fields
           originalMRP: originalMRP,
           basePrice: basePrice,
           finalPrice: finalPrice,
@@ -233,16 +232,10 @@ const Cart = () => {
           extraOfferPercentage: extraOfferPercentage,
           totalDiscountAmount: totalDiscountPerItem,
           totalDiscountPercent: totalDiscountPercent,
-
-          // ✅ Offer fields
           hasExtraOffer: hasExtraOffer,
           offerDetails: offerDetails,
-
-          // ✅ Total for this item
           itemTotalMrp: originalMRP * finalQuantity,
           itemTotalAfterDiscount: finalPrice * finalQuantity,
-
-          // ✅ Inventory
           stock: stock
         });
       }
@@ -258,24 +251,12 @@ const Cart = () => {
     }
   };
 
-  // ✅ UPDATED calculateSummary with correct breakdown
   const calculateSummary = (items) => {
-    // 1. Total MRP = Sum of (originalMRP × quantity)
     const totalMrp = items.reduce((sum, item) => sum + (item.originalMRP * item.quantity), 0);
-
-    // 2. Total Discount = Sum of (totalDiscountAmount × quantity)
     const totalDiscount = items.reduce((sum, item) => sum + (item.totalDiscountAmount * item.quantity), 0);
-
-    // 3. Subtotal = Total MRP - Total Discount (this includes GST)
     const subtotal = totalMrp - totalDiscount;
-
-    // 4. Shipping = FREE always
     const shipping = 0;
-
-    // 5. Tax = 5% of subtotal (actual tax amount)
     const tax = (subtotal * TAX_RATE) / 100;
-
-    // 6. Total = subtotal + shipping (tax already in subtotal)
     const total = subtotal + shipping;
 
     setCartSummary({
@@ -370,9 +351,9 @@ const Cart = () => {
         productId: item.productId,
         productName: item.productName,
         quantity: item.quantity,
-        originalPrice: item.originalMRP,      // MRP
-        finalPrice: item.finalPrice,           // Final after all discounts
-        unitPrice: item.basePrice,             // After regular discount
+        originalPrice: item.originalMRP,
+        finalPrice: item.finalPrice,
+        unitPrice: item.basePrice,
         totalPrice: item.finalPrice * item.quantity,
         taxSlab: TAX_RATE,
         selectedColor: item.selectedColor,
@@ -383,8 +364,6 @@ const Cart = () => {
         offerDetails: item.offerDetails,
         thumbnailImage: item.thumbnailImage,
         discountPercent: item.totalDiscountPercent,
-
-        // ✅ Send for backend validation
         discountAmount: item.totalDiscountAmount,
         regularDiscountAmount: item.regularDiscountAmount,
         extraDiscountAmount: item.extraDiscountAmount
@@ -402,6 +381,14 @@ const Cart = () => {
 
   const continueShopping = () => {
     navigate('/');
+  };
+
+  // ✅ Handle product click navigation with slug
+  const handleProductClick = (productId, productName) => {
+    const slug = createSlug(productName);
+    navigate(`/product/${slug}`, {
+      state: { productId: productId }
+    });
   };
 
   if (loading) {
@@ -434,13 +421,16 @@ const Cart = () => {
                   <img
                     src={item.thumbnailImage || "https://via.placeholder.com/120x120"}
                     alt={item.productName}
-                    onClick={() => navigate(`/product/${item.productId}`)}
+                    onClick={() => handleProductClick(item.productId, item.productName)}
                     style={{ cursor: "pointer" }}
                   />
 
                   <div className="info">
                     <div className="infoHeader">
-                      <h3 onClick={() => navigate(`/product/${item.productId}`)} style={{ cursor: "pointer" }}>
+                      <h3 
+                        onClick={() => handleProductClick(item.productId, item.productName)} 
+                        style={{ cursor: "pointer" }}
+                      >
                         {item.productName}
                       </h3>
                       <MdClose
@@ -461,14 +451,12 @@ const Cart = () => {
                       )}
                     </div>
 
-                    {/* ✅ Show extra offer badge */}
                     {item.hasExtraOffer && item.offerDetails && (
                       <div className="offer-label extra-offer">
                         🎁 {item.offerDetails.offerLabel}
                       </div>
                     )}
 
-                    {/* ✅ Show regular discount badge if no extra offer */}
                     {!item.hasExtraOffer && item.regularDiscountPercent > 0 && (
                       <div className="offer-label regular-offer">
                         🔥 {item.regularDiscountPercent}% OFF
@@ -534,13 +522,11 @@ const Cart = () => {
               <div className="summary">
                 <h3>Order Summary</h3>
 
-                {/* ✅ 1. Total MRP (Original Price) */}
                 <div className="row">
                   <span>Total MRP</span>
                   <span>₹ {cartSummary.totalMrp.toLocaleString()}</span>
                 </div>
 
-                {/* ✅ 2. Total Discount */}
                 {cartSummary.totalDiscount > 0 && (
                   <div className="row discount-row">
                     <span>Total Discount</span>
@@ -548,19 +534,16 @@ const Cart = () => {
                   </div>
                 )}
 
-                {/* ✅ 3. Subtotal (After Discount - Includes GST) */}
                 <div className="row subtotal-row">
                   <span>Subtotal</span>
                   <span>₹ {cartSummary.subtotal.toLocaleString()}</span>
                 </div>
 
-                {/* ✅ 4. Shipping (FREE) */}
                 <div className="row">
                   <span>Shipping</span>
                   <span className="free-shipping">FREE</span>
                 </div>
 
-                {/* ✅ 5. Tax (Actual 5% of Subtotal) */}
                 <div className="row tax-row">
                   <span>Tax (GST {TAX_RATE}%)</span>
                   <span>₹ {cartSummary.tax.toLocaleString()}</span>
@@ -568,7 +551,6 @@ const Cart = () => {
 
                 <hr />
 
-                {/* ✅ 6. Total Amount */}
                 <div className="row total">
                   <span>Total Amount</span>
                   <span>₹ {cartSummary.total.toLocaleString()}</span>

@@ -409,6 +409,120 @@
         font-family: 'Inter', sans-serif;
       }
     }
+
+    // Striked price style for when extra offer exists
+    .price-simple.price-striked {
+      .price, .mrp {
+        text-decoration: line-through;
+        color: #94a3b8;
+      }
+      
+      .price {
+        color: #94a3b8;
+      }
+      
+      .discount {
+        opacity: 0.7;
+      }
+    }
+
+    // Extra offer info - BELOW the main price
+    .offer-extra-info {
+      margin-top: 12px;
+      
+      .offer-detail-line {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        background: linear-gradient(135deg, #fff9f0, #fff5e6);
+        padding: 10px 16px;
+        border-radius: 12px;
+        border-left: 4px solid #5b2b1b;
+        
+        .offer-label-icon {
+          font-size: 18px;
+        }
+        
+        .offer-label-text {
+          font-size: 13px;
+          font-weight: 600;
+          color: #5b2b1b;
+          font-family: 'Inter', sans-serif;
+          background: #fff0e0;
+          padding: 4px 10px;
+          border-radius: 20px;
+        }
+        
+        .offer-arrow {
+          font-size: 16px;
+          color: #cbd5e1;
+        }
+        
+        .offer-final-price {
+          font-size: 14px;
+          color: #1e293b;
+          font-family: 'Inter', sans-serif;
+          
+          strong {
+            font-size: 18px;
+            font-weight: 700;
+            color: #dc2626;
+            font-family: 'DM Sans', sans-serif;
+          }
+        }
+        
+        .offer-save-text {
+          font-size: 12px;
+          font-weight: 500;
+          color: #2c6e2f;
+          font-family: 'Inter', sans-serif;
+          background: #e8f5e9;
+          padding: 4px 10px;
+          border-radius: 20px;
+        }
+      }
+      
+      @media (max-width: 768px) {
+        margin-top: 10px;
+        
+        .offer-detail-line {
+          padding: 8px 12px;
+          
+          .offer-label-icon {
+            font-size: 16px;
+          }
+          
+          .offer-label-text {
+            font-size: 12px;
+          }
+          
+          .offer-final-price {
+            font-size: 13px;
+            
+            strong {
+              font-size: 16px;
+            }
+          }
+          
+          .offer-save-text {
+            font-size: 11px;
+          }
+        }
+      }
+      
+      @media (max-width: 480px) {
+        .offer-detail-line {
+          flex-direction: row;
+          align-items: flex-start;
+          gap: 8px;
+          
+          .offer-arrow {
+            display: none;
+          }
+        }
+      }
+    }
   }
 
   &__reviews {
@@ -736,16 +850,6 @@
         border-color: #5a1f16;
       }
     }
-
-    // .non-returnable {
-    //   svg {
-    //     color: #ff6b6b;
-    //   }
-
-    //   &:hover {
-    //     border-color: #ff6b6b;
-    //   }
-    // }
 
     @media (max-width: 768px) {
       .feature-item {
@@ -1157,6 +1261,10 @@
   }
 }
 
+// ============================================
+// REVIEWS MODAL STYLES (FULLY STYLED)
+// ============================================
+
 .reviews-modal {
   position: fixed;
   top: 0;
@@ -1174,7 +1282,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.75);
     backdrop-filter: blur(4px);
     z-index: 1;
   }
@@ -1191,173 +1299,478 @@
     display: flex;
     flex-direction: column;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: modalFadeIn 0.3s ease-out;
   }
 }
 
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
 
+// Modal Header
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e9e6df;
+  background: white;
 
-.product__price {
-  margin-bottom: 6px;
-
-  .price-simple {
+  h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    font-family: 'DM Sans', sans-serif;
     display: flex;
-    align-items: baseline;
-    gap: 10px;
-    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
 
-    .discount {
-      color: #dc2626;
-      font-weight: 600;
-      font-size: 15px;
-      font-family: 'Inter', sans-serif;
-
-      @media (max-width: 480px) {
-        font-size: 14px;
-      }
-    }
-
-    .price {
-      font-size: 30px;
-      font-weight: 700;
-      color: #2c6e2f;
-      font-family: 'DM Sans', sans-serif;
-
-      @media (max-width: 768px) {
-        font-size: 28px;
-      }
-
-      @media (max-width: 600px) {
-        font-size: 26px;
-      }
-
-      @media (max-width: 480px) {
-        font-size: 24px;
-      }
-    }
-
-    .mrp {
-      text-decoration: line-through;
-      color: #64748b;
+    .reviews-count-badge {
       font-size: 14px;
-      margin: 0;
-      text-align: left;
+      font-weight: 500;
+      background: #f5f1ea;
+      padding: 4px 12px;
+      border-radius: 30px;
+      color: #5b2b1b;
       font-family: 'Inter', sans-serif;
+    }
+  }
 
-      @media (max-width: 480px) {
-        font-size: 12px;
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #64748b;
+    transition: all 0.2s ease;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+
+    &:hover {
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+  }
+}
+
+// Modal Body - Two Column Layout
+.reviews-modal-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  flex-direction: row;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+}
+
+// Left Sidebar - Stats
+.reviews-stats-sidebar {
+  width: 280px;
+  background: #faf8f5;
+  padding: 24px;
+  border-right: 1px solid #e9e6df;
+  overflow-y: auto;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e9e6df;
+    padding: 20px;
+  }
+
+  .overall-rating {
+    text-align: center;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e9e6df;
+
+    .overall-rating-number {
+      font-size: 48px;
+      font-weight: 800;
+      color: #1e293b;
+      font-family: 'DM Sans', sans-serif;
+      line-height: 1;
+    }
+
+    .overall-rating-stars {
+      margin: 10px 0 6px;
+
+      .star {
+        font-size: 22px;
+        color: #ffc107;
+        
+        &.empty {
+          color: #e2e8f0;
+        }
       }
     }
 
-    // Struck class for when extra offer exists
-    &.price-striked {
-      .price, .mrp {
-        text-decoration: line-through;
-        color: #94a3b8;
+    .overall-rating-text {
+      font-size: 13px;
+      color: #64748b;
+      font-family: 'Inter', sans-serif;
+    }
+  }
+
+  .rating-breakdown {
+    h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e293b;
+      margin: 0 0 16px 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .breakdown-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+
+      .breakdown-star {
+        width: 45px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #475569;
+        font-family: 'Inter', sans-serif;
       }
-      
-      .price {
-        color: #94a3b8;
+
+      .breakdown-bar-container {
+        flex: 1;
+        height: 8px;
+        background: #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+
+        .breakdown-bar-fill {
+          height: 100%;
+          background: #5b2b1b;
+          border-radius: 10px;
+          transition: width 0.3s ease;
+        }
       }
+
+      .breakdown-count {
+        width: 35px;
+        font-size: 13px;
+        color: #64748b;
+        font-family: 'Inter', sans-serif;
+        text-align: right;
+      }
+    }
+  }
+}
+
+// Right Section - Reviews List
+.reviews-list-section {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  background: white;
+
+  @media (max-width: 768px) {
+    padding: 20px;
+  }
+
+  .reviews-list-container {
+    .loading-reviews {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 60px;
+      color: #64748b;
+      font-family: 'Inter', sans-serif;
+
+      .spinner-small {
+        width: 24px;
+        height: 24px;
+        border: 2px solid #e9e6df;
+        border-top-color: #5b2b1b;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+    }
+
+    .review-card-full {
+      background: white;
+      border: 1px solid #e9e6df;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        border-color: #d4cfc5;
+      }
+
+      .review-header-full {
+        margin-bottom: 14px;
+
+        .reviewer-info-full {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+
+          .reviewer-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #5b2b1b, #8b3e2a);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            font-family: 'DM Sans', sans-serif;
+            flex-shrink: 0;
+          }
+
+          .reviewer-details {
+            flex: 1;
+
+            .reviewer-name-full {
+              font-weight: 700;
+              font-size: 16px;
+              color: #1e293b;
+              margin-bottom: 6px;
+              font-family: 'DM Sans', sans-serif;
+            }
+
+            .review-meta {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              flex-wrap: wrap;
+
+              .review-rating-full {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+
+                .star {
+                  font-size: 14px;
+                  color: #ffc107;
+                  
+                  &.empty {
+                    color: #e2e8f0;
+                  }
+                }
+
+                .review-rating-value {
+                  font-size: 12px;
+                  font-weight: 500;
+                  color: #475569;
+                  font-family: 'Inter', sans-serif;
+                }
+              }
+
+              .review-date-full {
+                font-size: 12px;
+                color: #94a3b8;
+                font-family: 'Inter', sans-serif;
+              }
+
+              .verified-purchase-chip {
+                font-size: 11px;
+                background: #e8f5e9;
+                color: #2c6e2f;
+                padding: 4px 10px;
+                border-radius: 20px;
+                font-weight: 500;
+                font-family: 'Inter', sans-serif;
+              }
+            }
+          }
+        }
+      }
+
+      .review-content-full {
+        margin-bottom: 16px;
+        padding-left: 62px;
+
+        .review-text-full {
+          font-size: 14px;
+          line-height: 1.6;
+          color: #334155;
+          margin: 0;
+          font-family: 'Inter', sans-serif;
+          font-style: italic;
+        }
+
+        .no-review-text {
+          font-size: 13px;
+          color: #94a3b8;
+          font-family: 'Inter', sans-serif;
+          font-style: italic;
+        }
+      }
+
+      .review-actions-full {
+        padding-left: 62px;
+
+        .helpful-btn {
+          background: none;
+          border: 1px solid #e2e8f0;
+          padding: 6px 14px;
+          border-radius: 30px;
+          font-size: 12px;
+          font-weight: 500;
+          color: #64748b;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          font-family: 'Inter', sans-serif;
+
+          &:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            color: #1e293b;
+          }
+        }
+      }
+    }
+
+    .load-more-btn {
+      width: 100%;
+      padding: 14px;
+      background: #f5f1ea;
+      border: 1px solid #e9e6df;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #5b2b1b;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Inter', sans-serif;
+      margin-top: 8px;
+
+      &:hover:not(:disabled) {
+        background: #5b2b1b;
+        color: white;
+        border-color: #5b2b1b;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+
+    .no-reviews-full {
+      text-align: center;
+      padding: 60px 20px;
+
+      .no-reviews-icon-full {
+        font-size: 48px;
+        margin-bottom: 16px;
+      }
+
+      h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 8px;
+        font-family: 'DM Sans', sans-serif;
+      }
+
+      p {
+        font-size: 14px;
+        color: #64748b;
+        font-family: 'Inter', sans-serif;
+      }
+    }
+  }
+}
+
+// Responsive adjustments for reviews modal
+@media (max-width: 600px) {
+  .reviews-modal {
+    .reviews-modal-content {
+      width: 95%;
+      max-height: 90vh;
+      border-radius: 16px;
+    }
+  }
+
+  .modal-header {
+    padding: 16px 20px;
+
+    h2 {
+      font-size: 18px;
       
-      .discount {
-        opacity: 0.7;
+      .reviews-count-badge {
+        font-size: 12px;
+        padding: 3px 10px;
+      }
+    }
+
+    .close-btn {
+      font-size: 20px;
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  .reviews-stats-sidebar {
+    padding: 16px;
+
+    .overall-rating {
+      .overall-rating-number {
+        font-size: 36px;
+      }
+
+      .overall-rating-stars .star {
+        font-size: 18px;
       }
     }
   }
 
-  // Extra offer info - BELOW the main price
-  .offer-extra-info {
-    margin-top: 12px;
-    
-    .offer-detail-line {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      background: linear-gradient(135deg, #fff9f0, #fff5e6);
-      padding: 10px 16px;
-      border-radius: 12px;
-      border-left: 4px solid #5b2b1b;
-      
-      .offer-label-icon {
-        font-size: 18px;
-      }
-      
-      .offer-label-text {
-        font-size: 13px;
-        font-weight: 600;
-        color: #5b2b1b;
-        font-family: 'Inter', sans-serif;
-        background: #fff0e0;
-        padding: 4px 10px;
-        border-radius: 20px;
-      }
-      
-      .offer-arrow {
-        font-size: 16px;
-        color: #cbd5e1;
-      }
-      
-      .offer-final-price {
-        font-size: 14px;
-        color: #1e293b;
-        font-family: 'Inter', sans-serif;
-        
-        strong {
-          font-size: 18px;
-          font-weight: 700;
-          color: #dc2626;
-          font-family: 'DM Sans', sans-serif;
-        }
-      }
-      
-      .offer-save-text {
-        font-size: 12px;
-        font-weight: 500;
-        color: #2c6e2f;
-        font-family: 'Inter', sans-serif;
-        background: #e8f5e9;
-        padding: 4px 10px;
-        border-radius: 20px;
-      }
-    }
-    
-    @media (max-width: 768px) {
-      margin-top: 10px;
-      
-      .offer-detail-line {
-        padding: 8px 12px;
-        
-        .offer-label-icon {
-          font-size: 16px;
-        }
-        
-        .offer-label-text {
-          font-size: 12px;
-        }
-        
-        .offer-final-price {
-          font-size: 13px;
-          
-          strong {
+  .reviews-list-section {
+    padding: 16px;
+
+    .reviews-list-container {
+      .review-card-full {
+        padding: 16px;
+
+        .review-header-full .reviewer-info-full {
+          gap: 12px;
+
+          .reviewer-avatar {
+            width: 40px;
+            height: 40px;
             font-size: 16px;
           }
+
+          .reviewer-details {
+            .reviewer-name-full {
+              font-size: 14px;
+            }
+          }
         }
-        
-        .offer-save-text {
-          font-size: 11px;
+
+        .review-content-full,
+        .review-actions-full {
+          padding-left: 52px;
         }
-      }
-    }
-    
-    @media (max-width: 480px) {
-      .offer-detail-line {
-        flex-direction: row;
-        align-items: flex-start;
-        gap: 8px;
-        
-        .offer-arrow {
-          display: none;
+
+        .review-content-full .review-text-full {
+          font-size: 13px;
         }
       }
     }
