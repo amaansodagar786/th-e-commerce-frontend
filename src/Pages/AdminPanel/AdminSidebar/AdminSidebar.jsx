@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   MdDashboard,
   MdInventory,
@@ -8,15 +8,19 @@ import {
   MdMenu,
   MdClose,
   MdLocalOffer,
-  MdShoppingCart
+  MdShoppingCart,
+  MdLogout
 } from "react-icons/md";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./AdminSidebar.scss";
 
 function AdminSidebar() {
-  const [open, setOpen] = useState(false); // Changed to false by default on desktop
+  const [open, setOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Check if mobile on mount and resize
   useEffect(() => {
@@ -24,12 +28,11 @@ function AdminSidebar() {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
 
-      // Reset states when switching between mobile/desktop
       if (!mobile) {
         setMobileOpen(false);
-        setOpen(false); // Keep sidebar collapsed on desktop by default
+        setOpen(false);
       } else {
-        setOpen(true); // On mobile, sidebar is always in expanded mode internally
+        setOpen(true);
       }
     };
 
@@ -45,6 +48,28 @@ function AdminSidebar() {
       setOpen(false);
     }
   }, [location.pathname, isMobile]);
+
+  // Handle Logout
+  const handleLogout = () => {
+    // Clear localStorage
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("role");
+    
+    // Show success toast
+    toast.success("Logged out successfully!", {
+      position: "top-right",
+      autoClose: 1500,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      theme: "dark",
+    });
+    
+    // Redirect to admin login page after a short delay
+    setTimeout(() => {
+      navigate("/admin/login");
+    }, 1500);
+  };
 
   const menuItems = [
     {
@@ -95,7 +120,7 @@ function AdminSidebar() {
 
   return (
     <>
-      {/* Mobile Hamburger Button - Only show on mobile when sidebar is closed */}
+      {/* Mobile Hamburger Button */}
       {isMobile && !mobileOpen && (
         <button
           className="mobile-hamburger"
@@ -111,7 +136,6 @@ function AdminSidebar() {
         {/* Logo/Toggle Area */}
         <div className="sidebar-header">
           {(!isMobile && !open) ? (
-            // Desktop collapsed view - only menu icon
             <button
               className="toggle-btn collapsed"
               onClick={() => setOpen(true)}
@@ -120,7 +144,6 @@ function AdminSidebar() {
               <MdMenu />
             </button>
           ) : (
-            // Expanded view (both desktop expanded and mobile)
             <div className="logo-area">
               <h2 className="logo-text">Admin Panel</h2>
               <button
@@ -145,21 +168,37 @@ function AdminSidebar() {
                 }
               >
                 <span className="menu-icon">{item.icon}</span>
-                {/* Show title when: not collapsed on desktop OR on mobile (always show) */}
                 {(!isMobile && !open) ? null : <span className="menu-title">{item.title}</span>}
               </NavLink>
             </li>
           ))}
         </ul>
+
+        {/* Logout Button - Bottom Section */}
+        <div className="sidebar-footer">
+          <button
+            className={`logout-btn ${(!isMobile && !open) ? "collapsed" : ""}`}
+            onClick={handleLogout}
+            title="Logout"
+          >
+            <span className="logout-icon">
+              <MdLogout />
+            </span>
+            {(!isMobile && !open) ? null : <span className="logout-text">Logout</span>}
+          </button>
+        </div>
       </div>
 
-      {/* Mobile Overlay - Only show on mobile when sidebar is open */}
+      {/* Mobile Overlay */}
       {isMobile && mobileOpen && (
         <div
           className="mobile-sidebar-overlay"
           onClick={() => setMobileOpen(false)}
         />
       )}
+
+      {/* Toast Container for logout messages */}
+      <ToastContainer />
     </>
   );
 }

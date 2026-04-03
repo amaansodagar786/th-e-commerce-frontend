@@ -5,10 +5,6 @@ import { useLocation } from "react-router-dom";
 import "./App.css";
 import Home from "./Pages/Home/Home";
 import Navbar from "./Components/Navbar/Navbar";
-// import Login from "./Components/Login/Login";
-// import Register from "./Components/Register/Register";
-// import AdminLogin from "./Pages/AdminAuth/AdminLogin/AdminLogin";
-// import AdminRegister from "./Pages/AdminAuth/AdminReg/AdminRegister";
 import AdminDashboard from "./Pages/AdminPanel/AdminDashboard/AdminDashboard";
 import AdminLayout from "./Pages/AdminPanel/AdminLayout/AdminLayout";
 import AdminCategories from "./Pages/AdminPanel/Categories/AdminCategories";
@@ -16,7 +12,6 @@ import ListProducts from "./Pages/AdminPanel/ListProducts/ListProducts";
 import Inventories from "./Pages/AdminPanel/Inventory/Inventories";
 import ProductOffers from "./Pages/AdminPanel/ProductOffers/ProductOffers";
 import ProductPage from "./Pages/ProductPage/ProductPage";
-import Wishlist from "./Pages/Wishlist/Wishlist";
 import Profile from "./Pages/Profile/Profile/Profile";
 import Checkout from "./Pages/CheckOut/Checkout";
 import UserOrders from "./Pages/Profile/UserOrders/UserOrders";
@@ -33,6 +28,7 @@ import Contact from "./Pages/Contact/Contact";
 import ScrollToTop from "./Components/GoToTop/ScrollToTop";
 import Cart from "./Pages/Cart/Cart";
 import Distributorship from "./Pages/Distributorship/Distributorship";
+import ProtectedRoute from "./Components/ProtectedRoute/ProtectedRoute"; // 👈 IMPORT THIS
 
 function LayoutWrapper({ children }) {
   const location = useLocation();
@@ -55,6 +51,7 @@ function App() {
     <Router>
       <ScrollToTop />
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={
           <LayoutWrapper>
             <Home />
@@ -71,109 +68,136 @@ function App() {
           </LayoutWrapper>
         } />
         <Route path="/login" element={<UserAuth />} />
-        {/* <Route path="/register" element={<Register />} />  */}
-        {/* <Route path="/adminregister" element={<AdminRegister />} /> */}
-        {/* <Route path="/adminlogin" element={<AdminLogin />} /> */}
         <Route path="/admin/login" element={<AdminAuth />} />
+        
         <Route path="/product/:slug" element={
           <LayoutWrapper>
             <ProductPage />
           </LayoutWrapper>
         } />
+        
         <Route path="*" element={
           <LayoutWrapper>
             <NotFound />
           </LayoutWrapper>
         } />
+        
         <Route path="/wishlist" element={
           <LayoutWrapper>
             <NewWishlist />
           </LayoutWrapper>
         } />
+        
         <Route path="/profile" element={
           <LayoutWrapper>
             <Profile />
           </LayoutWrapper>
         } />
+        
         <Route path="/cart" element={
           <LayoutWrapper>
             <Cart />
           </LayoutWrapper>
         } />
+        
         <Route path="/checkout" element={
           <LayoutWrapper>
             <Checkout />
           </LayoutWrapper>
         } />
+        
         <Route path="/orders" element={
           <LayoutWrapper>
             <UserOrders />
           </LayoutWrapper>
         } />
+        
         <Route path="/reviews" element={
           <LayoutWrapper>
             <UserReviews />
           </LayoutWrapper>
         } />
+        
         <Route path="/products" element={
           <LayoutWrapper>
             <AllProducts />
           </LayoutWrapper>
         } />
+        
         <Route path="/category/:categoryId" element={
           <LayoutWrapper>
             <CategoryProducts />
           </LayoutWrapper>
         } />
-        <Route
-          path="/admin/dashboard"
+
+        {/* ========== PROTECTED ADMIN ROUTES ========== */}
+        {/* Wrap each admin route with ProtectedRoute */}
+        <Route 
+          path="/admin/dashboard" 
           element={
-            <LayoutWrapper>
-              <AdminDashboard />
-            </LayoutWrapper>
-          }
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <AdminDashboard />
+              </LayoutWrapper>
+            </ProtectedRoute>
+          } 
         />
-        <Route
-          path="/admin/categories"
+        
+        <Route 
+          path="/admin/categories" 
           element={
-            <LayoutWrapper>
-              <AdminCategories />
-            </LayoutWrapper>
-          }
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <AdminCategories />
+              </LayoutWrapper>
+            </ProtectedRoute>
+          } 
         />
-        <Route
-          path="/admin/products"
+        
+        <Route 
+          path="/admin/products" 
           element={
-            <LayoutWrapper>
-              <ListProducts />
-            </LayoutWrapper>
-          }
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <ListProducts />
+              </LayoutWrapper>
+            </ProtectedRoute>
+          } 
         />
-        <Route
-          path="/admin/inventories"
+        
+        <Route 
+          path="/admin/inventories" 
           element={
-            <LayoutWrapper>
-              <AdminLayout>
-                <Inventories />
-              </AdminLayout>
-            </LayoutWrapper>
-          }
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <AdminLayout>
+                  <Inventories />
+                </AdminLayout>
+              </LayoutWrapper>
+            </ProtectedRoute>
+          } 
         />
-        <Route
-          path="/admin/productoffers"
+        
+        <Route 
+          path="/admin/productoffers" 
           element={
-            <LayoutWrapper>
-              <ProductOffers />
-            </LayoutWrapper>
-          }
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <ProductOffers />
+              </LayoutWrapper>
+            </ProtectedRoute>
+          } 
         />
-        <Route
-          path="/admin/orders"
+        
+        <Route 
+          path="/admin/orders" 
           element={
-            <LayoutWrapper>
-              <AdminOrders />
-            </LayoutWrapper>
-          }
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <AdminOrders />
+              </LayoutWrapper>
+            </ProtectedRoute>
+          } 
         />
       </Routes>
     </Router>

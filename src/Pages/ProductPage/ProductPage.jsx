@@ -4,7 +4,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./ProductPage.scss";
-import { FaTruck, FaLock, FaBoxOpen, FaUndo } from "react-icons/fa";
+import { FaTruck, FaLock, FaBoxOpen, FaUndo, FaChevronLeft, FaChevronRight, FaShoppingCart, FaEye } from "react-icons/fa";
 
 const ProductPage = () => {
   const { slug } = useParams();
@@ -35,8 +35,10 @@ const ProductPage = () => {
   const [activeImg, setActiveImg] = useState("");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-  // Related Products
+  // Related Products (Similar Products)
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [productOffers, setProductOffers] = useState({});
+  const [relatedLoading, setRelatedLoading] = useState(false);
 
   // Inventory Status
   const [inventoryStatus, setInventoryStatus] = useState({
@@ -56,6 +58,9 @@ const ProductPage = () => {
   const [reviewsPage, setReviewsPage] = useState(1);
   const [reviewsLimit] = useState(5);
 
+  // Similar Products Slider State
+  const [currentSimilarIndex, setCurrentSimilarIndex] = useState(0);
+
   // Accordion state
   const [open, setOpen] = useState(true);
 
@@ -68,7 +73,7 @@ const ProductPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Auto slider for mobile
+  // Auto slider for mobile (main product images)
   useEffect(() => {
     let interval;
     if (isMobile && images.length > 1) {
@@ -165,12 +170,8 @@ const ProductPage = () => {
       );
       setCurrentOffer(offer || null);
 
-      // Fetch related products
-      const relatedRes = await axios.get(`${import.meta.env.VITE_API_URL}/products/all`);
-      const sameCategoryProducts = relatedRes.data
-        .filter(p => p.categoryId === productData.categoryId && p.productId !== id)
-        .slice(0, 4);
-      setRelatedProducts(sameCategoryProducts);
+      // Fetch similar products (related products)
+      await fetchSimilarProducts(productData.categoryId, id);
 
     } catch (err) {
       console.error("Error fetching product by ID:", err);
@@ -178,6 +179,61 @@ const ProductPage = () => {
       toast.error("Failed to load product details");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 🎯 FETCH SIMILAR PRODUCTS (excluding current product)
+  const fetchSimilarProducts = async (categoryId, currentProductId) => {
+    try {
+      setRelatedLoading(true);
+      // Fetch all products
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/products/all`);
+      
+      // Filter: same category, active, and not current product
+      let similar = response.data.filter(p => 
+        p.categoryId === categoryId && 
+        p.productId !== currentProductId &&
+        p.isActive === true
+      );
+      
+      // Limit to max 6 products
+      similar = similar.slice(0, 6);
+      setRelatedProducts(similar);
+      
+      // Fetch offers for similar products
+      await fetchOffersForSimilarProducts(similar);
+      
+    } catch (error) {
+      console.error("Error fetching similar products:", error);
+    } finally {
+      setRelatedLoading(false);
+    }
+  };
+
+  // Fetch offers for similar products
+  const fetchOffersForSimilarProducts = async (productsList) => {
+    try {
+      const offersMap = {};
+      for (const product of productsList) {
+        try {
+          const offersRes = await axios.get(
+            `${import.meta.env.VITE_API_URL}/productoffers/product-color-offers/${product.productId}`
+          );
+          const validOffer = offersRes.data.find(offer =>
+            offer.productId === product.productId &&
+            !offer.variableModelId &&
+            offer.isCurrentlyValid === true
+          );
+          if (validOffer) {
+            offersMap[product.productId] = validOffer;
+          }
+        } catch (err) {
+          console.log(`No offers for product ${product.productId}`);
+        }
+      }
+      setProductOffers(offersMap);
+    } catch (error) {
+      console.error("Error fetching offers for similar products:", error);
     }
   };
 
@@ -230,12 +286,8 @@ const ProductPage = () => {
         );
         setCurrentOffer(offer || null);
 
-        // Fetch related products
-        const relatedRes = await axios.get(`${import.meta.env.VITE_API_URL}/products/all`);
-        const sameCategoryProducts = relatedRes.data
-          .filter(p => p.categoryId === productData.categoryId && p.productId !== productData.productId)
-          .slice(0, 4);
-        setRelatedProducts(sameCategoryProducts);
+        // Fetch similar products
+        await fetchSimilarProducts(productData.categoryId, productData.productId);
 
       } else {
         setError("Product not found");
@@ -634,6 +686,282 @@ const ProductPage = () => {
     setActiveImg(img);
   };
 
+  // ==================== SIMILAR PRODUCTS HELPER FUNCTIONS ====================
+  const createSlug = (productName) => {
+    return productName
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
+  const getSimilarProductPrice = (product) => {
+    if (product.colors && product.colors.length > 0) {
+      return product.colors[0].currentPrice || 0;
+    }
+    return product.currentPrice || 0;
+  };
+
+  const getSimilarOriginalPrice = (product) => {
+    if (product.colors && product.colors.length > 0) {
+      return product.colors[0].originalPrice || 0;
+    }
+    return product.originalPrice || 0;
+  };
+
+  const getSimilarOfferPrice = (product) => {
+    const basePrice = getSimilarProductPrice(product);
+    const offer = productOffers[product.productId];
+    if (offer && offer.offerPercentage > 0) {
+      const discountAmount = (basePrice * offer.offerPercentage) / 100;
+      return Math.max(0, basePrice - discountAmount);
+    }
+    return basePrice;
+  };
+
+  const getSimilarDiscountPercent = (product) => {
+    const originalPrice = getSimilarOriginalPrice(product);
+    const offerPrice = getSimilarOfferPrice(product);
+    if (originalPrice > 0) {
+      return Math.round(((originalPrice - offerPrice) / originalPrice) * 100);
+    }
+    return 0;
+  };
+
+  const getSimilarProductImage = (product) => {
+    if (product.colors && product.colors.length > 0 && product.colors[0].images && product.colors[0].images.length > 0) {
+      return product.colors[0].images[0];
+    }
+    return product.thumbnailImage || "https://via.placeholder.com/300x300?text=No+Image";
+  };
+
+  const handleSimilarViewProduct = (similarProduct) => {
+    const slug = createSlug(similarProduct.productName);
+    navigate(`/product/${slug}`, {
+      state: { productId: similarProduct.productId }
+    });
+    // Scroll to top when navigating
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSimilarAddToCart = async (e, similarProduct) => {
+    e.stopPropagation();
+
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
+
+    if (!token || !userId) {
+      toast.info("Please login to add items to cart");
+      navigate("/login");
+      return;
+    }
+
+    const basePrice = getSimilarProductPrice(similarProduct);
+    const offerPrice = getSimilarOfferPrice(similarProduct);
+    const hasOffer = !!productOffers[similarProduct.productId];
+    const currentOffer = productOffers[similarProduct.productId];
+    const firstColor = similarProduct.colors && similarProduct.colors.length > 0 ? similarProduct.colors[0] : null;
+    const taxSlab = similarProduct.taxSlab || 18;
+    const quantity = 1;
+
+    const cartData = {
+      userId,
+      productId: similarProduct.productId,
+      productName: similarProduct.productName,
+      quantity: quantity,
+      unitPrice: basePrice,
+      finalPrice: offerPrice,
+      totalPrice: offerPrice * quantity,
+      taxSlab: taxSlab,
+      selectedColor: firstColor ? {
+        colorId: firstColor.colorId,
+        colorName: firstColor.colorName,
+        currentPrice: firstColor.currentPrice,
+        originalPrice: firstColor.originalPrice,
+        images: firstColor.images || []
+      } : null,
+      selectedSize: null,
+      hasOffer: hasOffer,
+      offerDetails: hasOffer ? {
+        offerId: currentOffer._id,
+        offerPercentage: currentOffer.offerPercentage,
+        offerLabel: currentOffer.offerLabel,
+        originalPrice: basePrice,
+        offerPrice: offerPrice,
+        savedAmount: (basePrice - offerPrice) * quantity
+      } : null,
+      thumbnailImage: similarProduct.thumbnailImage
+    };
+
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/cart/add`,
+        cartData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      toast.success(`Added to cart!`);
+      window.dispatchEvent(new Event('cartUpdated'));
+      navigate('/cart');
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast.error("Error adding to cart. Please try again.");
+    }
+  };
+
+  const handleSimilarBuyNow = (e, similarProduct) => {
+    e.stopPropagation();
+
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
+
+    if (!token || !userId) {
+      toast.info("Please login to proceed with Buy Now");
+      navigate("/login");
+      return;
+    }
+
+    const basePrice = getSimilarProductPrice(similarProduct);
+    const offerPrice = getSimilarOfferPrice(similarProduct);
+    const hasOffer = !!productOffers[similarProduct.productId];
+    const currentOffer = productOffers[similarProduct.productId];
+    const firstColor = similarProduct.colors && similarProduct.colors.length > 0 ? similarProduct.colors[0] : null;
+    const taxSlab = similarProduct.taxSlab || 18;
+    const quantity = 1;
+
+    const buyNowData = {
+      userId,
+      productId: similarProduct.productId,
+      productName: similarProduct.productName,
+      quantity: quantity,
+      unitPrice: basePrice,
+      finalPrice: offerPrice,
+      totalPrice: offerPrice * quantity,
+      taxSlab: taxSlab,
+      selectedColor: firstColor ? {
+        colorId: firstColor.colorId,
+        colorName: firstColor.colorName,
+        currentPrice: firstColor.currentPrice,
+        originalPrice: firstColor.originalPrice,
+        images: firstColor.images || []
+      } : null,
+      selectedSize: null,
+      selectedModel: null,
+      hasOffer: hasOffer,
+      offerDetails: hasOffer ? {
+        offerId: currentOffer._id,
+        offerPercentage: currentOffer.offerPercentage,
+        offerLabel: currentOffer.offerLabel,
+        originalPrice: basePrice,
+        offerPrice: offerPrice,
+        savedAmount: (basePrice - offerPrice) * quantity
+      } : null,
+      thumbnailImage: similarProduct.thumbnailImage
+    };
+
+    navigate('/checkout', {
+      state: {
+        buyNowMode: true,
+        productData: buyNowData
+      }
+    });
+  };
+
+  // Similar Products Slider Navigation
+  const nextSimilarSlide = () => {
+    setCurrentSimilarIndex((prev) => (prev + 1) % relatedProducts.length);
+  };
+
+  const prevSimilarSlide = () => {
+    setCurrentSimilarIndex((prev) => (prev - 1 + relatedProducts.length) % relatedProducts.length);
+  };
+
+  // Render Similar Product Card
+  const renderSimilarProductCard = (similarProduct) => {
+    const price = getSimilarProductPrice(similarProduct);
+    const originalPrice = getSimilarOriginalPrice(similarProduct);
+    const offerPrice = getSimilarOfferPrice(similarProduct);
+    const productImage = getSimilarProductImage(similarProduct);
+    const hasOffer = !!productOffers[similarProduct.productId];
+    const currentOffer = productOffers[similarProduct.productId];
+    const discountPercent = getSimilarDiscountPercent(similarProduct);
+
+    return (
+      <div key={similarProduct.productId} className="similar-product-card">
+        <div className="similar-product-card__image">
+          <img src={productImage} alt={similarProduct.productName} />
+          {hasOffer && (
+            <div className="similar-product-card__offer-badge">
+              <span className="offer-percent">{currentOffer.offerPercentage}% OFF</span>
+              <span className="offer-label">{currentOffer.offerLabel}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="similar-product-card__content">
+          <h3 className="similar-product-card__title">{similarProduct.productName}</h3>
+
+          <div className="similar-product-card__price">
+            {hasOffer ? (
+              <>
+                <span className="similar-product-card__current-price offer-price">
+                  ₹{offerPrice.toLocaleString()}
+                </span>
+                <span className="similar-product-card__old-price">
+                  ₹{price.toLocaleString()}
+                </span>
+                {originalPrice > price && (
+                  <span className="similar-product-card__mrp">MRP: ₹{originalPrice.toLocaleString()}</span>
+                )}
+                <span className="similar-product-card__discount-badge">
+                  -{discountPercent}% OFF
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="similar-product-card__current-price">₹{price.toLocaleString()}</span>
+                {originalPrice > price && (
+                  <span className="similar-product-card__old-price">₹{originalPrice.toLocaleString()}</span>
+                )}
+              </>
+            )}
+          </div>
+
+          <div
+            className="similar-product-card__view-text"
+            onClick={() => handleSimilarViewProduct(similarProduct)}
+          >
+            View Product
+          </div>
+
+          <div className="similar-product-card__actions">
+            <button
+              className="similar-product-card__btn similar-product-card__btn--cart"
+              onClick={(e) => handleSimilarAddToCart(e, similarProduct)}
+            >
+              <FaShoppingCart />
+              <span>Add to Cart</span>
+            </button>
+
+            <button
+              className="similar-product-card__btn similar-product-card__btn--buy"
+              onClick={(e) => handleSimilarBuyNow(e, similarProduct)}
+            >
+              <FaEye />
+              <span>Buy Now</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="product-page-loading">
@@ -907,6 +1235,57 @@ const ProductPage = () => {
         </div>
       </div>
 
+      {/* SIMILAR PRODUCTS SECTION */}
+      {relatedProducts.length > 0 && (
+        <div className="similar-products-section">
+          <div className="similar-products-section__container">
+            <h2 className="similar-products-section__title">You May Also Like</h2>
+            
+            {/* Desktop View */}
+            <div className="similar-products-section__desktop">
+              {relatedProducts.map((product) => renderSimilarProductCard(product))}
+            </div>
+
+            {/* Mobile View */}
+            <div className="similar-products-section__mobile">
+              <div className="similar-products-section__slider">
+                <button className="similar-products-section__slider-btn" onClick={prevSimilarSlide}>
+                  <FaChevronLeft />
+                </button>
+
+                <div className="similar-products-section__slider-container">
+                  <div
+                    className="similar-products-section__slider-track"
+                    style={{ transform: `translateX(-${currentSimilarIndex * 100}%)` }}
+                  >
+                    {relatedProducts.map((product) => (
+                      <div key={product.productId} className="similar-products-section__slider-item">
+                        {renderSimilarProductCard(product)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <button className="similar-products-section__slider-btn" onClick={nextSimilarSlide}>
+                  <FaChevronRight />
+                </button>
+              </div>
+
+              <div className="similar-products-section__dots">
+                {relatedProducts.map((product, index) => (
+                  <button
+                    key={product.productId}
+                    className={`similar-products-section__dot ${index === currentSimilarIndex ? 'active' : ''}`}
+                    onClick={() => setCurrentSimilarIndex(index)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REVIEWS MODAL */}
       {showReviewsModal && (
         <div className="reviews-modal">
           <div className="modal-overlay" onClick={() => setShowReviewsModal(false)}></div>
