@@ -43,7 +43,7 @@
   }
 
   &__main-img {
-    background: #efefef;
+    background: transparent;
     text-align: center;
     border-radius: 16px;
     position: relative;
@@ -707,7 +707,7 @@
     @media (max-width: 480px) {
       button {
         width: 34px;
-        height: 34px;
+        height: 38px;
         font-size: 15px;
       }
 
