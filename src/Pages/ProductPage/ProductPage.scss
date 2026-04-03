@@ -3,7 +3,7 @@
 .product {
   display: flex;
   gap: 40px;
-  padding: 120px 60px  60px;
+  padding: 120px 60px 60px;
   background: #f5f1ea;
   margin: 0 auto;
 
@@ -412,15 +412,17 @@
 
     // Striked price style for when extra offer exists
     .price-simple.price-striked {
-      .price, .mrp {
+
+      .price,
+      .mrp {
         text-decoration: line-through;
         color: #94a3b8;
       }
-      
+
       .price {
         color: #94a3b8;
       }
-      
+
       .discount {
         opacity: 0.7;
       }
@@ -429,7 +431,7 @@
     // Extra offer info - BELOW the main price
     .offer-extra-info {
       margin-top: 12px;
-      
+
       .offer-detail-line {
         display: flex;
         align-items: center;
@@ -439,11 +441,11 @@
         padding: 10px 16px;
         border-radius: 12px;
         border-left: 4px solid #5b2b1b;
-        
+
         .offer-label-icon {
           font-size: 18px;
         }
-        
+
         .offer-label-text {
           font-size: 13px;
           font-weight: 600;
@@ -453,17 +455,17 @@
           padding: 4px 10px;
           border-radius: 20px;
         }
-        
+
         .offer-arrow {
           font-size: 16px;
           color: #cbd5e1;
         }
-        
+
         .offer-final-price {
           font-size: 14px;
           color: #1e293b;
           font-family: 'Inter', sans-serif;
-          
+
           strong {
             font-size: 18px;
             font-weight: 700;
@@ -471,7 +473,7 @@
             font-family: 'DM Sans', sans-serif;
           }
         }
-        
+
         .offer-save-text {
           font-size: 12px;
           font-weight: 500;
@@ -482,41 +484,41 @@
           border-radius: 20px;
         }
       }
-      
+
       @media (max-width: 768px) {
         margin-top: 10px;
-        
+
         .offer-detail-line {
           padding: 8px 12px;
-          
+
           .offer-label-icon {
             font-size: 16px;
           }
-          
+
           .offer-label-text {
             font-size: 12px;
           }
-          
+
           .offer-final-price {
             font-size: 13px;
-            
+
             strong {
               font-size: 16px;
             }
           }
-          
+
           .offer-save-text {
             font-size: 11px;
           }
         }
       }
-      
+
       @media (max-width: 480px) {
         .offer-detail-line {
           flex-direction: row;
           align-items: flex-start;
           gap: 8px;
-          
+
           .offer-arrow {
             display: none;
           }
@@ -1125,7 +1127,7 @@
     font-weight: 700;
     margin-bottom: 30px;
     color: #000000;
-    text-align: left;
+    text-align: center;
     font-family: 'DM Sans', sans-serif;
 
     @media (max-width: 1024px) {
@@ -1149,7 +1151,6 @@
     }
   }
 
-  // Desktop View - Grid
   &__desktop {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1159,14 +1160,43 @@
     max-width: 1000px;
     margin: 0 auto;
 
+    // 👈 NEW: Center items when less than 3 products
+    justify-content: center;
+    align-items: center;
+
+    // When only 1 product
+    &:has(:only-child) {
+      display: flex;
+      justify-content: center;
+
+      .similar-product-card {
+        max-width: 300px;
+        margin: 0 auto;
+      }
+    }
+
+    // When only 2 products
+    &:has(:nth-child(2):last-child) {
+      grid-template-columns: repeat(2, 1fr);
+      max-width: 660px; // 👈 Adjust width for 2 products
+    }
+
     @media (max-width: 1024px) {
       max-width: 900px;
       gap: 25px;
+
+      &:has(:nth-child(2):last-child) {
+        max-width: 600px;
+      }
     }
 
     @media (max-width: 992px) {
       max-width: 800px;
       gap: 20px;
+
+      &:has(:nth-child(2):last-child) {
+        max-width: 560px;
+      }
     }
 
     @media (max-width: 768px) {
@@ -1174,90 +1204,91 @@
     }
   }
 
-  // Mobile View - Slider
-  &__mobile {
-    display: none;
-    position: relative;
-    z-index: 1;
 
-    @media (max-width: 768px) {
-      display: block;
-    }
+// Mobile View - Slider
+&__mobile {
+  display: none;
+  position: relative;
+  z-index: 1;
+
+  @media (max-width: 768px) {
+    display: block;
+  }
+}
+
+&__slider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+&__slider-container {
+  flex: 1;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+&__slider-track {
+  display: flex;
+  transition: transform 0.3s ease;
+}
+
+&__slider-item {
+  flex: 0 0 100%;
+  padding: 0 3px;
+}
+
+&__slider-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #6b2c1f;
+  flex-shrink: 0;
+
+  &:hover {
+    background: #6b2c1f;
+    color: white;
+    border-color: #6b2c1f;
   }
 
-  &__slider {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-left: 20px;
-    margin-right: 20px;
+  svg {
+    width: 16px;
+    height: 16px;
   }
+}
 
-  &__slider-container {
-    flex: 1;
-    overflow: hidden;
-    border-radius: 16px;
+&__dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 15px;
+}
+
+&__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ccc;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &.active {
+    background: #6b2c1f;
+    width: 20px;
+    border-radius: 3px;
   }
-
-  &__slider-track {
-    display: flex;
-    transition: transform 0.3s ease;
-  }
-
-  &__slider-item {
-    flex: 0 0 100%;
-    padding: 0 3px;
-  }
-
-  &__slider-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: white;
-    border: 1px solid #e0e0e0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    color: #6b2c1f;
-    flex-shrink: 0;
-
-    &:hover {
-      background: #6b2c1f;
-      color: white;
-      border-color: #6b2c1f;
-    }
-
-    svg {
-      width: 16px;
-      height: 16px;
-    }
-  }
-
-  &__dots {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-    margin-top: 15px;
-  }
-
-  &__dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #ccc;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-
-    &.active {
-      background: #6b2c1f;
-      width: 20px;
-      border-radius: 3px;
-    }
-  }
+}
 }
 
 // Similar Product Card
@@ -1291,26 +1322,29 @@
     aspect-ratio: 1;
     position: relative;
     margin: 0;
-    padding: 20px;
+    padding: 20px; // 👈 Equal padding all sides
     overflow: hidden;
     border-radius: 16px 16px 0 0;
-    padding-top: 30px;
-    
-    // Half light yellow background
+    background: transparent; // 👈 Change to white
+    cursor: pointer;
+
+    // Remove the yellow background - CHANGE TO WHITE
     &::before {
       content: '';
       position: absolute;
       bottom: 0;
       left: 0;
       width: 100%;
-      height: 60%;
-      background: #fff5e9;
+      height: 50%; // 👈 Half background
+      background: white; // 👈 Change to WHITE
       z-index: 1;
-      border-radius: 30px 30px 30px 30px;
+      border-radius: 30px;
     }
 
     img {
-      max-width: 85%;
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
       height: auto;
       object-fit: contain;
       transition: transform 0.3s ease;
@@ -1323,6 +1357,7 @@
     }
   }
 
+
   &__offer-badge {
     position: absolute;
     top: 12px;
@@ -1334,7 +1369,7 @@
     flex-direction: column;
     z-index: 10;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    
+
     .offer-percent {
       font-size: 13px;
       font-weight: 700;
@@ -1342,7 +1377,7 @@
       line-height: 1.2;
       font-family: 'Inter', sans-serif;
     }
-    
+
     .offer-label {
       font-size: 9px;
       color: rgba(255, 255, 255, 0.95);
@@ -1355,11 +1390,11 @@
       top: 8px;
       left: 8px;
       padding: 4px 8px;
-      
+
       .offer-percent {
         font-size: 11px;
       }
-      
+
       .offer-label {
         font-size: 8px;
       }
@@ -1369,11 +1404,11 @@
       top: 6px;
       left: 6px;
       padding: 3px 6px;
-      
+
       .offer-percent {
         font-size: 10px;
       }
-      
+
       .offer-label {
         font-size: 7px;
       }
@@ -1457,7 +1492,7 @@
     padding: 3px 8px;
     border-radius: 20px;
     letter-spacing: 0.3px;
-    
+
     @media (max-width: 768px) {
       font-size: 10px;
       padding: 2px 6px;
@@ -1529,7 +1564,7 @@
     @media (max-width: 768px) {
       padding: 8px 0;
       font-size: 12px;
-      
+
       svg {
         width: 12px;
         height: 12px;
@@ -1608,6 +1643,7 @@
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -1712,7 +1748,7 @@
       .star {
         font-size: 22px;
         color: #ffc107;
-        
+
         &.empty {
           color: #e2e8f0;
         }
@@ -1867,7 +1903,7 @@
                 .star {
                   font-size: 14px;
                   color: #ffc107;
-                  
+
                   &.empty {
                     color: #e2e8f0;
                   }
@@ -2070,7 +2106,7 @@
 
     h2 {
       font-size: 18px;
-      
+
       .reviews-count-badge {
         font-size: 12px;
         padding: 3px 10px;

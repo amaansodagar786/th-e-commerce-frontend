@@ -286,7 +286,9 @@ const Products = () => {
 
     return (
       <div key={product.productId} className="product-card">
-        <div className="product-card__image">
+        <div className="product-card__image"
+          onClick={() => handleViewProduct(product)}
+          style={{ cursor: "pointer" }}>
           <img src={productImage} alt={product.productName} />
           {hasOffer && (
             <div className="product-card__offer-badge">

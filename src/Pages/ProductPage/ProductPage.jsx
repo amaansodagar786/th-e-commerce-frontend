@@ -892,7 +892,9 @@ const ProductPage = () => {
 
     return (
       <div key={similarProduct.productId} className="similar-product-card">
-        <div className="similar-product-card__image">
+        <div className="similar-product-card__image"
+          onClick={() => handleSimilarViewProduct(similarProduct)}
+          style={{ cursor: "pointer" }}>
           <img src={productImage} alt={similarProduct.productName} />
           {hasOffer && (
             <div className="similar-product-card__offer-badge">
