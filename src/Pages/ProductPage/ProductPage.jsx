@@ -10,7 +10,7 @@ const ProductPage = () => {
   const { slug } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Get productId from state if coming from Products.js
   const productIdFromState = location.state?.productId;
 
@@ -188,21 +188,21 @@ const ProductPage = () => {
       setRelatedLoading(true);
       // Fetch all products
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/products/all`);
-      
+
       // Filter: same category, active, and not current product
-      let similar = response.data.filter(p => 
-        p.categoryId === categoryId && 
+      let similar = response.data.filter(p =>
+        p.categoryId === categoryId &&
         p.productId !== currentProductId &&
         p.isActive === true
       );
-      
+
       // Limit to max 6 products
       similar = similar.slice(0, 6);
       setRelatedProducts(similar);
-      
+
       // Fetch offers for similar products
       await fetchOffersForSimilarProducts(similar);
-      
+
     } catch (error) {
       console.error("Error fetching similar products:", error);
     } finally {
@@ -357,7 +357,7 @@ const ProductPage = () => {
   // Fetch reviews
   const fetchProductReviews = async (page = 1) => {
     if (!actualProductId) return;
-    
+
     try {
       setReviewsLoading(true);
       const response = await axios.get(
@@ -731,9 +731,7 @@ const ProductPage = () => {
   };
 
   const getSimilarProductImage = (product) => {
-    if (product.colors && product.colors.length > 0 && product.colors[0].images && product.colors[0].images.length > 0) {
-      return product.colors[0].images[0];
-    }
+
     return product.thumbnailImage || "https://via.placeholder.com/300x300?text=No+Image";
   };
 
@@ -1240,7 +1238,7 @@ const ProductPage = () => {
         <div className="similar-products-section">
           <div className="similar-products-section__container">
             <h2 className="similar-products-section__title">You May Also Like</h2>
-            
+
             {/* Desktop View */}
             <div className="similar-products-section__desktop">
               {relatedProducts.map((product) => renderSimilarProductCard(product))}

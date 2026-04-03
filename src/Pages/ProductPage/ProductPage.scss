@@ -1089,7 +1089,8 @@
 .similar-products-section {
   background: #f5f1ea;
   padding: 50px 60px;
-  max-width: 1400px;
+  // max-width: 1400px; 
+  width: 100%;
   margin: 0 auto;
 
   @media (max-width: 1200px) {
@@ -1261,7 +1262,7 @@
 
 // Similar Product Card
 .similar-product-card {
-  background: white;
+  background: transparent;
   border-radius: 16px;
   overflow: hidden;
   transition: transform 0.3s ease;
@@ -1384,7 +1385,7 @@
     display: flex;
     flex-direction: column;
     flex: 1;
-    background: white;
+    background: transparent;
     box-shadow: none !important;
   }
 
