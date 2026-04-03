@@ -7,30 +7,61 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
 
+// Helper function to extract YouTube video ID from any YouTube URL
+const getYouTubeId = (url) => {
+  const patterns = [
+    /(?:youtube\.com\/shorts\/)([^\/\?&]+)/,  // YouTube Shorts
+    /(?:youtube\.com\/watch\?v=)([^\/\?&]+)/, // Regular YouTube
+    /(?:youtu\.be\/)([^\/\?&]+)/,             // youtu.be
+    /(?:youtube\.com\/embed\/)([^\/\?&]+)/    // embed format
+  ];
+  
+  for (let pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+};
+
 const reviews = [
     {
         id: 1,
-        videoSrc: "https://www.w3schools.com/html/mov_bbb.mp4",  // Big Buck Bunny
+        videoUrl: "https://youtube.com/shorts/wbE9qQKMP7E?si=sQnvDHk4xjLeq5kn",
+        title: "VALENTINE SPECIAL",
+        subtitle: "Love in Every Drop"
     },
     {
         id: 2,
-        videoSrc: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+        videoUrl: "https://youtube.com/shorts/o3AHdNjRdxU?si=X8YIW8G_f-ovdi-z",
+        title: "FAMILY FAVORITE",
+        subtitle: "Healthy Cooking Made Easy"
     },
     {
         id: 3,
-        videoSrc: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+        videoUrl: "https://youtube.com/shorts/OpQFXSHbD7I?si=bLzDeRIdlkETlcJw",
+        // isMp4: true,
+        title: "NATURE'S BEST",
+        subtitle: "100% Pure & Natural"
     },
     {
         id: 4,
-        videoSrc: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+        videoUrl: "https://youtube.com/shorts/ulP5CrNwLmY?si=TZtB79GU7S68JkFv",
+        // isMp4: true,
+        title: "TRADITIONAL TASTE",
+        subtitle: "Since 1985"
     },
     {
         id: 5,
-        videoSrc: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+        videoUrl: "https://youtube.com/shorts/3VOxXQN9H8U?si=38hdSOYXbCgIm9MA",
+        title: "CHEF CHOICE",
+        subtitle: "Trusted by Professionals"
     },
     {
         id: 6,
-        videoSrc: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+        videoUrl: "https://youtube.com/shorts/cAh_6aN4bd8?si=7jOlPZG73Z05eYVq",
+        // isMp4: true,
+        title: "EVERYDAY HEALTH",
+        subtitle: "Your Family Deserves Best"
     },
 ];
 
@@ -97,6 +128,51 @@ const AnimatedText = ({ text, className }) => {
     );
 };
 
+// ── Video Component with NO interactions, NO controls, infinite play ──
+const VideoCard = ({ videoUrl, isMp4, title, subtitle }) => {
+    const videoId = !isMp4 ? getYouTubeId(videoUrl) : null;
+    const isYouTube = !isMp4 && videoId;
+
+    return (
+        <div className="story-card">
+            <div className="card-video-wrap">
+                {isYouTube ? (
+                    <iframe
+                        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0&showinfo=0&disablekb=1&fs=0&iv_load_policy=3&color=white&autohide=1&playsinline=1`}
+                        className="card-video"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        title=""
+                        style={{ pointerEvents: 'none' }}
+                    />
+                ) : (
+                    <video
+                        src={videoUrl}
+                        className="card-video"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        controls={false}
+                        disablePictureInPicture
+                        controlsList="nodownload nofullscreen noremoteplayback"
+                    />
+                )}
+                
+                {/* ── TEXT OVERLAY AT BOTTOM ── */}
+                <div className="video-text-overlay">
+                    <div className="overlay-gradient"></div>
+                    <div className="text-content">
+                        <h3 className="video-title">{title}</h3>
+                        <p className="video-subtitle">{subtitle}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // ── Main Component ─────────────────────────────────────────────────
 const CustomerStories = () => {
     return (
@@ -123,18 +199,12 @@ const CustomerStories = () => {
                     >
                         {reviews.map((review) => (
                             <SwiperSlide key={review.id}>
-                                <div className="story-card">
-                                    <div className="card-video-wrap">
-                                        <video
-                                            src={review.videoSrc}
-                                            className="card-video"
-                                            autoPlay
-                                            muted
-                                            loop
-                                            playsInline
-                                        />
-                                    </div>
-                                </div>
+                                <VideoCard 
+                                    videoUrl={review.videoUrl} 
+                                    isMp4={review.isMp4 || false}
+                                    title={review.title}
+                                    subtitle={review.subtitle}
+                                />
                             </SwiperSlide>
                         ))}
                     </Swiper>
